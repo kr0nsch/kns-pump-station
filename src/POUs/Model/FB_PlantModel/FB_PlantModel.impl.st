@@ -29,7 +29,9 @@ IF stCmd.xClearFaults THEN
     stCmd.xClearFaults := FALSE;
 END_IF
 IF stCmd.xResetPlant THEN
+    // исходное состояние проверки (И0): уровень, время перелива, ливни, ПЧ
     fbTank.SetLevel(rNewLevel_m := stCfg.rLevelInit_m);
+    fbTank.ClearOverflow();
     fbStorms.Clear(lrFrom_h := lrClock_h);
     FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
         afbVfd[uiPump].ResetDrive();

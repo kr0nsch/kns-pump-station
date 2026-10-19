@@ -27,3 +27,6 @@ xIntakeDry := lrLevel_m < REAL_TO_LREAL(GVL_Const.SIM_PUMP_INTAKE_M);
 rLevel_m := LREAL_TO_REAL(lrLevel_m);
 rVolume_m3 := rLevel_m * rArea_m2;
 udiOverflow_s := LREAL_TO_UDINT(lrOverflow_s);
+IF udiOverflow_s = 0 AND lrOverflow_s > 0.0 THEN
+    udiOverflow_s := 1;     // перелив короче 0,5 с при округлении дал бы 0: любой перелив виден
+END_IF

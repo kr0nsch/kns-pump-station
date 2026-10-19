@@ -105,8 +105,8 @@ ISA-18.2, журнал и суточный режим работы. Функци
 
 1. Сборка имитации загружена и запущена, `GVL_Sim.xSimulation = TRUE` (тревога `KNS1.SIM` — норма
    стенда).
-2. Модель: `SimCmd.xResetPlant` (уровень `SimCfg.rLevelInit_m` = 1,20 м, ливни сняты, ПЧ готовы),
-   `SimCmd.xClearFaults` (все инъекции сняты).
+2. Модель: `SimCmd.xResetPlant` (уровень `SimCfg.rLevelInit_m` = 1,20 м, время перелива
+   `SimSts.udiOverflow_s` = 0, ливни сняты, ПЧ готовы), `SimCmd.xClearFaults` (все инъекции сняты).
 3. Приток постоянный: `SimCmd.xInflowOverride = TRUE`, `SimCmd.rInflowOverride_m3h = 100`.
 4. Ускорение `SimCfg.rTimeScale` — по проверке (колонка «k» приложения А), по умолчанию 20.
 5. Отказы сброшены, тревоги квитированы: `Cmd.xResetAll`, затем `Cmd.xAckAll`.
@@ -145,7 +145,7 @@ ISA-18.2, журнал и суточный режим работы. Функци
 | Поле | Тип | Что делает |
 |---|---|---|
 | `SimCfg.rTimeScale` | `REAL` | ускорение контура, 1…50 (раздел 5.3) |
-| `SimCmd.xResetPlant` | `BOOL`, импульс | уровень := `SimCfg.rLevelInit_m`, ливни сняты, ПЧ готовы |
+| `SimCmd.xResetPlant` | `BOOL`, импульс | уровень := `SimCfg.rLevelInit_m`, время перелива `udiOverflow_s` := 0, ливни сняты, ПЧ готовы |
 | `SimCmd.xClearFaults` | `BOOL`, импульс | снять все инъекции `Inj` |
 | `SimCmd.xSetLevel`, `rSetLevel_m` | `BOOL` импульс, `REAL` | установить уровень в модели (подготовка проверки) |
 | `SimCmd.xInflowOverride`, `rInflowOverride_m3h` | `BOOL`, `REAL` | постоянный приток вместо суточного профиля и ливней |

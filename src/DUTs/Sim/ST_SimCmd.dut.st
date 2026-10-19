@@ -6,7 +6,7 @@
 {attribute 'qualified_only'}
 TYPE ST_SimCmd :
 STRUCT
-    xResetPlant      : BOOL;        // импульс: уровень := stSimCfg.rLevelInit_m, ливни сняты, ПЧ готовы
+    xResetPlant      : BOOL;        // импульс: уровень := stSimCfg.rLevelInit_m, перелив 0, ливни сняты, ПЧ готовы
     xClearFaults     : BOOL;        // импульс: обнулить stFaultInj (ускорение и приток не меняются)
     xSetLevel        : BOOL;        // импульс: уровень := rSetLevel_m
     rSetLevel_m      : REAL;

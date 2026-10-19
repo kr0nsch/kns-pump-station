@@ -538,7 +538,7 @@ END_TYPE
 ```st
 TYPE ST_SimCmd :                    // GVL_Sim.stSimCmd — команды модели; импульсы сбрасывает FB_PlantModel
 STRUCT
-    xResetPlant      : BOOL;        // импульс: уровень := stSimCfg.rLevelInit_m, ливни сняты, ПЧ готовы
+    xResetPlant      : BOOL;        // импульс: уровень := stSimCfg.rLevelInit_m, перелив 0, ливни сняты, ПЧ готовы
     xClearFaults     : BOOL;        // импульс: обнулить stFaultInj (ускорение и приток не меняются)
     xSetLevel        : BOOL;        // импульс: уровень := rSetLevel_m
     rSetLevel_m      : REAL;
@@ -1578,8 +1578,9 @@ flowchart LR
   заменяется `SIM_XS_ZERO_STATE`. Ливень, начавшийся до полуночи, продолжается в следующих сутках.
   `xResetPlant` снимает ливни, начавшиеся раньше (и внеочередной); ливни, которые начнутся позже, идут.
 - **Резервуар:** `dV = (Qin − Qout) · dt / 3600`, `h = V / rTankArea_m2`, шаги не длиннее
-  `SIM_DT_SUBSTEP`. Выше `rLevelOverflow_m` — перелив (уровень ограничен, `udiOverflow_s` растёт);
-  ниже `SIM_PUMP_INTAKE_M` — насосы подсасывают воздух (подача 0).
+  `SIM_DT_SUBSTEP`. Выше `rLevelOverflow_m` — перелив (уровень ограничен, `udiOverflow_s` растёт: целые
+  секунды, перелив короче секунды — 1 с; `xResetPlant` обнуляет — проверки ПМИ «перелива нет» не зависят
+  от прошлых); ниже `SIM_PUMP_INTAKE_M` — насосы подсасывают воздух (подача 0).
 - **Насосы (законы подобия):** скорость `s = f / 50 Гц`; напор насоса `H_i = H0 · s_i² − k · q_i²`;
   сеть `H = (Hgeo − h) + R · Q²`, `Q = Σ q_i`; обратные клапаны — `q_i = 0` при `H0 · s_i² ≤ H`.
   Рабочая точка — бисекция по `H` на `[Hgeo − h, max(H0 · s_i²)]` (30 итераций), так решаются и
