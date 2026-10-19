@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-20 01:06:48. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-20 02:40:37. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-20 01:06:48 |
-| Коммит | 6beaae6 |
+| Дата прогона | 2026-10-20 02:40:37 |
+| Коммит | e6853b1-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -23,14 +23,6 @@
 
 | Набор | Тестов | Пройдено | Упало | Пропущено | Итог |
 |---|---|---|---|---|---|
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | 8 | 8 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbEventLogTest` | 14 | 14 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbEventLogCsvTest` | 6 | 6 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbUtcToIsoTest` | 4 | 4 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbAlarmCodeTest` | 5 | 5 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | 16 | 16 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbDeviceAuditTest` | 4 | 4 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbPlcStartAdoptionTest` | 2 | 2 | 0 | 0 | пройдено |
 | `GVL_TestsModel.fbScaledClockTest` | 8 | 8 | 0 | 0 | пройдено |
 | `GVL_TestsModel.fbInflowProfileTest` | 6 | 6 | 0 | 0 | пройдено |
 | `GVL_TestsModel.fbStormGeneratorTest` | 10 | 10 | 0 | 0 | пройдено |
@@ -52,71 +44,21 @@
 | `GVL_TestsStation.fbAnnunciatorTest` | 7 | 7 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationCfgCheckTest` | 13 | 13 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationCoreTest` | 37 | 37 | 0 | 0 | пройдено |
-| **Всего** | 337 | 337 | 0 | 0 | **пройдено** |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | 8 | 8 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbEventLogTest` | 14 | 14 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbEventLogCsvTest` | 6 | 6 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbUtcToIsoTest` | 4 | 4 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmCodeTest` | 5 | 5 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | 16 | 16 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbDeviceAuditTest` | 4 | 4 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbPlcStartAdoptionTest` | 2 | 2 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbFieldOwenTest` | 5 | 5 | 0 | 0 | пройдено |
+| **Всего** | 342 | 342 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
 | Набор | Тест | Итог |
 |---|---|---|
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DefaultsAllFalse` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeBits` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeScale5000Is100Pct` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_NoCommForcesStatusFalseHoldsSpeed` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeResetBitWhileQReset` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeScaleAndClamp` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeRoundsToNearest` | пройден |
-| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeNanIsZero` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EmptyLogDefaults` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EventRecordSizeIs40` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_AlarmEventStored` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_StationEventIdIsBasePlusCode` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_RingOverwritesOldestAndCounts` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_GetRecordNewestFirst` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPagination` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPageEqualToCountClamped` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedFromSeqOldestFirst` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedReportsOverwrittenGap` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_MonoTimeIsProcessTime` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_TimeBackwardsRecordedAsIs` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotIndependentOfLaterEvents` | пройден |
-| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotAfterWrapOldestFirst` | пройден |
-| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EventCsvLineFormat` | пройден |
-| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_WritesHeaderAndAllLines` | пройден |
-| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EmptySnapshotHeaderOnly` | пройден |
-| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ReadBackMatchesSnapshot` | пройден |
-| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ErrorOnBadPathReported` | пройден |
-| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_SlowTaskRequestHandshake` | пройден |
-| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroIsEmpty` | пройден |
-| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_KnownDates` | пройден |
-| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_CenturyLeapDay2000` | пройден |
-| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroPadDigits` | пройден |
-| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_DeviceSuffixesByType` | пройден |
-| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_StationAlarms` | пройден |
-| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_Lic101AndEvents` | пройден |
-| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_UnknownIsNumber` | пройден |
-| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_SlotWithoutSuffixIsNumber` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_EmptyDefaults` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_SlotMaxMatchesLibrary` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_CountsByPriority` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighest` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighestBeforeLower` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_NewHighSeqOnlyOnTransition` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewSortedUnackFirst` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewNewerFirstInGroup` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewLimitedToRows` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewPeriodRespected` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_TimeBackwardsRebuildsView` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_AckByIdDeviceStationPid` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdRespectsTShelveMax` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdUsesFullTShelveMax` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_UnshelveById` | пройден |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_StationSlotsBeyondDeviceLimit_PMI01_PMI30` | пройден |
-| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoEventOnFirstCall` | пройден |
-| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_AuditLogsModeChange` | пройден |
-| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoSinkIsSafe` | пройден |
-| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_LargeDevNoValueNoOverflow` | пройден |
-| `GVL_TestsInfra.fbPlcStartAdoptionTest` | `PlcStartAdoption_AdoptedInGeneratedOrder_A13` | пройден |
-| `GVL_TestsInfra.fbPlcStartAdoptionTest` | `PlcStartAdoption_PowerDeviceAfterPumpStopsRunningPump_A13` | пройден |
 | `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_DefaultsScaleOneAndSystemTime` | пройден |
 | `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ScaleOneEqualsSystem` | пройден |
 | `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ScaleChangeIsMonotonic` | пройден |
@@ -395,6 +337,70 @@
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidLeadFaultKeepsOutput_A7_A9_PMI13` | пройден |
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidLeadTripKeepsOutput_A7_A9_A10_PMI16` | пройден |
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidHandoverKeepsOutput_A7_A8` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DefaultsAllFalse` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeBits` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeScale5000Is100Pct` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_NoCommForcesStatusFalseHoldsSpeed` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeResetBitWhileQReset` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeScaleAndClamp` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeRoundsToNearest` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeNanIsZero` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EmptyLogDefaults` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EventRecordSizeIs40` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_AlarmEventStored` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_StationEventIdIsBasePlusCode` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_RingOverwritesOldestAndCounts` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_GetRecordNewestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPagination` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPageEqualToCountClamped` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedFromSeqOldestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedReportsOverwrittenGap` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_MonoTimeIsProcessTime` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_TimeBackwardsRecordedAsIs` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotIndependentOfLaterEvents` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotAfterWrapOldestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EventCsvLineFormat` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_WritesHeaderAndAllLines` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EmptySnapshotHeaderOnly` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ReadBackMatchesSnapshot` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ErrorOnBadPathReported` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_SlowTaskRequestHandshake` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroIsEmpty` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_KnownDates` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_CenturyLeapDay2000` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroPadDigits` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_DeviceSuffixesByType` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_StationAlarms` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_Lic101AndEvents` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_UnknownIsNumber` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_SlotWithoutSuffixIsNumber` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_EmptyDefaults` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_SlotMaxMatchesLibrary` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_CountsByPriority` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighest` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighestBeforeLower` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_NewHighSeqOnlyOnTransition` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewSortedUnackFirst` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewNewerFirstInGroup` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewLimitedToRows` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewPeriodRespected` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_TimeBackwardsRebuildsView` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_AckByIdDeviceStationPid` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdRespectsTShelveMax` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdUsesFullTShelveMax` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_UnshelveById` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_StationSlotsBeyondDeviceLimit_PMI01_PMI30` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoEventOnFirstCall` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_AuditLogsModeChange` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoSinkIsSafe` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_LargeDevNoValueNoOverflow` | пройден |
+| `GVL_TestsInfra.fbPlcStartAdoptionTest` | `PlcStartAdoption_AdoptedInGeneratedOrder_A13` | пройден |
+| `GVL_TestsInfra.fbPlcStartAdoptionTest` | `PlcStartAdoption_PowerDeviceAfterPumpStopsRunningPump_A13` | пройден |
+| `GVL_TestsInfra.fbFieldOwenTest` | `FieldOwen_OwenAiPctToMa` | пройден |
+| `GVL_TestsInfra.fbFieldOwenTest` | `FieldOwen_OwenAiStatusErrorIsNan` | пройден |
+| `GVL_TestsInfra.fbFieldOwenTest` | `FieldOwen_WordsToRealHiLo` | пройден |
+| `GVL_TestsInfra.fbFieldOwenTest` | `FieldOwen_Mx210AiLowWordFirst` | пройден |
+| `GVL_TestsInfra.fbFieldOwenTest` | `FieldOwen_Mx210AiErrorCodeIsNan` | пройден |
 
 ### Упавшие тесты
 
@@ -402,6 +408,24 @@ _Нет._
 
 Машиночитаемые результаты: `build/test-results.json`, `build/junit.xml` (не в git).
 <!-- cds:test-report:end -->
+
+## Сборки для ОВЕН ПЛК210 и REGUL R500 (20.10.2026)
+
+Только компиляция и генерация кода: в ПЛК не загружалось, модули и ПЧ не подключались. Команды —
+`python tools_project/targets.py build|check <сборка>` (README, «Сборка для ОВЕН ПЛК210 и REGUL R500»).
+
+| Сборка | Среда и устройство | Что | Ошибок | Предупреждений |
+|---|---|---|---:|---:|
+| `plc210` | CODESYS 3.5.17.30, пакет OwenTargets 3.5.17.36 (ftp.owen.ru); ПЛК210 `4096 / 1628 0083 / 3.5.17.35`, модуль-слот PLC210-14 | импорт `src/` и `targets/plc210/src/`, дерево устройств скриптом (2 линии RS-485, 4 слейва Modbus RTU, Modbus TCP с МВ210-101 и МВ210-202, 27 привязок встроенного ввода-вывода), сборка (`rebuild`) | 0 | 0 |
+| `plc210` | то же | «Генерировать код» | 0 | 0 |
+| `plc210` | то же, без дерева устройств | `targets.py check plc210` = `cds.py check --tests`: все 125 объектов `src/` и `tests/` | 0 | 0 |
+| `r500` | Astra.IDE 1.7.2.2, REGUL R500 61 `4096 / 109B 0008 / 11.7.2.60` | импорт `src/`, задачи с приоритетами 5, 6, 14, сборка | 0 | 0 |
+| `r500` | то же | `targets.py check r500` = `cds.py check`: 88 объектов `src/` (coUnit в Astra.IDE не установлена) | 0 | 0 |
+
+Первая сборка дерева устройств: слейв МВ210-202 импортировался без привязок битов (0 из 15) — привязки битов в
+PLCopenXML вложены в элемент слова (выяснено выгрузкой привязки, сделанной через API), генератор исправлен до
+коммита. Повторный запуск сборки даёт тот же проект (модуль-слот на месте, порты пересоздаются из задания).
+Сценарии ПМИ после этих правок повторно не прогонялись: в задачи имитации новые объекты не входят.
 
 ## Исправление после протокола ПМИ № 1: ПИД при выбытии ведущего (20.10.2026)
 

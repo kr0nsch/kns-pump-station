@@ -40,6 +40,12 @@ reason = "Артефакт понижения: константы набора (
 # ===== Команда К3: сгенерированный слой, полевой слой, журнал (docs/STATIC_ANALYSIS.md, раздел К3) =====
 
 [[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Field/Owen/*.decl.st"
+match = "variable: (UBITS|WHI)$"
+reason = "Ложное срабатывание iec_checker 0.4: объединение uBits (PL.U_RealBits) используется обращениями к полям (uBits.dwValue, uBits.rValue), wHi — аргумент вложенного вызова SHL(WORD_TO_DWORD(wHi), …) в F_WordsToReal (функции полевого слоя ОВЕН, сборка targets/plc210)"
+
+[[allow]]
 id = "PLCOPEN-CP9"
 file = "src/POUs/Generated/*"
 match = "Code is too complex"

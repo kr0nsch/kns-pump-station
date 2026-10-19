@@ -2,7 +2,7 @@
 //             Один файл, три раздела с владельцами (docs/DESIGN.md, раздел 2): «Инфраструктура» —
 //             К3, «Станция» — К1, «Модель» — К2. Добавлять — только в свой раздел.
 // Автор:      kr0nsch
-// Версия:     0.2.0
+// Версия:     0.3.0
 // Документ:   docs/DESIGN.md, раздел 2
 {attribute 'qualified_only'}
 VAR_GLOBAL CONSTANT
@@ -26,6 +26,12 @@ VAR_GLOBAL CONSTANT
     VFD_STW_WARNING : WORD := 16#0008;
     VFD_STW_REMOTE : WORD := 16#0010;
     VFD_CTW_RESET : WORD := 16#0004;         // сброс аварии по фронту
+    // полевой слой ОВЕН (сборка targets/plc210): встроенные AI ПЛК210, модули Mx210, регистры Modbus
+    OWEN_AI_STATUS_OK : USINT := 0;          // «Статус» встроенного AI ПЛК210: NO_ERROR (перечисление PLC210AISTATUS)
+    MX210_AI_ERR_MIN : WORD := 16#F0;        // старший байт значения AI Mx210 16#F0…16#FF — код ошибки (РЭ МВ210-101)
+    MB_WORD_BITS : INT := 16;                // бит в регистре Modbus
+    MB_BYTE_BITS : INT := 8;                 // бит в байте регистра
+    REAL_QNAN_BITS : DWORD := 16#7FC00000;   // тихий NaN IEEE 754: значение недостоверно (PL.FB_AnalogInput)
     // журнал: часы и CSV (DESIGN, разделы 9.1, 9.2)
     LOG_RTC_OK : UDINT := 0;                 // SysTimeRtcHighResGet: «нет ошибки» (ERR_OK)
     LOG_UTC_MIN_MS : ULINT := 1577836800000; // 2020-01-01T00:00:00Z: раньше — часы ПЛК не выставлены
@@ -179,7 +185,7 @@ VAR_GLOBAL CONSTANT
     SIM_VFD_LOCAL_FREQ_HZ : REAL := 50.0;
     SIM_BUTTON_PULSE : TIME := T#500MS;      // длительность нажатия кнопки шкафа в модели
     SIM_V1_FB_DELAY : TIME := T#1S;          // ОС вентилятора после команды
-    // имитация разрешена сборкой; в targets/plc210 файл-наложение даёт FALSE (раздел 8.1)
+    // имитация разрешена сборкой; сборка targets/plc210 заменяет TRUE на FALSE (tools_project/targets.py, раздел 8.4)
     SIM_ALLOWED : BOOL := TRUE;
     SIM_DT_MAX : LTIME := LTIME#2S;          // больший шаг времени за вызов модели обрезается (пауза задачи, отладка)
     SIM_DAY_MAX : UDINT := 100000;           // предел счёта суток модели (≈ 270 лет): защита LREAL → UDINT

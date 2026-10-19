@@ -15,4 +15,5 @@ VAR_GLOBAL
     fbAlarmSummaryTest   : FB_AlarmSummary_Test;      // 9.3
     fbDeviceAuditTest    : FB_DeviceAudit_Test;       // 9.3
     fbPlcStartAdoptionTest : FB_PlcStartAdoption_Test;  // 4.6, 7: подхват насоса в порядке PRG_Devices
+    fbFieldOwenTest : FB_FieldOwen_Test;      // 8.4: функции полевого слоя ОВЕН (сборка targets/plc210)
 END_VAR

@@ -1,0 +1,45 @@
+{
+  "_doc": [
+    "Состав сборки ОВЕН ПЛК210 (targets/plc210): устройство, встроенный ввод-вывод, порты RS-485, модули Mx210 по Modbus TCP.",
+    "Из этого файла и docs/03_io_list.csv инструмент tools_project/codesys/plc210_io.py строит дерево устройств: модуль-слот, каналы Modbus, привязки ввода-вывода к GVL_IO и к программам полевой шины.",
+    "Идентификаторы устройств и параметров взяты из описаний устройств пакета OwenTargets 3.5.17.36 (ftp.owen.ru/CoDeSys3/03_Targets) и устройств Modbus CODESYS 3.5.17.30; номера COM-портов — из описания устройства ПЛК210; регистры Mx210 — из руководств по эксплуатации ОВЕН и примера ОВЕН Example_CodesysModbusTcpMasterMx210_3517v1.",
+    "Адреса IP модулей, скорость линий RS-485 и таймауты — условные (как в docs/DESIGN.md, раздел 16): уточняются по проекту шкафа."
+  ],
+  "package": "OwenTargets 3.5.17.36",
+  "device": {"type": 4096, "id": "1628 0083", "version": "3.5.17.35", "title": "ОВЕН ПЛК210-14"},
+  "slot": {
+    "_doc": "Модуль-слот модификации: PLC210-14 — 12 DI и 4 быстрых DO (левая плата), 8 релейных DO и 4 универсальных AI (правая плата)",
+    "name": "PLC210_14", "type": 40101, "id": "1628 0004", "version": "3.5.17.3004"
+  },
+  "builtin": {
+    "di": {"io_module": "D1", "device": "LeftSide", "param": 5001, "element": "FDI_{n}", "count": 12, "terminal": "DI{n}"},
+    "do": {"io_module": "Q1", "device": "RightSide", "param": 6003, "element": "RDO_{n}", "count": 8, "terminal": "DO{t}", "terminal_offset": 4},
+    "ai": {
+      "io_module": "A1", "device": "RightSide", "count": 4, "terminal": "AI{n}",
+      "value_param": 5700, "status_param": 5800, "type_param": 300, "sensor_type": 11,
+      "_sensor_type": "11 — «4-20 mA» (перечисление PLC210TYPESENSOR); границы «Нижняя/Верхняя граница» по умолчанию 0 и 100: значение — % диапазона"
+    }
+  },
+  "serial": [
+    {"link": "RS485-1", "name": "RS485_1", "com_port": 5, "baudrate": 19200, "parity": "EVEN", "data_bits": 8, "stop_bits": 1,
+     "master": "MB_Master_RS485_1", "response_timeout_ms": 200, "auto_restart": true},
+    {"link": "RS485-2", "name": "RS485_2", "com_port": 4, "baudrate": 19200, "parity": "EVEN", "data_bits": 8, "stop_bits": 1,
+     "master": "MB_Master_RS485_2", "response_timeout_ms": 200, "auto_restart": true}
+  ],
+  "serial_slaves": {
+    "_doc": "Имя слейва в дереве по адресу на линии (оно же имя экземпляра диагностики в коде: P101.xError)",
+    "RS485-1": {"1": "P101", "2": "P102", "3": "P103"},
+    "RS485-2": {"10": "TT403"}
+  },
+  "ethernet": {
+    "name": "Ethernet", "master": "MB_TCP_Master",
+    "modules": [
+      {"name": "MV210_101", "model": "МВ210-101", "ip": [192, 168, 1, 20], "port": 502, "unit_id": 1,
+       "io_module": "A1", "first_channel": 5, "kind": "ai_float", "register": 4000, "cycle_ms": 100,
+       "_register": "«Значение (float) на входе 1», регистр 4000 (0xFA0), FLOAT32, 2 регистра; 4–20 мА — 0…100 %; код ошибки — в старшем байте (РЭ МВ210-101). Младшее слово — в регистре 4000, как в примере ОВЕН"},
+      {"name": "MV210_202", "model": "МВ210-202", "ip": [192, 168, 1, 21], "port": 502, "unit_id": 1,
+       "io_module": "D2", "first_channel": 1, "kind": "di_mask", "register": 51, "length": 2, "cycle_ms": 100,
+       "_register": "«Состояние дискретных входов DI1–DI20, битовая маска», регистр 51 (0x33), UINT32 (РЭ МВ210-202/204). DI1–DI16 — регистр 51 (младшее слово первым, как у FLOAT32 в примере ОВЕН) — проверить на модуле при наладке"}
+    ]
+  }
+}

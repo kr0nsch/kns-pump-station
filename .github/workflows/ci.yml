@@ -106,6 +106,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: python tools/check/st_lint.py --strict
 
+      # Программы полевой шины сборки ОВЕН ПЛК210 (targets/plc210/src) — не в src/, поэтому отдельным прогоном
+      - name: Линтер ST сборки ПЛК210 (st_lint, targets/plc210)
+        id: st_lint_plc210
+        if: ${{ !cancelled() }}
+        run: python tools/check/st_lint.py --strict --root targets/plc210 src
+
       # run_iec_checker.py сам собирает вариант iec-checker в build/assembled/iec-checker/ и берёт
       # бинарник из переменной IEC_CHECKER; обоснованные находки — tools/check/iec_checker_allow.toml
       # и docs/STATIC_ANALYSIS.md
@@ -123,6 +129,7 @@ jobs:
           R_PYTEST: ${{ steps.pytest.outcome }}
           R_ASSEMBLE: ${{ steps.assemble.outcome }}
           R_ST_LINT: ${{ steps.st_lint.outcome }}
+          R_ST_LINT_PLC210: ${{ steps.st_lint_plc210.outcome }}
           R_IEC_CHECKER: ${{ steps.iec_checker.outcome }}
         run: |
           status() {
@@ -144,6 +151,7 @@ jobs:
             echo "| pytest | $(status "$R_PYTEST") |"
             echo "| assemble | $(status "$R_ASSEMBLE") |"
             echo "| st_lint --strict | $(status "$R_ST_LINT") |"
+            echo "| st_lint --strict, targets/plc210 | $(status "$R_ST_LINT_PLC210") |"
             echo "| iec_checker $IEC_CHECKER_VERSION | $(status "$R_IEC_CHECKER") |"
             echo ""
             echo "Отчёты — в артефакте \`build-reports\`. Находки iec_checker разбираются в \`docs/STATIC_ANALYSIS.md\`."

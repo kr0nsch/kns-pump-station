@@ -447,3 +447,67 @@ python tools_project\codesys\sim.py stop                   & rem останов�
 процесса это `%LOCALAPPDATA%\VirtualStore\Program Files (x86)\CODESYS 3.5.17.30\GatewayPLC\` (зонд Z1).
 Отсутствующие каталоги пути CAA File создаёт сам. Русские тексты подставляет
 `tools_project\eventlog_decode.py` (этап 2).
+
+## 10. Сборка для ОВЕН ПЛК210 и REGUL R500
+
+### 10.1. Пакет таргетов ОВЕН
+
+Нужен для сборки `targets/plc210`. Источник — FTP ОВЕН: матрица версий
+`https://ftp.owen.ru/CoDeSys3/96_CdsVersionSelector/cds_version_selector.json` связывает прошивки ПЛК210-11…15
+(3.7.0331.0614, 3.8.0126.1318) с CODESYS V3.5 SP17 Patch 3 и пакетами таргетов 3.5.17.35–36. Проверено с
+`https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.36.package` (27 736 218 байт, 16.02.2026; подписи у
+пакета нет, контрольных сумм на FTP нет — SHA-256 файла, скачанного 20.10.2026,
+`33ebe03daa0a71df5d57f4d2cbbbea4b628e2cbdae0c20d610ab18fd8571da09`).
+
+1. Установка — «Инструменты → Менеджер пакетов → Установить» или из командной строки (нужны права
+   администратора: пакет пишет в каталог CODESYS):
+
+   ```bat
+   "C:\Program Files (x86)\CODESYS 3.5.17.30\CODESYS\Common\PackageManagerCLI.exe" --profile="CODESYS V3.5 SP17 Patch 3" --install="<путь>\OwenTargets-3.5.17.36.package"
+   ```
+
+   Строка запуска — одной строкой, с кавычками после `=` (из Git Bash кавычки теряются — запускать из cmd).
+   20.10.2026 пакет установлен без компонентов OwenOPC и OwenBat (`--components` — все, кроме 20 и 23): они
+   копируют OPC-сервер ОВЕН в каталог «CODESYS OPC Server 3», которого в этой установке нет.
+2. Проверка: в «Репозитории устройств» — PLC210 (`4096 / 1628 0083`, версии 3.5.17.31, .32, .35) и SPK210
+   (`1628 0073`, 3.5.17.34); модули-слоты PLC210-11…15, -4G (тип 40101).
+
+### 10.2. Сборка ПЛК210
+
+```bat
+python tools_project\targets.py build plc210
+python tools_project\targets.py check plc210
+```
+
+Нужны plc-process-lib 1.0.0.0 в репозитории библиотек CODESYS (`cds.py deps`) и пакет из 10.1. Что делает
+сборка и что в ней проверено — [targets/plc210/README.md](../targets/plc210/README.md). Проект —
+`build\targets\plc210\root\build\kns-pump-station-plc210.project`: его можно открыть в IDE, посмотреть дерево
+устройств и загрузить в ПЛК. Правки делайте в `src/`, `targets/plc210/` и перечне сигналов, не в проекте:
+следующая сборка пересоздаёт порты RS-485 и Ethernet.
+
+На объекте (не проверялось — железа нет):
+
+1. Модификация ПЛК210 — по шкафу: другая модификация — `slot` в `targets/plc210/hardware.json` (идентификаторы
+   модулей-слотов — в репозитории устройств), каналы — `builtin`.
+2. Модули МВ210-101 и МВ210-202: адреса IP (`ethernet.modules[].ip`), Unit ID 1, Modbus TCP включён — в OWEN
+   Configurator. Вход 1 МВ210-101 — тип датчика 4–20 мА. Порядок слов маски входов МВ210-202 сверить в онлайне:
+   замкнуть DI1 и посмотреть, какой бит канала изменился (регистр 51 или 52).
+3. ПЧ: адрес 1/2/3, 19 200 бит/с, 8E1 (как `serial` в `hardware.json`), сторожевой таймер связи — раздел 8
+   DESIGN, 16. Таймаут ответа слейва — 200 мс; после подключения линии подобрать по обмену.
+4. Встроенные AI: тип «4-20 mA» ставит сборка; границы «Нижняя/Верхняя граница» оставить 0 и 100 — код
+   пересчитывает % в мА. Проверить на объекте: ток 12 мА → «Значение» 50.
+5. В онлайне: `GVL_IO.xMbOk_*` = TRUE при подключённых ПЧ и датчике TT403, `GVL_Sim.xSimulation = FALSE`,
+   тревоги `KNS1.SIM` нет; отсоединить линию RS485-1 — через 3 с `P10n.COM`.
+
+### 10.3. Сборка REGUL R500 61 (Astra.IDE)
+
+```bat
+python tools_project\targets.py build r500
+```
+
+Нужны Astra.IDE 1.7.2.2 (путь по умолчанию или `ASTRA_IDE_EXE`, профиль `ASTRA_IDE_PROFILE`) и plc-process-lib
+1.0.0.0 в репозитории библиотек Astra.IDE (`C:\ProgramData\Astra.IDE_64_1.7.2.2\Managed Libraries`, имя
+`System`): собирается командой `cds.py library --compiled --install` в plc-process-lib с переменными
+`CODESYS_EXE`, `CODESYS_PROFILE`, `CDS_LIBRARY_REGISTRY`, `CDS_LIBRARY_LOCK` Astra.IDE (рецепт —
+[kns-port-domestic, BUILD_ERRORS.md](https://github.com/kr0nsch/kns-port-domestic/blob/main/docs/BUILD_ERRORS.md)).
+Сборка проверяет компиляцию исходников флагмана на R500 61; полевой слой REGUL — в kns-port-domestic.

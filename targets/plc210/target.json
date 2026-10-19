@@ -1,0 +1,21 @@
+{
+  "_doc": [
+    "Сборка для ОВЕН ПЛК210-14 (python tools_project/targets.py build plc210): исходники src/ и targets/plc210/src/, имитация запрещена,",
+    "в MainTask первой — PRG_FieldBusIn_Plc210, последней — PRG_FieldBusOut_Plc210, задачи модели нет; после cds.py import",
+    "tools_project/codesys/plc210_io.py строит дерево устройств (hardware.json), собирает проект и генерирует код."
+  ],
+  "title": "ОВЕН ПЛК210-14",
+  "ide": "codesys",
+  "device": {"type": 4096, "id": "1628 0083", "version": "3.5.17.35", "title": "ОВЕН ПЛК210"},
+  "overlay": "targets/plc210/src",
+  "patches": [
+    {"file": "src/GVLs/GVL_Const.gvl.st", "from": "    SIM_ALLOWED : BOOL := TRUE;", "to": "    SIM_ALLOWED : BOOL := FALSE;"},
+    {"file": "src/GVLs/Sim/GVL_Sim.gvl.st", "from": "    xSimulationReq  : BOOL := TRUE;", "to": "    xSimulationReq  : BOOL := FALSE;"}
+  ],
+  "tasks": [
+    {"name": "MainTask", "interval_ms": 20, "priority": 1, "watchdog": {"time_ms": 100, "sensitivity": 1},
+     "pous": ["PRG_FieldBusIn_Plc210", "PRG_FieldIn", "PRG_DeviceList", "PRG_Station", "PRG_Devices", "PRG_FieldOut", "PRG_FieldBusOut_Plc210"]},
+    {"name": "SlowTask", "interval_ms": 200, "priority": 20, "pous": ["PRG_Slow"]}
+  ],
+  "post": "plc210_io"
+}

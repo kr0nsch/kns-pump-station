@@ -101,6 +101,7 @@ src/
   POUs/
     Generated/  PRG_Devices, PRG_ApplyProjectCfg, PRG_DeviceList                генератор (К3)
     Field/      PRG_FieldIn, PRG_FieldOut, FB_VfdAdapter_Cond                    К3
+      Owen/     F_OwenAiToMa, F_Mx210AiToMa, F_WordsToReal (сборка ПЛК210)       К3
     Station/    PRG_Station, FB_StationCore, FB_StationMode, FB_ControlSelector,
                 FB_LevelControlStepped, FB_LevelControlPid, FB_PumpRotation, FB_Ats, FB_Protections,
                 FB_PumpProtection, FB_PowerRestore, FB_Ventilation, FB_StationAlarms, FB_Annunciator,
@@ -111,12 +112,15 @@ src/
     Model/      PRG_PlantModel, FB_PlantModel, FB_InflowProfile, FB_StormGenerator, F_Xorshift32,
                 FB_TankModel, FB_HydraulicSolver, FB_VfdSim, FB_AnalogSensorSim, F_FloatContact,
                 F_PumpCurrent, F_FaultInjEqual                                   К2
-targets/plc210/                                  К3  сборка ПЛК210: PRG_ModbusDiag, привязки каналов, README
+targets/plc210/                                  К3  сборка ПЛК210: target.json, hardware.json, README (таблица привязок)
+  src/          PRG_FieldBusIn_Plc210, PRG_FieldBusOut_Plc210, GVL_ConstPlc210     К3
+targets/r500/                                    К3  сборка REGUL R500 61 (Astra.IDE): target.json
 tests/
   GVLs/  GVL_TestsStation (К1), GVL_TestsModel (К2), GVL_TestsInfra (К3) — экземпляры наборов, {attribute 'linkalways'}
   POUs/
     PRG_Tests                                    К3  только coUnit.RUN() и признак завершения
     Fakes/       FB_FakeMotorVfd, FB_FakeEventSink                              К1
+    Field/       FB_FieldOwen_Test (функции полевого слоя ОВЕН)                  К3
     Station/     FB_<ФБ>_Test для каждого ФБ станции                             К1
     Field/, Log/ FB_VfdAdapter_Cond_Test, FB_EventLog_Test, FB_EventLogCsv_Test,
                  FB_AlarmSummary_Test, FB_DeviceAudit_Test, FB_F_AlarmCode_Test,
@@ -336,7 +340,7 @@ VAR_GLOBAL CONSTANT
     SIM_VFD_LOCAL_FREQ_HZ : REAL := 50.0;    // частота местного поста ПЧ (в «Местном» задание по сети не ведётся)
     SIM_BUTTON_PULSE : TIME := T#500MS;      // длительность нажатия кнопки шкафа в модели
     SIM_V1_FB_DELAY : TIME := T#1S;          // ОС вентилятора после команды
-    SIM_ALLOWED : BOOL := TRUE;              // имитация разрешена сборкой; в targets/plc210 файл-наложение даёт FALSE (раздел 8.1)
+    SIM_ALLOWED : BOOL := TRUE;              // имитация разрешена сборкой; сборка targets/plc210 заменяет TRUE на FALSE (tools_project/targets.py, раздел 8.4)
     SIM_DT_MAX : LTIME := LTIME#2S;          // больший шаг времени за вызов модели обрезается (пауза задачи, отладка)
     SIM_DAY_MAX : UDINT := 100000;           // предел счёта суток модели (≈ 270 лет): защита LREAL → UDINT
     SIM_VFD_COUNTS_PER_HZ : REAL := 100.0;   // FREF и FACT ПЧ: 0,01 Гц (= VFD_COUNTS_PER_PCT · 100 % / VFD_FREQ_NOM_HZ)
@@ -1916,14 +1920,27 @@ END_VAR
 
 ### 8.4 Сборка ПЛК210 (`targets/plc210/`)
 
-`PRG_ModbusDiag` (вызывается первой в `MainTask` только в этой сборке) пишет
-`GVL_IO.xMbOk_RS485_1_S1…S3`, `xMbOk_RS485_2_S10` по диагностике слейвов Modbus дерева устройств
-(имена экземпляров и полей — сверить в IDE на вкладке «Объект МЭК» слейва) и собирает `GVL_IO.rTT403`
-из двух регистров FC4 (порядок слов HL, через `PL.U_RealBits` или своё объединение; неконечное
-значение библиотека отбросит сама, API 2.4); привязки каналов модулей и регистров — таблица в
-`targets/plc210/README.md` (из `03_io_list.csv`, `docs/modbus_master_map.csv`). В сборке
-`targets/plc210` нет `PRG_PlantModel`, `GVL_Sim.xSimulationReq = FALSE`, константа
-`GVL_Const.SIM_ALLOWED = FALSE` (раздел 8.1).
+Сделано 20.10.2026 иначе, чем планировалось (отдельная программа диагностики слейвов и ручное дерево
+устройств в IDE): дерево строит скрипт.
+
+- `tools_project/targets.py build plc210` собирает в `build/targets/plc210/root`: копия `src/`, объекты
+  `targets/plc210/src/`, правки из `target.json` (`SIM_ALLOWED := FALSE`, `xSimulationReq := FALSE`), задачи —
+  `MainTask` (`PRG_FieldBusIn_Plc210` первой, `PRG_FieldBusOut_Plc210` последней) и `SlowTask`, без
+  `PlantModelTask`. Устройство — ПЛК210 `4096 / 1628 0083 / 3.5.17.35` (пакет OwenTargets 3.5.17.36);
+  `OwenCloudTask` устройства импорт не удаляет (`device.keep_tasks`).
+- `tools_project/codesys/plc210_io.py` по `docs/03_io_list.csv` и `targets/plc210/hardware.json` готовит план, а
+  `plc210_io_cds.py` в CODESYS: модуль-слот PLC210-14; «Modbus COM» (COM5, COM4), мастера и слейвы; каналы слейвов
+  — выгрузкой слейва в PLCopenXML, вставкой параметров каналов и импортом обратно (API 3.5.17 каналы не создаёт);
+  Ethernet, Modbus TCP Master, МВ210-101 и МВ210-202; привязки встроенных DI/DO и битов маски МВ210-202 прямо к
+  `GVL_IO`, AI и регистров — к массивам программ полевой шины; тип датчика встроенных AI; сборка и «Генерировать
+  код».
+- `PRG_FieldBusIn_Plc210`: AI ПЛК210 — `F_OwenAiToMa` (% → мА, статус ошибки → NaN), AI МВ210-101 —
+  `F_Mx210AiToMa` (FLOAT32 младшим словом вперёд, код ошибки в старшем байте → NaN, нет связи — NaN), регистры ПЧ
+  и TT403 (`F_WordsToReal`, HL), `GVL_IO.xMbOk_*` := `NOT <слейв>.xError` (экземпляр диагностики слейва
+  `IoDrvModbus`). `PRG_FieldBusOut_Plc210` — слово управления и задание ПЧ в каналы FC16. Функции
+  `F_OwenAiToMa`, `F_Mx210AiToMa`, `F_WordsToReal` — в `src/POUs/Field/Owen/` (от таргета не зависят, тесты
+  `FB_FieldOwen_Test` на Control Win).
+- Таблица привязок — `targets/plc210/README.md` (`plc210_io.py table --write`, проверка — pytest).
 
 ## 9. Журнал, сводка тревог, CSV (К3)
 
@@ -2640,30 +2657,10 @@ k, время контура и реальное. Здесь — только т
    `build/textlists/` (готовит `tools_project/gen_textlists.py`; формат импорта сверить в IDE);
    пользователи и роли (оператор, наладчик). После сборки — экспорт `.project` для релиза и
    снимки экранов в `docs/media/`.
-7. **Дерево устройств ПЛК210 и Modbus RTU** (сборка `targets/plc210`, проект без модели):
-   1. Установить пакет таргета ОВЕН ПЛК210 (версия — по прошивке ПЛК, «Инструменты → Менеджер
-      пакетов»), заменить устройство проекта на ПЛК210 («Обновить устройство»).
-   2. Модули ввода-вывода (встроенные и расширения) — по проекту шкафа; каналы AI/DI/DO — вкладка
-      «Соотнесение входов/выходов» → «Сопоставить с существующей переменной» на `GVL_IO.*` по таблице
-      `targets/plc210/README.md` (генерируется из `03_io_list.csv`); «Цикл шины» — `MainTask`.
-   3. RS485-1: на порт ПЛК210 (номер COM — по РЭ) добавить «Modbus COM»: 19 200 бит/с, чётность Even,
-      8 бит, 1 стоп-бит (условно, как в ПЧ). Под ним — «Modbus Master, COM Port»: таймаут ответа
-      (начать с 200 мс), пауза между кадрами, «Автоперезапуск обмена» включён.
-   4. Под мастером — три «Modbus Slave, COM Port» с адресами 1, 2, 3 (`P101`…`P103`). У каждого на
-      вкладке «Каналы Modbus Slave»: канал 1 — «Запись нескольких регистров (FC16)», смещение 0,
-      длина 2, циклически 100 мс; канал 2 — «Чтение регистров хранения (FC3)», смещение 100, длина 4,
-      циклически 100 мс.
-   5. Вкладка «Соотнесение входов/выходов» слейва n: запись [0] → `GVL_IO.wP10n_CTW`, [1] →
-      `uiP10n_FREF`; чтение [0] → `wP10n_STW`, [1] → `uiP10n_FACT`, [2] → `uiIT1n1`, [3] →
-      `uiP10n_FCODE`. Если IDE не даёт сопоставить `UINT` с каналом `WORD` — промежуточные `WORD` в
-      `targets/plc210` и преобразование в `PRG_ModbusDiag` (риск R-07).
-   6. RS485-2: второй «Modbus COM» и мастер; слейв 10 (TT403): «Чтение входных регистров (FC4)»,
-      смещение 0, длина 2, 1000 мс; два `WORD` → `REAL` порядком HL в `PRG_ModbusDiag` → `GVL_IO.rTT403`.
-   7. Диагностика: на вкладке «Объект МЭК» каждого слейва посмотреть имя экземпляра и выходы ошибки
-      обмена; вписать их в `PRG_ModbusDiag` → `GVL_IO.xMbOk_RS485_1_S1…S3`, `xMbOk_RS485_2_S10`
-      (имена — сверить в IDE, R-05).
-   8. Собрать, загрузить, проверить в онлайне: `xMbOk_*` = TRUE при подключённых ПЧ, `xP10n_CommOk`,
-      частота и ток на фейсплейтах; отсоединить линию — через 3 с `P10n.COM`.
+7. **Дерево устройств ПЛК210 и Modbus RTU** — строит сборка `targets/plc210` (раздел 8.4,
+   `python tools_project/targets.py build plc210`): модуль-слот, порты RS-485 (COM5, COM4), мастера, слейвы
+   ПЧ и TT403 с каналами, модули МВ210 по Modbus TCP, привязки к `GVL_IO`. На объекте — адреса и параметры
+   линий в `targets/plc210/hardware.json`, загрузка и проверка в онлайне: `docs/MANUAL_STEPS.md`, раздел 10.2.
 8. **ПЧ** (по руководству производителя; карта регистров в репозитории — условная): адрес 1/2/3,
    скорость и формат кадра как у мастера; пуск и стоп — от дискретного входа (провод `P10n_RUN`),
    задание частоты — по сети; релейные выходы «Работа» и «Авария»; сброс аварии по сети (бит 2

@@ -7,6 +7,25 @@
 
 ## [Unreleased]
 
+### Added
+
+- Сборка для ОВЕН ПЛК210-14 (`targets/plc210`, `python tools_project/targets.py build plc210`): дерево устройств
+  по перечню сигналов и `hardware.json` — модуль-слот PLC210-14, встроенные DI/DO/AI, RS485-1 (COM5) и RS485-2
+  (COM4) с мастером Modbus RTU и слейвами ПЧ Н1…Н3 и TT403, Modbus TCP с модулями МВ210-101 и МВ210-202, каналы и
+  привязки; программы полевой шины `PRG_FieldBusIn_Plc210`, `PRG_FieldBusOut_Plc210`. CODESYS 3.5.17.30 с пакетом
+  OwenTargets 3.5.17.36: сборка и «Генерировать код» — 0 ошибок, 0 предупреждений. В ПЛК не загружалось.
+- Сборка для REGUL R500 61 в Astra.IDE 1.7.2.2 (`targets/r500`): 0 ошибок, 0 предупреждений.
+- Функции полевого слоя ОВЕН `F_OwenAiToMa`, `F_Mx210AiToMa`, `F_WordsToReal` и набор coUnit `FB_FieldOwen_Test`
+  (5 тестов; всего 342 из 342).
+- `tools_project/codesys/plc210_io.py` (план дерева, таблица привязок в `targets/plc210/README.md`) и
+  `tools_project/targets.py` (рабочий каталог сборки, правки `target.json`, окружение Astra.IDE), тесты pytest.
+
+### Changed
+
+- Инструменты шаблона: `device.keep_tasks` — импорт не удаляет задачи устройства (`OwenCloudTask` ПЛК210),
+  `CDS_DEVICE_TITLE` — название устройства в отчётах; варианты устройств ПЛК210, СПК210, REGUL R500 в
+  `config.json`.
+
 ## [1.0.0] - 2026-10-19
 
 Первый выпуск: канализационная насосная станция КНС-1 на три насоса с ПЧ — документы 01–08 (ТЗ, функциональная

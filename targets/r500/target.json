@@ -1,0 +1,25 @@
+{
+  "_doc": [
+    "Проверка компиляции флагмана на REGUL R500 61 в Astra.IDE 1.7.2.2 (python tools_project/targets.py build r500): исходники src/ без",
+    "изменений, приоритеты задач — в диапазоне REGUL (5, 6, 14; как в kns-port-domestic, targets/astra). Ввод-вывод — модель объекта:",
+    "полевой слой REGUL (Modbus RTU через Modbus Serial Outer Slave, RegulBus) — в репозитории kns-port-domestic, targets/astra."
+  ],
+  "title": "REGUL R500 61 (Astra.IDE)",
+  "ide": "astra",
+  "device": {"type": 4096, "id": "109B 0008", "version": "11.7.2.60", "title": "REGUL R500 61"},
+  "astra": {
+    "exe": {"env": "ASTRA_IDE_EXE", "default": "${ProgramFiles}/AstraRegul/Astra.IDE_64_1.7.2.2/Astra.IDE/Common/Astra.IDE.exe"},
+    "profile": {"env": "ASTRA_IDE_PROFILE", "default": "Astra.IDE_V1.7.2.2"},
+    "library_registry": "${LOCALAPPDATA}/plc-tools/astra-libraries.json",
+    "library_lock": "${LOCALAPPDATA}/plc-tools/astra-library-repo.lock"
+  },
+  "overlay": null,
+  "patches": [],
+  "tasks": [
+    {"name": "MainTask", "interval_ms": 20, "priority": 5, "watchdog": {"time_ms": 100, "sensitivity": 1},
+     "pous": ["PRG_FieldIn", "PRG_DeviceList", "PRG_Station", "PRG_Devices", "PRG_FieldOut"]},
+    {"name": "PlantModelTask", "interval_ms": 20, "priority": 6, "pous": ["PRG_PlantModel"]},
+    {"name": "SlowTask", "interval_ms": 200, "priority": 14, "pous": ["PRG_Slow"]}
+  ],
+  "post": null
+}
