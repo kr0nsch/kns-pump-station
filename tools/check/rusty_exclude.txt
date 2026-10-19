@@ -2,3 +2,42 @@
 # Формат: <Имя>.st  # причина (обязательно). Пустые строки и строки с '#' в начале пропускаются.
 # Пример:
 #   FB_ModbusMaster.st  # использует SysCom (CAA), объявлений для RuSTy нет
+
+# --- Сгенерированный слой, полевой слой, журнал (К3). Объявлений plc-process-lib (PL), CAA File (FILE) и
+# SysTimeRtc для RuSTy в репозитории нет: исключены файлы, которые к ним обращаются, и зависящие от них.
+# С прокладками (сборка assembled/rusty plc-process-lib 1.0.0, CAA File и SysTimeRtc по сигнатурам,
+# --strip-namespace PL --strip-namespace FILE) они проходят plc --check без ошибок, кроме GVL_Persist,
+# GVL_CfgProject, PRG_ApplyProjectCfg, PRG_Devices (одинаковые имена Cfg в двух GVL, R3) — docs/STATIC_ANALYSIS.md.
+FB_AlarmSummary.st  # PL.*
+FB_AlarmSummary_Test.st  # PL.*
+FB_DeviceAudit.st  # PL.*
+FB_DeviceAudit_Test.st  # PL.*
+FB_EventLog.st  # PL.*
+FB_EventLogCsv.st  # CAA File (FILE.*)
+FB_EventLogCsv_Test.st  # PL.*, CAA File (FILE.*)
+FB_EventLog_Test.st  # PL.*
+FB_F_AlarmCode_Test.st  # F_AlarmCode (исключены)
+FB_TestAlarmSource.st  # PL.*
+FB_VfdAdapter_Cond.st  # PL.*
+FB_VfdAdapter_Cond_Test.st  # PL.*
+F_AlarmCode.st  # PL.*
+F_EventCsvLine.st  # F_AlarmCode, ST_EventRecord (исключены)
+F_UtcNowMs.st  # SysTimeRtc
+GVL_CfgProject.st  # PL.*
+GVL_DeviceList.st  # PL.*
+GVL_Devices.st  # PL.*
+GVL_Hmi.st  # PL.*
+GVL_Log.st  # FB_AlarmSummary, FB_DeviceAudit, FB_EventLog (исключены)
+GVL_Persist.st  # PL.*
+GVL_TestsInfra.st  # FB_AlarmSummary_Test, FB_DeviceAudit_Test, FB_EventLogCsv_Test и др. (исключены)
+PRG_ApplyProjectCfg.st  # GVL_CfgProject, GVL_Persist (исключены)
+PRG_DeviceList.st  # GVL_DeviceList, GVL_Devices (исключены)
+PRG_Devices.st  # PL.*
+PRG_FieldIn.st  # PL.*
+PRG_FieldOut.st  # PRG_FieldIn (исключены)
+PRG_Slow.st  # FB_EventLogCsv, GVL_Log (исключены)
+ST_AlarmView.st  # ST_AlarmViewRow (исключены)
+ST_AlarmViewRow.st  # PL.*
+ST_EventFeed.st  # ST_EventRecord (исключены)
+ST_EventRecord.st  # PL.*
+ST_EventView.st  # ST_EventRecord (исключены)
