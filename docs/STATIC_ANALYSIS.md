@@ -73,3 +73,33 @@
 | неконстантные начальные значения (`:= E_DeviceMode.OutOfService`, `:= GVL_Const.ИМЯ`) | `FB_Example`, `ST_ExampleCmd` | сборка убирает начальное значение (отсюда часть находок CP3) |
 | `VAR_GLOBAL` вне `CONFIGURATION`, прагмы `{attribute …}` | `GVL_Const`, `E_DeviceMode` | сборка понижает |
 | методы и свойства внутри `FUNCTION_BLOCK`, `IMPLEMENTS`, `EXTENDS` | `FB_Example`, `FB_F_Clamp_Test`, `FB_Example_Test` | сборка выносит методы в функции `<ФБ>__<метод>` — анализ методов приблизительный |
+
+## Модель объекта и часы контура (К2)
+
+Объекты: `src/POUs/Model/*`, `src/POUs/Time/FB_ScaledClock`, `src/DUTs/Sim/*`, `src/GVLs/Sim/*`, раздел «Модель»
+`GVL_Const`, наборы `tests/POUs/Model/*`, `tests/GVLs/GVL_TestsModel`. Обоснования — раздел «Модель, имитация,
+часы контура» в конце `tools/check/iec_checker_allow.toml`.
+
+| Дата | Инструмент | Вход | Итог |
+|---|---|---|---|
+| 2026-10-19 | `st_lint --strict` | `src/`, `tests/` (293 файла вместе с примером шаблона) | 0 ошибок, 0 предупреждений |
+| 2026-10-19 | `run_iec_checker.py --tests` (iec_checker 0.4, Windows) | 44 объекта `src/` и `tests/` | ошибок разбора нет; необоснованных 0; по объектам модели: `src/` — CP3 244, L17 68, UnusedVariable 28, CP9 17 обоснованы, артефактов 61; `tests/` — CP3 265, UnusedVariable 153, CP9 128, L17 1 обоснованы, артефактов 18 |
+| 2026-10-19 | `run_rusty.py` (RuSTy 1.0.6) | 26 файлов `build/assembled/rusty/`, исключено 19 (`rusty_exclude.txt`) | 0 ошибок |
+| 2026-10-19 | `run_rusty.py --strip-namespace coUnit --strip-namespace CfUnit --strip-namespace PL` с прокладками шаблона и сборкой `assembled/rusty` plc-process-lib 1.0.0 (`I_TimeSource`, `FB_SystemTime`, `FB_FakeTime`, `FB_Delay`, `F_IsFinite`, `F_LTimeToSec`, `F_TimeToSec`, `F_RateLimit`, `U_RealBits`, `GVL_Const`), без исключений | все 45 файлов | 0 ошибок; 2 предупреждения E067 в `FB_InflowProfile` (`TRUNC` в RuSTy возвращает `LINT`, в CODESYS — `DINT`) |
+
+| Правило | Файл | Находка | Решение / обоснование |
+|---|---|---|---|
+| PLCOPEN-CP3 | все POU модели и наборы | «Variable … shall be initialized before being used» | Обосновано общими записями шаблона (`src/*`, `tests/*`): значения по умолчанию типов; сборка убирает неконстантные начальные значения (`:= T#10S`, `:= -1.0` в `STRUCT`) |
+| PLCOPEN-CP9 | `FB_PlantModel` (iec_checker: 171), `FB_VfdSim` (116), `FB_StormGenerator` (39), `FB_HydraulicSolver` (22), `FB_AnalogSensorSim` (21), `FB_TankModel` (18), `FB_InflowProfile`, `PRG_PlantModel` (число операторов) | «Code is too complex» | Обосновано. Тела — нормативная последовательность шагов DESIGN 11.1–11.2 с номерами шагов в комментариях; классическая цикломатическая сложность (точки ветвления `IF`/`ELSIF`/`FOR`/метки `CASE` + 1, без логических операций): `FB_PlantModel` — 28, `FB_VfdSim` — 27, `FB_AnalogSensorSim` и `FB_StormGenerator` — 10, `FB_HydraulicSolver` — 7, `Solve` — 7, `FB_TankModel` — 6, `FB_InflowProfile` — 5, остальные тела и методы — ≤ 4; `PRG_PlantModel` — 2 (линейное копирование `ST_PlantIo` в `GVL_IO`, 75 операторов). Деление на методы спрятало бы порядок шагов, а методы не должны обращаться к `VAR_IN_OUT` (R2 контракта библиотеки) |
+| PLCOPEN-L17 | `src/POUs/Model/*`, `FB_ScaledClock` | «Each IF instruction should have an ELSE clause» | Обосновано: команда не пришла, причины аварии нет, шаг времени 0, поле инъекции не изменилось, базы часов уже заданы — действия «иначе» нет |
+| UnusedVariable | `FB_PlantModel` (`stCfg`, `stCmd`, `stIo`, `stSts`, экземпляры ФБ модели), `F_FaultInjEqual` (`stA`, `stB`), `F_PumpCurrent` (`stPump`), `FB_StormGenerator` (`stManual`), `FB_VfdSim` (`fbBoot`, `fbWatchdog`), `PRG_PlantModel` (`fbPlant`) | «Found unused local variable» | Ложное срабатывание iec_checker 0.4: структуры используются обращениями к полям, экземпляры ФБ — вызовом, методами и чтением выходов |
+| UnusedVariable | `FB_ScaledClock` (все переменные), `FB_HydraulicSolver` (`arK`), `FB_StormGenerator` (`dwState`) | то же | Переменные используются только в методах; понижение выносит методы в отдельные функции, в теле ФБ их не видно (тело `FB_ScaledClock` пустое) |
+| UnusedVariable | наборы `tests/POUs/Model/*`: `fbDut`, `fbClock`, `fbOther`, `fbFresh`, `fbStopped`, `fbA`, `fbB`, `stCfg`, `stPump`, `stNoFaults`, `uBits` | то же | Ложное срабатывание, как в `src/`; настоящие неиспользуемые переменные в наборах убраны (переменная объявляется, только если тест её использует) |
+| PLCOPEN-L17 | `FB_StormGenerator_Test.StormCrossingMidnightContinues` | то же | Поиск ливня суток 21 в списке: на остальных элементах делать нечего |
+
+RuSTy: объявлений plc-process-lib в репозитории нет (библиотека подключается в CODESYS по `config.json`),
+поэтому в обязательном варианте исключены файлы, которые обращаются к `PL.*` или объявляют экземпляры
+исключённых ФБ (как в проекте 10 портфолио; ASSUMPTIONS M12). Проверяются типы и GVL имитации, `GVL_Const`,
+`F_Xorshift32`, `F_FloatContact`, `F_FaultInjEqual`. Полная проверка с библиотекой в прокладках (строка 4
+таблицы) — ручной шаг: прокладки шаблона принадлежат шаблону (`tools/check/rusty_shims/*`), а библиотеку
+в них копировать нельзя.

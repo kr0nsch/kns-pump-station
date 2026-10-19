@@ -2,3 +2,27 @@
 # Формат: <Имя>.st  # причина (обязательно). Пустые строки и строки с '#' в начале пропускаются.
 # Пример:
 #   FB_ModbusMaster.st  # использует SysCom (CAA), объявлений для RuSTy нет
+
+# --- Модель, имитация, часы контура (К2). Объявлений plc-process-lib (пространство PL) для RuSTy в
+# репозитории нет: исключены файлы, которые обращаются к PL.* или объявляют экземпляры исключённых ФБ.
+# С библиотекой в прокладках (assembled/rusty plc-process-lib и --strip-namespace PL) они проходят
+# plc --check без ошибок — docs/STATIC_ANALYSIS.md, раздел «Модель объекта и часы контура».
+FB_ScaledClock.st  # IMPLEMENTS PL.I_TimeSource
+GVL_Time.st  # экземпляры FB_ScaledClock (исключён)
+F_PumpCurrent.st  # PL.F_IsFinite
+FB_AnalogSensorSim.st  # PL.F_IsFinite, PL.GVL_Const (границы NE 43)
+FB_InflowProfile.st  # PL.F_IsFinite
+FB_StormGenerator.st  # PL.F_TimeToSec, PL.F_IsFinite
+FB_TankModel.st  # PL.F_IsFinite
+FB_HydraulicSolver.st  # PL.F_IsFinite, F_PumpCurrent (исключён)
+FB_VfdSim.st  # PL.I_TimeSource, PL.FB_Delay, PL.F_RateLimit
+FB_PlantModel.st  # PL.I_TimeSource, PL.FB_Delay и ФБ модели (исключены)
+PRG_PlantModel.st  # FB_PlantModel, GVL_Time (исключены)
+GVL_TestsModel.st  # экземпляры наборов модели (исключены)
+FB_ScaledClock_Test.st  # PL.U_RealBits, FB_ScaledClock (исключён)
+FB_InflowProfile_Test.st  # PL.U_RealBits, FB_InflowProfile (исключён)
+FB_StormGenerator_Test.st  # FB_StormGenerator (исключён)
+FB_HydraulicSolver_Test.st  # PL.U_RealBits, FB_HydraulicSolver (исключён)
+FB_TankModel_Test.st  # PL.U_RealBits, FB_TankModel (исключён)
+FB_VfdSim_Test.st  # PL.FB_FakeTime, FB_VfdSim (исключён)
+FB_PlantModel_Test.st  # PL.FB_FakeTime, FB_PlantModel (исключён)
