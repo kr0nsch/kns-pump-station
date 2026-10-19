@@ -416,7 +416,7 @@ STRUCT
         (ePriority := PL.E_AlarmPriority.Medium),                        // 5 ATS
         (ePriority := PL.E_AlarmPriority.Medium),                        // 6 FLOAT
         (ePriority := PL.E_AlarmPriority.Medium),                        // 7 LDEV
-        (ePriority := PL.E_AlarmPriority.Low),                           // 8 STEP
+        (ePriority := PL.E_AlarmPriority.Low, tOnDelay := T#10S),        // 8 STEP: без переходных циклов старта
         (ePriority := PL.E_AlarmPriority.Low, tOnDelay := T#10M),        // 9 NOAUTO
         (ePriority := PL.E_AlarmPriority.Medium),                        // 10 UL1
         (ePriority := PL.E_AlarmPriority.Medium),                        // 11 UL2
@@ -1023,8 +1023,10 @@ END_VAR
   `RunSeconds`, затем меньше `Starts`, затем меньший номер; `Cyclic`: следующий после
   `stRetain.uiNextLead`; `Fixed`: Н1, Н2, Н3). При `xRequireComm` ведущим назначается насос с
   `axCommOk`; смена ведущего между двумя работающими — без пуска и останова (событие 101005).
+  `Cyclic`: `stRetain.uiNextLead` — после любого нового ведущего, в том числе без пуска (передача роли,
+  подпорный стал ведущим, подхват).
 - Снятие роли при уменьшении числа: `RunHours` — останавливается насос с большей наработкой,
-  `Cyclic`/`Fixed` — подпорный.
+  `Cyclic`/`Fixed` — подпорный; при `xRequireComm` насос со связью снимается последним.
 - Новый запрос не раньше `tStagger` после предыдущего нового запроса (несколько пусков сразу).
 - Передача роли (04 §8.2): насос с запросом и `CurrentRunSeconds ≥ tMaxContRun`, есть готовый
   резервный, `xHandoverAllowed` → запрос резервному, после его `Running` и `tOverlap` — снятие
@@ -1039,8 +1041,9 @@ END_VAR
 - `xAdopt` добавляет запросы работающим насосам к прежним (идущий пуск не обрывается) и в этом вызове
   доступность не проверяет; ведущий без роли — запрошенный насос с меньшей наработкой.
 - Интервал `tStagger` не ждётся, если насос предыдущего нового запроса уже потерял запрос (отказ при
-  пуске, АВР без задержки). Замена при передаче роли — только `ReadyToStart`; не в работе за
-  `STN_HANDOVER_START_TIMEOUT` — пуск не удался, повтор через `STN_HANDOVER_RETRY`.
+  пуске, АВР без задержки). Замена при передаче роли — только `ReadyToStart` (замена ведущего при
+  `xRequireComm` — только с `axCommOk`); не в работе за `STN_HANDOVER_START_TIMEOUT` — пуск не удался,
+  повтор через `STN_HANDOVER_RETRY`.
 
 Тесты (`FB_PumpRotation_Test`, подменные насосы): `RunHoursPicksLeastHours`, `TieBreakStartsThenIndex`,
 `CyclicAdvancesNextLeadRetained`, `FixedOrder`, `ReadyBeforeInhibited`, `RunningKeepRoles`,
@@ -1048,7 +1051,8 @@ END_VAR
 `StopMoreHoursWhenFewerNeeded`, `CyclicStopsAssist`, `RequireCommPicksCommPumpAsLead`,
 `LeadSwapWithoutStartStop`, `HandoverAfterTMaxContRunWithOverlap`, `HandoverRetryWhenNoStandby`,
 `HandoverDisabledInEmergency`, `FaultedPumpLosesRequestImmediately`, `ResetPumpBecomesStandby`,
-`AdoptKeepsRunningPumpsOnAutoEntry`, `AdoptAtPlcStartFromFeedback`, `EmergencyRequiresAllThree`.
+`AdoptKeepsRunningPumpsOnAutoEntry`, `AdoptAtPlcStartFromFeedback`, `EmergencyRequiresAllThree`,
+`HandoverLeadNeedsCommInPid`, `CyclicNextLeadFollowsRoleTransfer`, `StopKeepsCommPumpInPid`.
 
 ### 6.6 `FB_Ats` — АВР, нет резерва, недостаточно насосов (04 §9)
 
@@ -1058,7 +1062,7 @@ VAR_INPUT
     xEnable     : BOOL;             // станция в «Автомате»
     aitfPump    : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF PL.I_MotorVfd;
     axRun       : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // запросы этого цикла (FB_PumpRotation)
-    axTrip      : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // фиксация станции: недогрузка (FB_PumpProtection)
+    axTrip      : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // блокировка станции насоса: недогрузка, перегрев
     uiRequired  : UINT;
     uiAvailable : UINT;
     uiForeign   : UINT;
@@ -1072,21 +1076,26 @@ VAR_OUTPUT
     xAtsActive : BOOL;              // есть насос, снятый АВР и ещё недоступный (KNS1.ATS)
     axRemoved  : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;
     xLack      : BOOL;              // uiRequired > uiAvailable + uiForeign (KNS1.LACK; задержка — в Cfg тревоги)
-    xNoReserve : BOOL;              // uiAvailable < uiDutyMax + 1 (KNS1.NORES; подавления — в PRG_Station)
+    xNoReserve : BOOL;              // uiAvailable < MIN(uiDutyMax, STN_DUTY_MAX) + 1 (KNS1.NORES; подавления — в ядре)
     udiAtsCount : UDINT;            // АВР с запуска (HMI)
 END_VAR
 ```
 
 - Отказ насоса, у которого был запрос в прошлом цикле: `Fault` или `axTrip` (04 §9.1: нет ОС,
-  авария ПЧ, пропадание ОС, недогрузка, перегрев через аварию ПЧ). Смена режима оператором,
-  пропадание напряжения и сухой ход станции — не АВР.
+  авария ПЧ, пропадание ОС; блокировка станции насоса — недогрузка (фиксация) и перегрев: TS1n2 без
+  задержки приходит раньше аварии ПЧ, насос останавливается и теряет запрос до отказа устройства).
+  Смена режима оператором, пропадание напряжения и сухой ход станции — не АВР.
 - `axRemoved[i]` держится, пока насос снова не станет `Available` без отказа и без фиксации станции
   (фиксация действует на устройство только с его вызова). Событие 101006 со значением — номер насоса,
-  получившего новый запрос в окне `STN_ATS_WINDOW`.
+  получившего новый запрос в окне `STN_ATS_WINDOW`; снятый АВР насос заменой не считается (при
+  блокировке станции он ещё запрошен в цикле отказа).
+- «Нет резерва» — сверх насосов обычного режима: `MIN(uiDutyMax, STN_DUTY_MAX) + 1` (ступенчатое и ПИД
+  — не больше двух насосов; при допустимом `uiDutyMax = 3` иначе была бы постоянная тревога).
 
 Тесты: `RequestedPumpFaultRaisesAts`, `ModeChangeIsNotAts`, `PowerLossIsNotAts`, `UnderloadTripIsAts`,
 `AtsClearsWhenPumpAvailableAgain`, `EventNamesReplacementPump`, `LackWhenRequiredExceedsAvailable`,
-`NoReserveWhenOnePumpUnavailable`, `ForeignRunningCountsAgainstLack`.
+`NoReserveWhenOnePumpUnavailable`, `ForeignRunningCountsAgainstLack`, `NoReserveUsesEffectiveDuty`,
+`TripEventNamesReplacementNotTrippedPump`.
 
 ### 6.7 `FB_Protections` — сухой ход, аварийный уровень, поплавки, режим по поплавкам (04 §10.1, 10.2, 10.5, 11)
 
@@ -1255,8 +1264,10 @@ END_VAR
 
 Условия и подавления (04 §15) задаёт `PRG_Station`: EHL — `xEmergency`, подавление `xFloatMode`;
 DRY — `xDryRun`, подавление `xFloatMode`; LACK — `xLack`, подавление `xPowerLost` или «Ручной»;
-NORES — `xNoReserve`, подавление LACK активна, `xPowerLost`, «Ручной»; ATS — `xAtsActive`,
-подавление `xPowerLost`; FLOAT — `xFloatMode`; LDEV — `xLdev`; STEP — `xStepFallback`, подавление при
+NORES — `xNoReserve`, подавление LACK активна, `xPowerLost`, «Ручной», `xDryRun` (насосы заблокированы
+защитой станции, дубль DRY); ATS — `xAtsActive`,
+подавление `xPowerLost`; FLOAT — `xFloatMode`; LDEV — `xLdev`; STEP — `xStepFallback` (задержка 10 с в Cfg: переходные циклы старта и входа в
+«Автомат»), подавление при
 `eControlAct` ∈ {Emergency, Float, DryRunStop, PowerLost}; NOAUTO — `eMode = Manual` (задержка 600 с в
 Cfg); UL1…UL3 — `xUnderloadTrip`; SIM — `GVL_Sim.xSimulation`.
 
@@ -1412,8 +1423,10 @@ END_VAR
 - Событие 101017: номер параметра № 2–31, таблица тревог или резерв — `STN_CFG_PARAM_ALARMS`, команда
   («Применить уставки проекта», откат) — 0; при старте записанные уставки принимаются без события.
   Событие 101021 — значение `udiFaultSeq` (номер поля инъекции станции неизвестен).
-- Последовательный пуск идёт по ступенчатому автомату (`Restart` — выход `FB_LevelControlStepped`, ПИД в
-  слежении); переход `Restart` ↔ `Stepped` автомат не переинициализирует.
+- Последовательный пуск охватывает все насосы состояния под ним (04 §13.2): при сухом ходе — 0, по
+  поплавкам — `fbProt.uiFloatRequired`, при аварийном уровне — `STN_PUMP_COUNT` (частота в обоих —
+  `STN_FULL_SPEED_PCT`), иначе — ступенчатый автомат (`FB_LevelControlStepped`, ПИД в слежении); по одному
+  насосу — `uiRequestLimit`. Переход `Restart` ↔ `Stepped` автомат не переинициализирует.
 - «Ручной»: общее задание частоты — задание работающего насоса с меньшей наработкой (будущего
   ведущего, 04 §3.2); сухой ход и нет напряжения — прежнее.
 - NE 107 станции — по тревогам после их задержек и без подавления по условию; биты `NO_RESERVE`,
@@ -1428,7 +1441,8 @@ END_VAR
 `StepFallbackSuppressedInEmergency`, `PidControlsLeadSpeed`, `FloatModeStartsAllOnLs102`,
 `AtsReplacesFaultedLead`, `UnderloadTripInterlocksAndAts`, `ManualToAutoAdoptsRunningPump`,
 `ExportCommandAndEvents`, `AlarmIdCommandsResultAndClear`, `SimulationAlarmAndFaultEvent`,
-`FlowAlarmsSuppressedUntilSettled`, `VentilationAndAnnunciatorOutputs`.
+`FlowAlarmsSuppressedUntilSettled`, `VentilationAndAnnunciatorOutputs`, `DryRunStopSuppressesNoReserve`,
+`OverheatTripIsAts`, `RestartSequencesEmergencyPumps`, `StepAlarmNoFlickerOnStartAndAutoEntry`.
 
 ## 7. `PRG_Station` — порядок цикла (К1)
 
@@ -1468,7 +1482,8 @@ END_VAR
 7. `fbStepped` (6.3) и `fbPidCtl` (6.4) вызываются всегда (таймеры непрерывны), `xEnable` — по
    `eControlAct`, `xLevelValid := fbProt.xLevelUsable`. Требуемое число `uiRequired`: `Stepped`/`LevelPid` — от ФБ; `Emergency` —
    `STN_PUMP_COUNT`; `Float` — `fbProt.uiFloatRequired`; `DryRunStop`, `PowerLost`, `Manual` — 0;
-   `Restart` — от выбранного способа (ограничение даёт `uiRequestLimit`).
+   `Restart` — по состоянию под ним: `DryRunStop` — 0, `Float`, `Emergency` — как выше, иначе ступенчатый
+   автомат (ограничение даёт `uiRequestLimit`, 6.15).
 8. `fbRotation` (6.5): `xEnable := eMode = Auto`, первый цикл — `xAdopt` с `axAdoptRun[i] := GVL_IO.xP10n_RFB`.
 9. `fbAts` (6.6).
 10. **LIC101:** `GVL_Station.fbLIC101(rPv_eu := fbLT101.rValue_eu, xPvValid := fbProt.xLevelUsable,
@@ -1476,7 +1491,8 @@ END_VAR
     rTrack_pct := fbPidCtl.rTrack_pct, rOutAct_pct := fbPidCtl.rTrack_pct, itfTime := …,
     stCmd := GVL_Station.stLIC101Cmd, stCfg := GVL_Persist.stLIC101Cfg, stRetain := GVL_Persist.stLIC101Retain)`.
 11. **Задание частоты:** `LevelPid` — `fbLIC101.rOut_pct`; `Stepped`, `Restart` — `rStepSpeed_pct`
-    (в `Restart` при выбранном ПИД — тоже, ПИД в слежении); `Emergency`, `Float` — `STN_FULL_SPEED_PCT`.
+    (в `Restart` при выбранном ПИД — тоже, ПИД в слежении; в `Restart` при аварийном уровне или по
+    поплавкам — `STN_FULL_SPEED_PCT`); `Emergency`, `Float` — `STN_FULL_SPEED_PCT`.
 12. **Входы автоматики (R5):** `arefPump[i].xAutoRun := fbRotation.axRun[i]`,
     `arefPump[i].rSpeedSpAuto_pct := rSpeedSp_pct`,
     `arefPump[i].wInterlock := SEL(fbProt.xDryRun, 0, KNS_ILK_DRY_RUN) OR afbPumpProt[i].wInterlock`;
