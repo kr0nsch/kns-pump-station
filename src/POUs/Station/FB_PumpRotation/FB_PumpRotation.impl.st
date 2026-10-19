@@ -210,11 +210,15 @@ IF xEnable THEN
     END_IF
 
     // 7. Новые запросы: не больше нужного, новые — не больше uiRequestLimit (последовательный пуск),
-    //    по одному с интервалом tStagger, если насос предыдущего нового запроса ещё запрошен
+    //    по одному с интервалом tStagger, если насос предыдущего нового запроса ещё запрошен.
+    //    «Время назад» — интервал отсчитывается заново (два пуска подряд не допускаются)
+    IF ltNow < ltLastNewReq THEN
+        ltLastNewReq := ltNow;
+    END_IF
     FOR uiStep := 1 TO GVL_Const.STN_PUMP_COUNT DO
         xStaggerOk := TRUE;
         IF xStaggerArmed AND uiLastNewPump >= 1 AND uiLastNewPump <= GVL_Const.STN_PUMP_COUNT THEN
-            IF axReq[uiLastNewPump] AND ltNow >= ltLastNewReq THEN
+            IF axReq[uiLastNewPump] THEN
                 xStaggerOk := ltNow - ltLastNewReq >= TIME_TO_LTIME(stCfg.tStagger);
             END_IF
         END_IF
@@ -243,7 +247,7 @@ IF xEnable THEN
     // ожидание интервала пусков (HMI): нужен ещё насос, кандидат есть, но tStagger не истёк
     xStaggerOk := TRUE;
     IF xStaggerArmed AND uiLastNewPump >= 1 AND uiLastNewPump <= GVL_Const.STN_PUMP_COUNT THEN
-        IF axReq[uiLastNewPump] AND ltNow >= ltLastNewReq THEN
+        IF axReq[uiLastNewPump] THEN
             xStaggerOk := ltNow - ltLastNewReq >= TIME_TO_LTIME(stCfg.tStagger);
         END_IF
     END_IF
