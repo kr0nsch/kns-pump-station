@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/kr0nsch/kns-pump-station/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/kr0nsch/kns-pump-station/actions/workflows/ci.yml/badge.svg?branch=main"></a> <a href="LICENSE"><img alt="Лицензия MIT" src="https://img.shields.io/badge/license-MIT-56677D?style=flat-square&labelColor=1B2736"></a>
   <img alt="CODESYS 3.5.17.30" src="https://img.shields.io/badge/CODESYS-3.5.17.30-C2410C?style=flat-square&labelColor=1B2736"> <img alt="IEC 61131-3" src="https://img.shields.io/badge/IEC%2061131--3-56677D?style=flat-square"> <img alt="Язык: Structured Text" src="https://img.shields.io/badge/Structured%20Text-3A4B60?style=flat-square"> <img alt="Язык: Python" src="https://img.shields.io/badge/Python-3A4B60?style=flat-square&logo=python&logoColor=white">
-  <a href="#тесты-и-качество"><img alt="Тесты: coUnit 333 из 333 в CODESYS Control Win (коммит 8bf535e, 19.10.2026), pytest 798 пройдено" src="https://img.shields.io/badge/tests-coUnit%20333%2F333%20%C2%B7%20pytest%20798-3A4B60?style=flat-square&labelColor=1B2736"></a> <a href="docs/07_test_protocol.md"><img alt="ПМИ: 39 из 39 проверок соответствуют на имитаторе, пять — по автоматической части (протокол № 1, 19.10.2026)" src="https://img.shields.io/badge/%D0%9F%D0%9C%D0%98-39%2F39%20%D0%BD%D0%B0%20%D0%B8%D0%BC%D0%B8%D1%82%D0%B0%D1%82%D0%BE%D1%80%D0%B5-3A4B60?style=flat-square&labelColor=1B2736"></a>
+  <a href="#тесты-и-качество"><img alt="Тесты: coUnit 337 из 337 в CODESYS Control Win (коммит 6beaae6, 20.10.2026), pytest 800 пройдено" src="https://img.shields.io/badge/tests-coUnit%20337%2F337%20%C2%B7%20pytest%20800-3A4B60?style=flat-square&labelColor=1B2736"></a> <a href="docs/07_test_protocol.md"><img alt="ПМИ: 39 из 39 проверок соответствуют на имитаторе, пять — по автоматической части (протокол № 1, 19.10.2026)" src="https://img.shields.io/badge/%D0%9F%D0%9C%D0%98-39%2F39%20%D0%BD%D0%B0%20%D0%B8%D0%BC%D0%B8%D1%82%D0%B0%D1%82%D0%BE%D1%80%D0%B5-3A4B60?style=flat-square&labelColor=1B2736"></a>
 </p>
 
 <p align="center"><a href="#что-это-и-зачем">Что это</a> · <a href="#как-это-выглядит">Как выглядит</a> · <a href="#быстрый-старт">Быстрый старт</a> · <a href="#как-использовать-в-своём-проекте">На свой объект</a> · <a href="#как-устроено">Как устроено</a> · <a href="#документация">Документация</a> · <a href="#summary-en">Summary (EN)</a></p>
@@ -57,9 +57,11 @@ CODESYS Control Win V3. КИП: уровнемер LT101 4–20 мА, попла
   реакцию и сверяет состояние насосов, тревоги ISA-18.2 и записи журнала по моментам ПЛК. Приёмка ПМИ
   на имитаторе нашла три дефекта логики, которых не ловили юнит-тесты; их закрыли новыми тестами (до
   исправления они падали) и повторным прогоном ([протокол](docs/07_test_protocol.md#6-замечания), замечания 1–3).
+  Четвёртый — провал выхода ПИД при аварии ведущего насоса — нашла запись тренда после приёмки: закрыт так же
+  и регрессионным сценарием (замечание 17).
 - Слой устройств не пишется руками: экземпляры ФБ plc-process-lib, команды HMI, энергонезависимые
   уставки, карты Modbus и импорт SCADA генерирует iolistgen из перечня сигналов.
-- ФБ станции, полевой слой, журнал и модель тестируются по отдельности: 333 юнит-теста coUnit прошли
+- ФБ станции, полевой слой, журнал и модель тестируются по отдельности: 337 юнит-тестов coUnit прошли
   в CODESYS Control Win.
 
 **Для кого.** Инженеры АСУ ТП водоканалов, теплосетей и насосных станций, техлиды интеграторов — как
@@ -233,8 +235,8 @@ expect_event = { event = "KNS1.E6", value = 1, since = "t_fault" }
    python -m pytest
    ```
 
-   Увидите: `798 passed, 39 skipped` примерно за 75 с. Пропущены 39 сценариев ПМИ: им нужен рантайм
-   CODESYS (`PMI_LIVE=1`, ниже).
+   Увидите: `800 passed, 40 skipped` примерно за 75 с. Пропущены 39 сценариев ПМИ и регрессионный
+   сценарий: им нужен рантайм CODESYS (`PMI_LIVE=1`, ниже).
 
 4. Сверить сгенерированный слой устройств с перечнем сигналов и документы между собой (то же
    проверяют тесты CI):
@@ -286,8 +288,8 @@ expect_event = { event = "KNS1.E6", value = 1, since = "t_fault" }
    python tools\codesys\cds.py test
    ```
 
-   Увидите (прогон 19.10.2026, коммит 8bf535e): сборка — 0 ошибок, 0 предупреждений; 333 теста из
-   333 в 29 наборах; итоги — `build/test-results.json`, отчёт — `python tools\codesys\cds.py report`.
+   Увидите (прогон 20.10.2026, коммит 6beaae6): сборка — 0 ошибок, 0 предупреждений; 337 тестов из
+   337 в 29 наборах; итоги — `build/test-results.json`, отчёт — `python tools\codesys\cds.py report`.
 
 3. **CODESYS.** Запустить приложение имитации — один скрипт делает импорт, символьную конфигурацию
    OPC UA, запуск рантайма, сертификаты OPC UA, загрузку и «Старт»:
@@ -321,10 +323,11 @@ expect_event = { event = "KNS1.E6", value = 1, since = "t_fault" }
    python -m pytest scenarios\test_pmi.py -m plc -k "PMI-13"
    ```
 
-   Без `-k` выполняются все 39 сценариев — около 1,7 ч реального времени; серию делят на части с
-   перезапуском рантайма (демо-режим — 2 ч). Отчёт исполнителя — `build/pmi-results.md` и `.json`:
-   по каждой проверке итог «соответствует», «не соответствует» или «не проверялось», измеренные
-   задержки и несработавшие сверки.
+   Без `-k` выполняются все 39 сценариев и регрессионный (`scenarios/regression/`, отдельно —
+   `-k regression`) — около 1,7 ч реального времени; серию делят на части с перезапуском рантайма
+   (демо-режим — 2 ч). Отчёт исполнителя — `build/pmi-results.md` и `.json` (регрессионных —
+   `build/regression-results.*`): по каждой проверке итог «соответствует», «не соответствует» или
+   «не проверялось», измеренные задержки и несработавшие сверки.
 
 6. **Сравнить с протоколом.** Протокол испытаний № 1 от 19.10.2026 —
    [docs/07_test_protocol.md](docs/07_test_protocol.md): все 39 проверок соответствуют, у пяти — по
@@ -430,7 +433,7 @@ flowchart TB
 | `src/POUs/Field/` | полевой слой: `PRG_FieldIn`, `PRG_FieldOut`, адаптер ПЧ `FB_VfdAdapter_Cond` | вручную |
 | `src/POUs/Log/`, `src/*/Log/` | журнал, сводка тревог, аудит режимов, CSV (`PRG_Slow`) | вручную |
 | `src/*/Generated/` | `GVL_IO`, `GVL_Devices`, `GVL_Hmi`, `GVL_Persist`, `PRG_Devices`, список устройств | `tools_project/generate.py` (iolistgen) |
-| `tests/POUs/` | 333 юнит-теста coUnit: станция, полевой слой и журнал, модель; подменные насосы и журнал | вручную |
+| `tests/POUs/` | 337 юнит-тестов coUnit: станция, полевой слой и журнал, модель; подменные насосы и журнал | вручную |
 | `scenarios/pmi/` | 39 сценариев ПМИ `PMI-NN.toml` | вручную |
 | `scenarios/kns_scenarios/`, `scenarios/test_*.py` | исполнитель сценариев, клиент OPC UA, журнал и тревоги, отчёт; тесты на имитаторе OPC UA-сервера | вручную |
 | `tools_project/` | генерация слоя устройств, сверка документов, эталонная модель, таблица перечислений; `codesys/` — `sim.py`, символы OPC UA, сертификаты, Persistent Variables | вручную |
@@ -444,19 +447,20 @@ flowchart TB
 
 | Что проверяется | Сколько | Где |
 |---|---:|---|
-| ФБ станции и ядро цикла: режимы, ступенчатое и ПИД, роли и чередование, АВР, защиты и поплавки, питание, тревоги, уставки LKG | 192 теста | coUnit, `tests/POUs/Station/` |
+| ФБ станции и ядро цикла: режимы, ступенчатое и ПИД, роли и чередование, АВР, защиты и поплавки, питание, тревоги, уставки LKG | 196 тестов | coUnit, `tests/POUs/Station/` |
 | адаптер ПЧ, подхват работающего насоса при старте ПЛК, журнал, CSV через CAA File, сводка тревог | 59 тестов | coUnit, `tests/POUs/Field/`, `tests/POUs/Log/` |
 | модель: часы с ускорением, приток и ливни, резервуар, рабочая точка насосов против эталона `plant_reference.py`, модель ПЧ | 82 теста | coUnit, `tests/POUs/Model/` |
 | программа испытаний на модели объекта: 39 сценариев через OPC UA на работающем приложении | 39 из 39 соответствуют | CODESYS Control Win V3, [протокол № 1](docs/07_test_protocol.md) |
-| инструменты, обвязка сценариев на имитаторе OPC UA-сервера, файлы сценариев, символы, эталонная модель, сверка документов | 798 пройдено, 39 пропущено | pytest |
+| инструменты, обвязка сценариев на имитаторе OPC UA-сервера, файлы сценариев, символы, эталонная модель, сверка документов | 800 пройдено, 40 пропущено | pytest |
 | сгенерированный слой совпадает с перечнем; документы 01–08 согласованы | 20 файлов; 20 проверок | `generate.py --check`, `check_docs_consistency.py` |
 | линтер и статанализ ST | 0 необоснованных находок | `st_lint`, iec_checker 0.4, RuSTy 1.0.6 — [STATIC_ANALYSIS.md](docs/STATIC_ANALYSIS.md) |
 
 Что где выполнялось:
 
-- **CODESYS 3.5.17.30, CODESYS Control Win V3**, Windows 11, 19.10.2026, после правок по ревью кода
-  (коммит 8bf535e): сборка и полная компиляция без ошибок и предупреждений (85 объектов `src/`, 121 вместе
-  с `tests/`), 333 теста coUnit из 333 в 29 наборах, roundtrip — экспорт совпал побайтно (1023 файла)
+- **CODESYS 3.5.17.30, CODESYS Control Win V3**, Windows 11: 20.10.2026, после исправления ПИД при аварии
+  ведущего (коммит 6beaae6), — сборка тестового проекта без ошибок и предупреждений, 337 тестов coUnit из 337
+  в 29 наборах; 19.10.2026, после правок по ревью кода (коммит 8bf535e), — полная компиляция без ошибок и
+  предупреждений (85 объектов `src/`, 121 вместе с `tests/`), roundtrip — экспорт совпал побайтно (1023 файла)
   ([TEST_REPORT.md](docs/TEST_REPORT.md)).
 - **Сценарии ПМИ** — 19.10.2026 на CODESYS Control Win V3 через OPC UA: все 39 проверок соответствуют, у
   пяти (PMI-01, PMI-08, PMI-35, PMI-36, PMI-37) — по автоматической части; ручные части (экраны WebVisu,
@@ -465,9 +469,12 @@ flowchart TB
   завершался раньше времени, тревоги станции мелькали после снятия подавления. Их исправили, тесты coUnit на
   них до исправления падали; после правок по ревью кода девять затронутых проверок прогнаны повторно.
   Протокол № 1 — [07_test_protocol.md](docs/07_test_protocol.md), проверки сценариев по шагам и измеренные
-  значения — [07_pmi_report.md](docs/07_pmi_report.md); сводка — на снимке ниже.
-- **pytest**: 798 пройдено, 39 пропущено — чистый клон с соседними iolistgen v0.2.0 и plc-process-lib
-  v1.0.0, коммит 9479c06, Windows 11, 19.10.2026 (первый GIF в разделе «Как это выглядит»).
+  значения — [07_pmi_report.md](docs/07_pmi_report.md); сводка — на снимке ниже. После протокола запись тренда
+  нашла провал выхода ПИД при аварии ПЧ ведущего (замечание 17): исправлен, на рантайме проверен тем же путём и
+  регрессионным сценарием `scenarios/regression/PID-lead-fault.toml` 20.10.2026 — соответствует.
+- **pytest**: 800 пройдено, 40 пропущено — рабочая копия с соседними iolistgen v0.2.0 и plc-process-lib
+  v1.0.0, коммит 6beaae6, Windows 11, 20.10.2026; чистый клон на коммите 9479c06 (19.10.2026) — 798 и 39
+  (первый GIF в разделе «Как это выглядит»).
 - **ПЛК210, ПЧ и модули ввода-вывода** — не проверялось.
 - **CI GitHub Actions** (Linux) — всё, что не требует CODESYS: ruff, mypy, pytest, сборка ST, линтер,
   iec_checker; необязательное задание — iec_checker nightly.
@@ -564,7 +571,9 @@ floats, power-restore sequencing, ISA-18.2 alarms and a 200-entry event log with
 model with fault injection and a scaled clock replaces the field I/O in CODESYS Control Win, and all
 39 acceptance-test checks are scripted in Python over OPC UA. On 19 Oct 2026 all 39 passed against the
 simulated plant (five on their automated part only; test protocol No. 1), after the run had exposed three
-logic defects that were fixed. 333 coUnit tests pass in CODESYS 3.5.17.30 / Control Win V3; documents are
+logic defects that were fixed; a fourth (PID output collapse on lead-pump failure), found later while recording
+a trend, is fixed and covered by a regression scenario. 337 coUnit tests pass in CODESYS 3.5.17.30 / Control
+Win V3; documents are
 cross-checked in CI. The HMI exists only as an ISA-101 spec with screen mockups; nothing was run on PLC
 hardware. Docs are in Russian.
 

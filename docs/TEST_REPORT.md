@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 23:07:22. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-20 01:06:48. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 23:07:22 |
-| Коммит | 8bf535e |
+| Дата прогона | 2026-10-20 01:06:48 |
+| Коммит | 6beaae6 |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -41,7 +41,7 @@
 | `GVL_TestsStation.fbStationModeTest` | 10 | 10 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbControlSelectorTest` | 5 | 5 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbLevelControlSteppedTest` | 11 | 11 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbLevelControlPidTest` | 16 | 16 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbLevelControlPidTest` | 17 | 17 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbPumpRotationTest` | 28 | 28 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbAtsTest` | 13 | 13 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbProtectionsTest` | 20 | 20 | 0 | 0 | пройдено |
@@ -51,8 +51,8 @@
 | `GVL_TestsStation.fbStationAlarmsTest` | 10 | 10 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbAnnunciatorTest` | 7 | 7 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationCfgCheckTest` | 13 | 13 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbStationCoreTest` | 34 | 34 | 0 | 0 | пройдено |
-| **Всего** | 333 | 333 | 0 | 0 | **пройдено** |
+| `GVL_TestsStation.fbStationCoreTest` | 37 | 37 | 0 | 0 | пройдено |
+| **Всего** | 337 | 337 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
@@ -241,6 +241,7 @@
 | `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NanOutputNoStaging_A7` | пройден |
 | `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TimeBackwardsRestartsConfirm_A7` | пройден |
 | `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_CommAbsentDuringPowerRestoreNoRecoverDelay_A7_A12_A13` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_HoldOutputWhenLeadDropsOut_A7_A9` | пройден |
 | `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RunHoursPicksLeastHours_A8_PMI09` | пройден |
 | `GVL_TestsStation.fbPumpRotationTest` | `Rotation_TieBreakStartsThenIndex_A8` | пройден |
 | `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicAdvancesNextLeadRetained_A8_PMI10` | пройден |
@@ -391,6 +392,9 @@
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_DryRunReleaseNoNoresStepFlicker_A7_A10_A15_PMI22` | пройден |
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepAlarmNoFlickerAfterPowerRestorePid_A7_A12_A13_A15_PMI33_PMI34` | пройден |
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualFloatModeKeepsEhlDry_A3_A10_A11_A15` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidLeadFaultKeepsOutput_A7_A9_PMI13` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidLeadTripKeepsOutput_A7_A9_A10_PMI16` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidHandoverKeepsOutput_A7_A8` | пройден |
 
 ### Упавшие тесты
 
@@ -398,6 +402,44 @@ _Нет._
 
 Машиночитаемые результаты: `build/test-results.json`, `build/junit.xml` (не в git).
 <!-- cds:test-report:end -->
+
+## Исправление после протокола ПМИ № 1: ПИД при выбытии ведущего (20.10.2026)
+
+Дефект найден на рантайме при записи тренда для README (протокол [07_test_protocol.md](07_test_protocol.md),
+раздел 4.11, замечание 17; ASSUMPTIONS Пп1–Пп3): под ПИД при аварии ПЧ ведущего `FB_LevelControlPid` видел
+ведущего прошлого цикла, уже остановленного устройством, и LIC101 следил за его заданием 0. Тесты написаны до
+исправления: прогон «до» (`cds.py test`, исходники `src/` коммита `2477f9f` с новыми тестами) — 337 тестов, 334
+пройдено, 3 упали; после исправления (коммит `6beaae6`) — 337 из 337 (раздел «Последний прогон в CODESYS»).
+
+| Тест | Что проверяет | Прогон «до» |
+|---|---|---|
+| `LevelPid_HoldOutputWhenLeadDropsOut_A7_A9` | ведущий выбыл (авария ПЧ, блокировка станции) при выбранном ПИД — слежение за выходом LIC101; ПИД не выбран или ведущий в пуске — за заданием ведущего | упал: «faulted lead: PID output held, not the 0 of the failed drive» |
+| `StationCore_PidLeadFaultKeepsOutput_A7_A9_PMI13` | ядро, два насоса под ПИД (выход ≈ 90 %), авария ПЧ ведущего: в цикле отказа задание частоты = прежний выход, Н2 — ведущий, Н3 запрошен; через 3 с выход и частоты Н2, Н3 — в пределах 5 % от прежнего | упал: «fault cycle: speed setpoint keeps the PID output» |
+| `StationCore_PidLeadTripKeepsOutput_A7_A9_A10_PMI16` | то же при перегреве ведущего (блокировка станции; недогрузка идёт через ту же блокировку): насос останавливается в цикле блокировки, роль передаётся в следующем | упал: «speed setpoint did not collapse» |
+| `StationCore_PidHandoverKeepsOutput_A7_A8` | передача роли по `tMaxContRun` с перекрытием: задание частоты не проваливается ни в одном шаге | прошёл (причина дефекта передачу роли не касается — страж) |
+
+На рантайме (CODESYS Control Win V3, приложение имитации — `sim.py start`, исполнитель OPC UA; исходники `src/` с
+исправлением):
+
+| Проверка | До исправления (запись тренда, тот же путь) | После исправления |
+|---|---|---|
+| Скрипт тренда: И0 под ПИД, приток 100 → 180 м³/ч, на 18-й минуте контура авария ПЧ Н1, k = 20, опрос 0,25 с | выход LIC101 98,3 → 0,7 %; Н2 и Н3 на 60 %; расход 57 м³/ч при притоке 180; Н3 отключён через 1,1 мин контура, вернулся через 3,5 мин; уровень 1,51 → 2,11 м | выход 98,3 → 98,6 %; Н2 продолжает на 98,5 %, Н3 за ≈ 15 с контура выходит на 99,3 % (расход на это время не ниже 153 м³/ч, затем 187–195); до ливня (12 мин контура) работают два насоса, выход не ниже 94,4 %, уровень 1,416…1,512 м |
+| Регрессионный сценарий `scenarios/regression/PID-lead-fault.toml` (`PMI_LIVE=1 pytest scenarios/test_pmi.py -m plc -k regression`) | — | соответствует: проверок 25 из 25, 0,7 мин реального времени, 14,6 мин контура; выход перед аварией 100,0 %, после — АВР (101006 со значением 3, `KNS1.ATS`), выход и задание Н2 не ниже «прежний − 10 %», 5 мин контура два насоса, ПИД управляет, уровень не выше «прежний + 0,15 м» |
+
+Проверки (рабочая копия перед коммитом `6beaae6`; `cds.py test` — на коммите):
+
+| Команда | Итог |
+|---|---|
+| `ruff check .` / `ruff format --check .` / `mypy` | All checks passed; 76 файлов отформатированы; 55 файлов без ошибок |
+| `pytest -q` (с `PL_REPO`, `IOLISTGEN_REPO`) | 800 пройдено, 40 пропущено (39 сценариев ПМИ и регрессионный — на рантайме, `PMI_LIVE=1`) |
+| `st_lint.py --strict` | файлов 1033, ошибок 0, предупреждений 0 |
+| `run_iec_checker.py --tests` | 121 объект; необоснованных 0 (обоснованных 4510, артефактов сборки 232) |
+| `generate.py --check`, `check_docs_consistency.py` | дрейфа нет (20 файлов); проверок 20, расхождений 0 |
+| `cds.py test` | 29 наборов, 337 из 337 (сборка тестового проекта — 0 ошибок, 0 предупреждений) |
+
+Не выполнялись в этом исправлении: `cds.py check`, `cds.py roundtrip`, `run_rusty.py` (последний прогон — раздел
+«Правки по ревью кода»). Сбоя планировщика рантайма (`CmpSupervisor: Scheduler Tick`) за этот сеанс не было: после
+регрессионного сценария задачи приложения работали ещё не меньше 10 мин.
 
 ## Правки по ревью кода (19.10.2026)
 
@@ -431,7 +473,7 @@ _Нет._
 | `cds.py deps --check` | plc-process-lib 1.0.0.0, CAA File 3.5.17.0, SysTimeRtc 3.5.17.0, coUnit 1.2.0.0, Standard 3.5.17.0 |
 | `cds.py check` / `check --tests` | 85 / 121 объект, 0 ошибок, 0 предупреждений |
 | `cds.py build` / `build --tests` | 0 ошибок, 0 предупреждений; повторный импорт рабочего проекта — без изменений (сторожевой таймер задан) |
-| `cds.py test` | 29 наборов, 333 из 333 (раздел «Последний прогон в CODESYS» — прогон после коммита) |
+| `cds.py test` | 29 наборов, 333 из 333 (прогон после коммита `8bf535e`, 19.10.2026 23:07) |
 | `cds.py roundtrip` | экспорт совпал побайтно (1023 файла), повторный импорт — 0 изменений |
 
 Сторожевой таймер `MainTask` (ключ `watchdog` в `config.json`, DESIGN 12): импорт рабочего проекта —
@@ -576,17 +618,17 @@ CODESYS (не в репозитории: вход и загрузка — как
 | `FB_AlarmSummary_Test` | 16 | счётчики по приоритетам, высший неквитированный (независимо от порядка обхода), новые High/Critical, порядок списка (группа, приоритет, новые выше) и его предел, период и «время назад», квитирование и откладывание по номеру с `tShelveMax` (весь срок тревоги), соответствие `ALM_SLOT_MAX` библиотеке |
 | `FB_DeviceAudit_Test` | 4 | событие 101018 со значением dev_no · 10 + режим (dev_no 9999 — без переполнения), без события при старте и без журнала |
 | `FB_PlcStartAdoption_Test` | 2 | подхват работающего насоса при старте ПЛК настоящими `PL.FB_DigitalInput` и `PL.FB_MotorVfd` с параметрами проекта: в порядке `PRG_Devices` (ES301 раньше P101) — Running с командой, пуск не засчитан, 5 с без отказов; в обратном порядке — останов «нет напряжения» |
-| `FB_StationCore_Test` | 34 | порядок цикла станции с подменными насосами: старт ПЛК, команды и кнопки, уставки LKG (в том числе восстановление энергонезависимой копии после перезапуска и замена неверной копии уставками проекта, «Применить уставки проекта» при перенастроенных L/H LT101), насосы, выполняющие запрос режима и снятие блокировки циклом позже (без мелькания `KNS1.NORES`, `KNS1.STEP`), `KNS1.STEP` при восстановлении питания с ПИД, `KNS1.EHL` и `KNS1.DRY` в «Ручном» при отказе LT101, действующее управление и требуемое число, подавления тревог, NE 107, `wState`, LIC101, АВР, «Ручной» → «Автомат», журнал, В1 и сигнализация |
-| ФБ станции: `FB_StationMode_Test` (10), `FB_ControlSelector_Test` (5), `FB_LevelControlStepped_Test` (11), `FB_LevelControlPid_Test` (16), `FB_PumpRotation_Test` (28), `FB_Ats_Test` (13), `FB_Protections_Test` (20), `FB_PumpProtection_Test` (9), `FB_PowerRestore_Test` (12), `FB_Ventilation_Test` (4), `FB_StationAlarms_Test` (10), `FB_Annunciator_Test` (7), `FB_F_StationCfgCheck_Test` (13) | 158 | алгоритмы 04: режимы и способ, старшинство управления, ступенчатое и ПИД с подпорным, роли и чередование, АВР, защиты и поплавки, недогрузка и перегрев, последовательный пуск, вентиляция, тревоги KNS1.*, сигнализация, проверка уставок; у каждого ФБ — умолчания, границы, «время назад» |
+| `FB_StationCore_Test` | 37 | порядок цикла станции с подменными насосами: старт ПЛК, команды и кнопки, уставки LKG (в том числе восстановление энергонезависимой копии после перезапуска и замена неверной копии уставками проекта, «Применить уставки проекта» при перенастроенных L/H LT101), насосы, выполняющие запрос режима и снятие блокировки циклом позже (без мелькания `KNS1.NORES`, `KNS1.STEP`), `KNS1.STEP` при восстановлении питания с ПИД, `KNS1.EHL` и `KNS1.DRY` в «Ручном» при отказе LT101, выход LIC101 при аварии ПЧ, перегреве и передаче роли ведущего под ПИД, действующее управление и требуемое число, подавления тревог, NE 107, `wState`, LIC101, АВР, «Ручной» → «Автомат», журнал, В1 и сигнализация |
+| ФБ станции: `FB_StationMode_Test` (10), `FB_ControlSelector_Test` (5), `FB_LevelControlStepped_Test` (11), `FB_LevelControlPid_Test` (17), `FB_PumpRotation_Test` (28), `FB_Ats_Test` (13), `FB_Protections_Test` (20), `FB_PumpProtection_Test` (9), `FB_PowerRestore_Test` (12), `FB_Ventilation_Test` (4), `FB_StationAlarms_Test` (10), `FB_Annunciator_Test` (7), `FB_F_StationCfgCheck_Test` (13) | 159 | алгоритмы 04: режимы и способ, старшинство управления, ступенчатое и ПИД с подпорным, роли и чередование, АВР, защиты и поплавки, недогрузка и перегрев, последовательный пуск, вентиляция, тревоги KNS1.*, сигнализация, проверка уставок; у каждого ФБ — умолчания, границы, «время назад» |
 | Модель: `FB_ScaledClock_Test` (8), `FB_InflowProfile_Test` (6), `FB_StormGenerator_Test` (10), `FB_TankModel_Test` (8), `FB_HydraulicSolver_Test` (11), `FB_VfdSim_Test` (15), `FB_PlantModel_Test` (24) | 82 | часы с ускорением, приток и ливни по seed, баланс резервуара и перелив, рабочая точка насосов и токи против эталона `plant_reference.py`, модель ПЧ (рампа, авария, сторожевой таймер 5 с → 50 Гц), модель целиком (инъекции, команды, согласованность при разном шаге) |
 
 ## Проверки без CODESYS
 
 | Проверка | Итог | Примечание |
 |---|---|---|
-| `ruff check`, `ruff format --check`, `mypy` (strict) | пройдено, 19.10.2026, локально | `tools/`, `tools_project/`, `scenarios/` (55 модулей mypy) |
-| `pytest` (с `PL_REPO` и `IOLISTGEN_REPO`) | 798 пройдено, 39 пропущено (19.10.2026, после синхронизации инструментов с шаблоном; после правок по ревью кода — 792) | тесты инструментов шаблона (в том числе ключ `checker` обоснований iec_checker), сверка генерации побайтно и порядок вызова устройств, перекрытие шаблона `PRG_Devices` против шаблона пакета iolistgen, разметка PLCopenXML объекта Persistent Variables, сторожевой таймер задач, сверка уставок LIC101 по умолчанию с `GVL_Persist`, правила символов, обвязка сценариев на имитаторе OPC UA-сервера, сверка документов; снимок plc-process-lib и вывод iolistgen сверены с исходниками; пропущены — 39 сценариев ПМИ на рантайме (`PMI_LIVE=1`) |
+| `ruff check`, `ruff format --check`, `mypy` (strict) | пройдено, 20.10.2026, локально | `tools/`, `tools_project/`, `scenarios/` (55 модулей mypy) |
+| `pytest` (с `PL_REPO` и `IOLISTGEN_REPO`) | 800 пройдено, 40 пропущено (20.10.2026, после исправления ПИД при выбытии ведущего; 19.10.2026 — 798 и 39) | тесты инструментов шаблона (в том числе ключ `checker` обоснований iec_checker), сверка генерации побайтно и порядок вызова устройств, перекрытие шаблона `PRG_Devices` против шаблона пакета iolistgen, разметка PLCopenXML объекта Persistent Variables, сторожевой таймер задач, сверка уставок LIC101 по умолчанию с `GVL_Persist`, правила символов, обвязка сценариев на имитаторе OPC UA-сервера, сверка документов; снимок plc-process-lib и вывод iolistgen сверены с исходниками; пропущены — 39 сценариев ПМИ и регрессионный сценарий на рантайме (`PMI_LIVE=1`) |
 | `tools_project/generate.py --check` | дрейфа нет (20 файлов) | iolistgen 0.2.0 |
 | `tools_project/check_docs_consistency.py` | 20 проверок, 0 расхождений | — |
 | `tools/assemble.py --tests` | 121 объект | все варианты сборки |
-| `st_lint --strict`, iec_checker 0.4, RuSTy 1.0.6 | 0 ошибок, необоснованных находок 0 | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md): `st_lint` — 1023 файла; iec_checker — 121 объект, обоснованных 4434; RuSTy — 35 файлов, исключено 87 |
+| `st_lint --strict`, iec_checker 0.4, RuSTy 1.0.6 | 0 ошибок, необоснованных находок 0 | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md): `st_lint` — 1033 файла; iec_checker — 121 объект, обоснованных 4510; RuSTy — 35 файлов, исключено 87 |
