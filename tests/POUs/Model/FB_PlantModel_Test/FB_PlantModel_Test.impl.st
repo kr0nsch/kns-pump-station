@@ -19,3 +19,4 @@ SetTimeOfDayKeepsDay();
 StepCappedAtMax();
 ResetPlantClearsOverflowTime();
 NanInjectionCountedOnce();
+IntakeEdgeOutflowMatchesTank();

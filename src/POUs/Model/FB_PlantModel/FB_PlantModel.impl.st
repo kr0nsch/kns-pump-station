@@ -104,9 +104,9 @@ FOR uiSub := 1 TO uiSubsteps DO
     ELSE
         rInflow_m3h := fbInflow.rInflow_m3h + fbStorms.rInflow_m3h;
     END_IF
-    xIntakeDry := fbTank.rLevel_m < GVL_Const.SIM_PUMP_INTAKE_M;
+    // приёмок осушен — по уровню LREAL резервуара: гидравлика и баланс объёма решают одинаково
     fbHydraulic(arSpeed := arSpeed, axAirLock := stFault.axAirLock, axClog := stFault.axClog,
-                rLevel_m := fbTank.rLevel_m, xIntakeDry := xIntakeDry, stPump := stCfg.stPump);
+                rLevel_m := fbTank.rLevel_m, xIntakeDry := fbTank.xIntakeDry, stPump := stCfg.stPump);
     fbTank(rInflow_m3h := rInflow_m3h, rOutflow_m3h := fbHydraulic.rFlow_m3h, lrDt_s := lrSub_s,
            rArea_m2 := stCfg.rTankArea_m2, rOverflow_m := stCfg.rLevelOverflow_m);
 END_FOR

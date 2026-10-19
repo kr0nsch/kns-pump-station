@@ -64,5 +64,4 @@ VAR
     arAiValue   : ARRAY[1..GVL_Const.SIM_AI_COUNT] OF REAL;     // измеряемые величины датчиков
     arAiRange   : ARRAY[1..GVL_Const.SIM_AI_COUNT] OF REAL;     // верх шкалы датчиков (низ — 0)
     rTT403Hold  : REAL;                 // последнее значение TT403, принятое мастером RS485-2
-    xIntakeDry  : BOOL;                 // уровень ниже приёмка насосов
 END_VAR
