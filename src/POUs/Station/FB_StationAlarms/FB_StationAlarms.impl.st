@@ -15,7 +15,11 @@ FOR uiSlot := 1 TO GVL_Const.STN_ALARM_COUNT DO
     IF (wUnshelveReq AND wBit) <> 0 THEN
         afbAlarm[uiSlot].Unshelve();
     END_IF
-    afbAlarm[uiSlot](xIn := axCond[uiSlot], xSuppress := axSuppress[uiSlot], xOutOfService := FALSE,
+    // условие при подавлении не копит выдержку: после снятия подавления она отсчитывается заново. Иначе условие,
+    // которое держится ещё цикл (станция видит выходы устройств циклом позже: после «сухого хода» и восстановления
+    // питания насосы ещё «недоступны»), давало мелькание KNS1.NORES (High, сирена) — прогон ПМИ 19.10.2026
+    afbAlarm[uiSlot](xIn := axCond[uiSlot] AND NOT axSuppress[uiSlot], xSuppress := axSuppress[uiSlot],
+                     xOutOfService := FALSE,
                      udiId := GVL_Const.STN_ALARM_ID_BASE + UINT_TO_UDINT(uiSlot), rValue := arValue[uiSlot],
                      stCfg := stCfg.astAlarm[uiSlot], itfTime := itfTime);
     eState := afbAlarm[uiSlot].eState;

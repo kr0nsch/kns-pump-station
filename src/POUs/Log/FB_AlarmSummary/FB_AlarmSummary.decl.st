@@ -23,10 +23,10 @@ VAR_IN_OUT
     stView : ST_AlarmView;          // GVL_Log.stAlarmView, пересчёт раз в ALM_VIEW_PERIOD
 END_VAR
 VAR
-    aeStatePrev : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SLOT_MAX] OF PL.E_AlarmState;
-    audiSeqPrev : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SLOT_MAX] OF UDINT;
-    auliSince   : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SLOT_MAX] OF ULINT;   // UTC перехода
-    alrSince    : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SLOT_MAX] OF LREAL;   // время процесса
+    aeStatePrev : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SRC_SLOT_MAX] OF PL.E_AlarmState;
+    audiSeqPrev : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SRC_SLOT_MAX] OF UDINT;
+    auliSince   : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SRC_SLOT_MAX] OF ULINT;   // UTC перехода
+    alrSince    : ARRAY[1..GVL_Const.ALM_SOURCE_MAX, 0..GVL_Const.ALM_SRC_SLOT_MAX] OF LREAL;   // время процесса
     fbSysTime   : PL.FB_SystemTime; // источник времени без itfTime
     itfTimeAct  : PL.I_TimeSource;  // действующий источник времени
     ltNow       : LTIME;            // время этого вызова

@@ -9,3 +9,5 @@ NothingRequiredFinishesImmediately();
 SeqRemainCountsDown();
 FirstCallIgnoresPowerInput();
 TimeBackwardsRestartsDelay();
+DemandRisingAfterDelayKeepsSequence();
+LastStepUnconfirmedFinishesOnTimeout();

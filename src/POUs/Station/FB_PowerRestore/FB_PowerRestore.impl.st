@@ -51,8 +51,10 @@ IF xAdvance THEN
     fbStepWait.Preset(xValue := FALSE);
     fbStepTimeout.Preset(xValue := FALSE);
 END_IF
-IF xSeq AND uiStep >= uiRequired THEN
-    // разрешено не меньше требуемого — последовательность завершена
+IF xSeq AND uiStep >= uiRequired AND (uiRunningRequested >= uiRequired OR fbStepTimeout.xOut) THEN
+    // разрешено не меньше требуемого и все запрошенные пущены (или пуск шага не подтвердился за
+    // STN_SEQ_START_TIMEOUT) — последовательность завершена. Только «разрешено не меньше требуемого» мало:
+    // после Restart автоматика набирает потребность заново, и в конце задержки она ещё не полная (PMI-34)
     xSeq := FALSE;
     IF itfEvents <> 0 THEN
         itfEvents.LogEvent(eEvent := E_StationEvent.RestartDone, rValue := UINT_TO_REAL(MIN(uiStep, uiRequired)));

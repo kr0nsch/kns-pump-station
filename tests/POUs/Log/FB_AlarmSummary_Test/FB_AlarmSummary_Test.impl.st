@@ -14,3 +14,4 @@ AckByIdDeviceStationPid();
 ShelveByIdRespectsTShelveMax();
 ShelveByIdUsesFullTShelveMax();
 UnshelveById();
+StationSlotsBeyondDeviceLimit();

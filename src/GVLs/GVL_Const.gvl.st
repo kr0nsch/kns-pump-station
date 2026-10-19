@@ -33,6 +33,7 @@ VAR_GLOBAL CONSTANT
     LOG_CSV_TIMEOUT_US : UDINT := 1000000;   // таймаут FILE.Write, мкс (CAA File)
     LOG_DEV_MODE_SCALE : UINT := 10;         // событие 101018: значение dev_no · 10 + режим (04 §16)
     ALM_SLOT_MAX : UINT := 7;                // последний слот тревог источника (PL.GVL_Const.DEV_ALARMS_MAX - 1)
+    ALM_SRC_SLOT_MAX : UINT := 12;           // последний слот источника в сводке тревог: станция — STN_ALARM_COUNT - 1
     LOG_NUM_LEN : INT := 10;                 // знаков в десятичной записи UDINT
     LOG_ISO_LEN : INT := 24;                 // «2026-10-16T07:41:05.120Z»
     LOG_SUFFIX_LEN : INT := 8;               // суффикс кода тревоги и короткие поля CSV

@@ -8,6 +8,8 @@ Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 
 
 fbDut.uiRunningRequested := 1;
 Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 16);
+fbDut.uiRunningRequested := 2;
+Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 1);
 
 AssertEquals_UINT(Expected := 3, Actual := fbDut.uiRequestLimit, Message := 'sequence done');
 fbDut.uiRequired := 3;

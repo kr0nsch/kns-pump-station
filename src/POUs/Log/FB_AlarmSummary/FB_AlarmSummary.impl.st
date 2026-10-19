@@ -14,7 +14,7 @@ FOR uiSrc := 1 TO MIN(uiSourceCount, GVL_Const.ALM_SOURCE_MAX) DO
     itfSrc := aitfSource[uiSrc];
     IF itfSrc <> 0 THEN
         // цикл по слотам с 1: при AlarmCount = 0 граница «0 - 1» беззнаковая (правило API 10.5)
-        FOR uiK := 1 TO MIN(itfSrc.AlarmCount, GVL_Const.ALM_SLOT_MAX + 1) DO
+        FOR uiK := 1 TO MIN(itfSrc.AlarmCount, GVL_Const.ALM_SRC_SLOT_MAX + 1) DO
             uiSlot := uiK - 1;
             itfAlm := itfSrc.GetAlarm(uiIndex := uiSlot);
             IF itfAlm <> 0 THEN

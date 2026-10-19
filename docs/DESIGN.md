@@ -112,7 +112,7 @@ scenarios/                                       сценарии ПМИ (не �
                   report.py                                                      К3 (обвязка, раздел 14.3)
   mock_plc.py, plc_fixtures.py, test_harness.py, test_harness_robustness.py, test_pmi.py,
   test_scenario_files.py (без ПЛК, в CI)                                          К3
-  examples/PMI-12.toml, PMI-13.toml, PMI-28.toml — примеры схемы                 К3
+  examples/PMI-13.toml — сокращённый пример схемы (исполнитель на имитаторе OPC UA)  К3
   pmi/PMI-NN.toml — 39 файлов по 06, приложение А                                К2 (сценарии ПМИ)
 tools_project/                                   инструменты проекта (Python 3.11+, ruff, mypy strict, pytest в CI)
   check_docs_consistency.py, test_check_docs_consistency.py, data/plc_process_lib.json   К3 (есть с этапа документов)
@@ -122,7 +122,9 @@ tools_project/                                   инструменты прое
   iolistgen_templates/st/PRG_Devices.impl.st.j2  перекрытие шаблона: ожидание входов имитации (4.6)  К3
   codesys/  codesys_pvl.py (Persistent Variables импортом PLCopenXML; запасной путь — объект теперь
             создаёт cds.py import), symbol_config.py,
-            symbol_rules.json (символьная конфигурация, раздел 13), *_cds.py — скрипты CODESYS   К3
+            symbol_rules.json (символьная конфигурация, раздел 13), sim.py (приложение имитации в
+            рантайме: загрузка, «Старт», сброс; прототип cds.py sim), opcua_pki.py (сертификаты
+            OPC UA, раздел 16, шаг 5), *_cds.py — скрипты CODESYS                              К3
   plant_reference.py, test_plant_reference.py                                    К2 (эталон модели, раздел 11.3)
 tools/                                           шаблон plc-repo-template (общие инструменты, синхронизируются из шаблона)
   codesys/   + symbol_config.py, online_bridge.py, команды cds.py scenarios и cds.py sim — доработки
@@ -171,6 +173,7 @@ VAR_GLOBAL CONSTANT
     LOG_CSV_TIMEOUT_US : UDINT := 1000000;   // таймаут FILE.Write, мкс (CAA File)
     LOG_DEV_MODE_SCALE : UINT := 10;         // событие 101018: значение dev_no · 10 + режим (04 §16)
     ALM_SLOT_MAX : UINT := 7;                // последний слот тревог источника (PL.GVL_Const.DEV_ALARMS_MAX - 1)
+    ALM_SRC_SLOT_MAX : UINT := 12;           // последний слот источника в сводке тревог: станция — STN_ALARM_COUNT - 1
     LOG_NUM_LEN : INT := 10;                 // знаков в десятичной записи UDINT
     LOG_ISO_LEN : INT := 24;                 // «2026-10-16T07:41:05.120Z»
     LOG_SUFFIX_LEN : INT := 8;               // суффикс кода тревоги и короткие поля CSV
@@ -1236,7 +1239,11 @@ END_VAR
 102 или 103; исключение уровнемера отмечается событием 101013). Снятие сухого хода без уровнемера —
 `LS103` снят дольше `tDryRelease`, отсчёт идёт, пока защита действует при негодном уровнемере (PMI-26:
 через `tDryRelease` после исключения LT101). В первом вызове (выходы устройств ещё не посчитаны,
-`xValid = FALSE`) режим по поплавкам не включается.
+`xValid = FALSE`) режим по поплавкам не включается. С plc-process-lib 1.0.0 (решение AI-13) подтверждённый за
+`tFailDelay` выход за диапазон сам даёт `xValid = FALSE`: станция переходит на поплавки сразу, без LL → «сухой ход»
+по уровнемеру и без противоречий; ветка «`OutOfSpecification` и противоречие дольше `tLdev`» остаётся только для
+неподтверждённого выхода за диапазон и на практике не наступает (`tLdev` 30 с > `tFailDelay` 2 с). Проверено
+приёмкой ПМИ (PMI-26, 06 v0.4).
 
 Тесты: `DryRunByFloat`, `DryRunByLtLl`, `DryRunReleaseAboveL`, `DryRunReleaseWithoutLtAfterTDryRelease`,
 `EmergencyByFloatAndByHh`, `EmergencyReleaseBelowH`, `FalseLs103MaskedAfterTLdev`,
@@ -1297,13 +1304,17 @@ END_VAR
 (`uiRequestLimit := 0`, событие 101008); ↑ — «задержка» `tPwrRestart` (событие 101009); затем шаги:
 `uiRequestLimit := k`, следующий шаг — через `tSeqStep` после `uiRunningRequested ≥ k` или через
 `STN_SEQ_START_TIMEOUT`, если пуск не подтвердился (АВР уже назначил замену); конец — когда
-`uiRequestLimit ≥ uiRequired` (событие 101010, значение — число разрешённых пусков
-`MIN(шаг, uiRequired)`). В первом вызове `xPowerOk` не используется (ES301 ещё не вызывался), событие
+`uiRequestLimit ≥ uiRequired` и все запрошенные пущены (`uiRunningRequested ≥ uiRequired`) или пуск шага не
+подтвердился за `STN_SEQ_START_TIMEOUT` (событие 101010, значение — число разрешённых пусков
+`MIN(шаг, uiRequired)`). Одного «разрешено не меньше требуемого» мало: после `Restart` действующее управление
+набирает потребность заново (ступенчатое — с нуля работающих), и в конце задержки она ещё не полная — без
+условия «пущены» подпорный пускался бы без шага `tSeqStep` (найдено приёмкой ПМИ, PMI-34). В первом вызове `xPowerOk` не используется (ES301 ещё не вызывался), событие
 101009 пишется и при старте ПЛК.
 
 Тесты: `PlcStartDelaysAllRequests`, `PowerLossBlocksRequests`, `RestoreWaitsTPwrRestart`,
 `SequenceOnePumpPerStep`, `StepAdvancesOnTimeoutIfStartFails`, `PowerLossDuringSequenceRestarts`,
-`NothingRequiredFinishesImmediately`, `SeqRemainCountsDown`.
+`NothingRequiredFinishesImmediately`, `SeqRemainCountsDown`, `DemandRisingAfterDelayKeepsSequence`,
+`LastStepUnconfirmedFinishesOnTimeout`.
 
 ### 6.10 `FB_Ventilation` — вентилятор В1 (04 §17)
 
@@ -1363,10 +1374,15 @@ NORES — `xNoReserve`, подавление LACK активна, `xPowerLost`, 
 подавление `xPowerLost`; FLOAT — `xFloatMode`; LDEV — `xLdev`; STEP — `xStepFallback` (задержка 10 с в Cfg: переходные циклы старта и входа в
 «Автомат»), подавление при
 `eControlAct` ∈ {Emergency, Float, DryRunStop, PowerLost}; NOAUTO — `eMode = Manual` (задержка 600 с в
-Cfg); UL1…UL3 — `xUnderloadTrip`; SIM — `GVL_Sim.xSimulation`.
+Cfg); UL1…UL3 — `xUnderloadTrip`; SIM — `GVL_Sim.xSimulation`. Вход тревоги — `axCond AND NOT axSuppress`: при
+подавлении выдержка появления не копится и после снятия подавления отсчитывается заново. Без этого условие,
+которое держится ещё цикл после снятия подавления (станция видит выходы устройств циклом позже: после «сухого
+хода» и восстановления питания насосы ещё «недоступны»), давало мелькание `KNS1.NORES` (High: сирена, K1) и
+`KNS1.STEP` — найдено приёмкой ПМИ (PMI-22, PMI-34).
 
 Тесты: `IdsAreBasePlusSlot`, `SuppressionPutsSuppressedByDesign`, `AckMaskAcksSlot`, `AckAllViaInterface`,
-`GetAlarmIndexOutOfRangeReturnsZero`, `WordsAndPrioUnack`, `ShelveRejectedForEhl` (`tShelveMax = 0`).
+`GetAlarmIndexOutOfRangeReturnsZero`, `WordsAndPrioUnack`, `ShelveRejectedForEhl` (`tShelveMax = 0`),
+`SuppressionReleaseRestartsOnDelay`.
 
 ### 6.12 `FB_Annunciator` — HA1, HL1, K1 (04 §14)
 
@@ -1963,8 +1979,10 @@ END_VAR
 
 Группы списка: неквитированные (`ActiveUnack`, `RtnUnack`) по приоритету, затем `ActiveAck` по приоритету,
 затем `Shelved`, `SuppressedByDesign`, `OutOfService`; внутри — новые выше (время процесса перехода).
-Границы массивов слотов — `GVL_Const.ALM_SLOT_MAX` (= `PL.GVL_Const.DEV_ALARMS_MAX - 1`, тест
-`SlotMaxMatchesLibrary`). Счётчики — каждый цикл (`AlarmCount`, `GetAlarm(i).State`, `.AlarmPriority`, `.Unacked`; имя свойства
+Границы массивов и циклов слотов сводки — `GVL_Const.ALM_SRC_SLOT_MAX` = `STN_ALARM_COUNT - 1` (12): у станции
+13 тревог, больше, чем у устройства библиотеки (`ALM_SLOT_MAX` = `PL.GVL_Const.DEV_ALARMS_MAX - 1` = 7, тест
+`SlotMaxMatchesLibrary`; по нему — таблицы суффиксов `F_AlarmCode`). До приёмки ПМИ сводка ограничивалась
+`ALM_SLOT_MAX` и не видела `KNS1.NOAUTO`, `KNS1.UL1…UL3`, `KNS1.SIM` (тест `StationSlotsBeyondDeviceLimit`). Счётчики — каждый цикл (`AlarmCount`, `GetAlarm(i).State`, `.AlarmPriority`, `.Unacked`; имя свойства
 приоритета `AlarmPriority` закреплено в контракте 1.0.0, запись F-17). Время перехода строки списка —
 по изменению `I_Alarm.Seq`, отметка RTC.
 
@@ -1983,7 +2001,8 @@ END_VAR
 `ViewLimitedToRows`, `AckByIdDeviceStationPid`, `ShelveByIdRespectsTShelveMax`, `UnshelveById`,
 `AuditLogsModeChange`; сверх списка — `PrioUnackHighestBeforeLower`, `ViewNewerFirstInGroup`,
 `ShelveByIdUsesFullTShelveMax` (срок откладывания — весь `tShelveMax` тревоги), `LargeDevNoValueNoOverflow`
-(значение события 101018 для dev_no 9999 считается в UDINT).
+(значение события 101018 для dev_no 9999 считается в UDINT), `StationSlotsBeyondDeviceLimit` (слоты станции 9–13
+в счётчиках, списке и квитировании по номеру).
 
 ## 10. Время: `FB_ScaledClock IMPLEMENTS PL.I_TimeSource` (К2, заморожен)
 
@@ -2344,7 +2363,7 @@ clear_faults = true
 | `capture`, `mark` | запомнить значение или время контура (`GVL_Time.lrMainNow_s`) |
 | `hold_s` | выдержка в секундах контура (исполнитель делит на k) |
 | `repeat` + `steps` | повтор вложенных шагов (PMI-37: 110 переключений двери) |
-| `reset` | `warm` или `cold` — только исполнитель `cds`; в `opcua` шаг и зависящие проверки — «не проверялось» с причиной |
+| `reset` | `warm` или `cold`: исполнитель `cds` — мост; `opcua` — скрипт CODESYS `tools_project/codesys/sim.py reset` (на время запуска CODESYS контур переводится на k = 1, затем новый сеанс OPC UA); без CODESYS (`PMI_RESET=none`) шаг и зависящие проверки — «не проверялось» с причиной |
 | `wait_alarm`, `expect_delay` (список) | несколько тревог или задержек в одном шаге; `expect_delay.since` — граница поиска обеих записей после метки (момент инъекции — событие 101021, записанное станцией после того, как модель применила изменение `stFaultInj`) |
 | `expect_alarm` | состояние тревоги «здесь и сейчас» без ожидания (неуспех не прерывает сценарий) |
 | `expect_event` | запись журнала после метки `since`: событие станции `KNS1.E<код>` или переход тревоги, `value` — значение (номер насоса, параметра, поплавка, число строк) |
@@ -2355,8 +2374,8 @@ clear_faults = true
 | `init` | И0 06 §5.2 посреди сценария (PMI-01 — после проверок старта) |
 | `manual`, `not_checked` | часть проверки, которую отмечает инженер, или не проверяемая сценарием (с причиной) — в отчёт как «не проверялось» |
 
-Внутри шага действия выполняются в порядке: `time_scale`, `init`, `reset`, `write`, `pulse`, `mark`, `capture`,
-`hold_s`, `wait`, `wait_alarm`, `expect`, `expect_alarm`, `expect_delay`, `expect_event`, `expect_absent`,
+Внутри шага действия выполняются в порядке: `time_scale`, `init`, `reset`, `write`, `pulse`, `mark`,
+`hold_s`, `wait`, `wait_alarm`, `capture` (значения в момент, когда условия шага выполнены), `expect`, `expect_alarm`, `expect_delay`, `expect_event`, `expect_absent`,
 `expect_log_order`, `manual`/`not_checked`, `repeat` (другой порядок — отдельные шаги). `expect_delay` от метки
 сценария: метка читается после записи, поэтому она не раньше действия (с точностью до цикла MainTask) и
 запаздывает не больше чем на «период опроса · k». Запись журнала ищется среди записей с номером больше
@@ -2369,9 +2388,13 @@ clear_faults = true
 06 §5.2 (`skip_initial_state = true` — без него; `journal_from_start = true` — курсор с самой старой записи
 кольца, PMI-01) и отличия: `method`, `level_m`, `inflow_m3h`, `run_hours_s` (без него — наработка И0: 100, 200,
 300 ч). И0 пишет наработку, пока насосы стоят (06 §5.2, п. 8): «Ручной», «Стоп» насосов с фейсплейта, «Автомат»
-(ступенчатый автомат и ПИД начинают с нуля работающих), ожидание действующего ступенчатого или ПИД (выход из
-`Float`, `Restart` прошлого сценария), снова `xResetPlant` (уровень 1,20 м после остановки) и в конце
-квитирование. `[teardown]` — `clear_faults`, `inflow_m3h`, `write` (параметры модели, которые не сбрасывает
+(ступенчатый автомат и ПИД начинают с нуля работающих), насосы, LIC101 и В1 — `Auto` (06 §5.2, п. 7: режимы
+энергонезависимы, после первой загрузки — `Manual`; без этого «ПИД» действует как ступенчатое, а В1 не пускается
+автоматикой), ожидание
+действующего ступенчатого или ПИД (выход из `Float`, `Restart` прошлого сценария), снова `xResetPlant` (уровень
+1,20 м после остановки) и в конце квитирование. Курсор журнала сценария ставится после общей части И0 и до
+отличий проверки (приток, наработка, уровень, способ): пуск ведущего при `level_m` и смена способа — уже записи
+сценария. `[teardown]` — `clear_faults`, `inflow_m3h`, `write` (параметры модели, которые не сбрасывает
 `xClearFaults`: дверь, температура, постоянный приток). Верхний уровень файла — ещё `mode`: `auto`,
 `auto+manual`, `manual` (колонка «Вид» приложения А 06; офлайн-проверка сверяет).
 
@@ -2401,10 +2424,10 @@ class PlcClient(Protocol):
 | Транспорт | asyncua (синхронный API), `opc.tcp://localhost:4840` | TCP `127.0.0.1`, JSON по строке, к мосту `tools/codesys/online_bridge.py` в процессе CODESYS `--noUI` |
 | Адрес переменной | `ns=<индекс>;s=\|var\|<устройство>.Application.<путь>`; индекс — по URI пространства имён, оканчивающемуся на `IecVarAccess`, имя устройства — обзором `Objects/DeviceSet` (константой не задаются) | выражение онлайн-доступа (`GVL_…`), как в `read_value` |
 | Вход | политика Basic256Sha256, Sign&Encrypt, имя и пароль из `credentials.json` (путь — `CODESYS_RUNTIME_CREDENTIALS` или `runtime.credentials` в `config.json`); сертификат клиента — `~/.local/plc-tools/opcua-client/` (создаётся при первом запуске, вне репозитория); пароль не выводится ни в лог, ни в отчёт | вход в рантайм как у `cds.py test`, учётные данные из того же файла |
-| Условие | сертификат OPC UA-сервера и доверие клиенту — ручной шаг 5 раздела 16: без сертификата сервер даёт только конечную точку `None` без способов входа, вход отклоняется (зонд Z5) | ничего сверх `tools/codesys`; проверено зондом Z7 |
-| Чтение | `read_values` пакетом | `read_values` пакетом: ≈ 200 мс на пакет независимо от длины (Z7) — опрос не чаще 4 раз в секунду |
-| Запись | `write_value(DataValue(Variant(значение, тип)))` без меток времени; тип — из `DataType` узла, кэш | `set_prepared_value` для каждого пути и один `write_prepared_values` (Z7: 4 значения — 34 мс) |
-| `reset` | нет | `ScriptOnlineApplication.reset(ResetOption.Warm/Cold)` — есть в стабах, не запускалось: зонд этапа 0 |
+| Условие | сертификат OPC UA-сервера и доверие клиенту — шаг 5 раздела 16 (`sim.py pki`, автоматически): без сертификата сервер даёт только конечную точку `None` без способов входа, вход отклоняется (зонд Z5) | ничего сверх `tools/codesys`; проверено зондом Z7 |
+| Чтение | `read_values` пакетом; сервер CODESYS 3.5.17 принимает не больше 100 узлов в запросе (`MaxNodesPerRead`, иначе `BadTooManyOperations`) — больший пакет делится на запросы по порядку; курсор журнала читает заголовок, затем только заполненные строки | `read_values` пакетом: ≈ 200 мс на пакет независимо от длины (Z7) — опрос не чаще 4 раз в секунду |
+| Запись | `write_values(DataValue(Variant(значение, тип)))` без меток времени, не больше 100 узлов в запросе (`MaxNodesPerWrite`); тип — по текущему значению узла, кэш (у перечисления `DataType` — тип перечисления, а значение — базового типа: `INT` — Int16; Int32 из `DataType` даёт `BadTypeMismatch`) | `set_prepared_value` для каждого пути и один `write_prepared_values` (Z7: 4 значения — 34 мс) |
+| `reset` | через `sim.py reset warm\|cold`: вход без загрузки, `ScriptOnlineApplication.reset`, «Старт» (проверено приёмкой ПМИ, PMI-10, PMI-35) | `ScriptOnlineApplication.reset(ResetOption.Warm/Cold)` |
 
 **Мост `online_bridge.py`** (IronPython 2.7, К3). Запускает его `cds.py scenarios --backend cds`
 под глобальной блокировкой рантайма: открыть проект имитации, собрать, войти, загрузить, «Старт»;
@@ -2455,7 +2478,7 @@ k, время контура и реальное. Здесь — только т
 
 | Что | Пункты | Решение |
 |---|---|---|
-| Исполнитель | все, кроме двух | оба исполнителя; PMI-10 (тёплый сброс) и PMI-35 (сбросы, загрузка, перезапуск) — шаги `reset` только в `cds`; перезапуск процесса рантайма в PMI-35 — вручную (риск R-02 архитектуры) |
+| Исполнитель | все | оба исполнителя; шаги `reset` PMI-10 (тёплый сброс) и PMI-35 (тёплый и холодный) — мост `cds` или `sim.py reset` у `opcua`; перезапуск процесса рантайма и загрузка изменённой программы в PMI-35 — вручную (риск R-02 архитектуры) |
 | Части для инженера (`manual`) | PMI-01, 08, 35, 36, 37 | вид экранов, права ролей, баннер; перезапуск рантайма и загрузка (PMI-01 — исполнитель серии перед первым сценарием, PMI-35 — шаги 2 и 5); файл CSV журнала — забрать `ScriptOnlineDevice.upload_file` (стаб, зонд этапа 0) или вручную, тексты — `eventlog_decode.py` |
 | Ускорение | все | по колонке «k»; проверки регулирования PMI-04, 05, 07, 11 — k ≤ 20 (шаг времени за цикл ≤ 0,4 с меньше `tSample` = 0,5 с); PMI-39 — k = 50 (сутки за ≈ 29 мин) |
 | Модель для PMI-15 | `axAirLock`, `axClog` | ток сухого хода на 100 % ≈ 10,8 А (< 12 А), засора ≈ 34,3 А (> HH 34 А) — запас мал, эталон `plant.py` сверяет оба числа (раздел 11.3) |
@@ -2527,15 +2550,16 @@ k, время контура и реальное. Здесь — только т
    текст. «Reorder List and Clear Gaps» не выполнять.
 4. **Символьная конфигурация.** Выполняется при импорте; проверить объект «Symbol Configuration» с
    «Support OPC UA features»; запасной путь — IDE по таблице раздела 13.
-5. **OPC UA: сертификаты.** Нужен только исполнителю `opcua` (исполнитель `cds` работает без них,
-   зонд Z7). Онлайн → «Экран безопасности» (Security Screen) → «Устройства» → создать сертификат для
-   OPC UA-сервера рантайма; перезапустить рантайм (`cds.py runtime restart`); проверить, что сервер
-   предлагает конечную точку Basic256Sha256 с входом по имени и паролю (сейчас — только `None` без
-   способов входа, зонд Z5); запустить `python tools/codesys/cds.py scenarios --backend opcua -k PMI-01`
-   — сертификат клиента попадёт в отклонённые; перенести его в доверенные на том же экране и
-   повторить. Пользователю `cdsci` (или отдельному пользователю сценариев) выдать права на объект
-   `OPCUAServer`: чтение и запись переменных (проект 06, `docs/security.md`, раздел 3.2). Названия
-   пунктов меню и каталог хранилища сертификатов сверить с русской IDE и справкой 3.5.17.
+5. **OPC UA: сертификаты.** Нужны только исполнителю `opcua` (исполнитель `cds` работает без них,
+   зонд Z7). Автоматически: `python tools_project/codesys/sim.py pki` (вызывается из `sim.py start`) —
+   самоподписанный сертификат OPC UA-сервера (`CN = OPCUAServer@<узел>`, `ApplicationUri` сервера в
+   SubjectAltName) и ключ в хранилище рантайма `.pki/own`, сертификат клиента сценариев — в `.pki/trusted/cert`,
+   затем перезапуск рантайма (хранилище читается при запуске; у пользовательского процесса оно лежит в
+   виртуальном хранилище UAC, `opcua_pki.py`). Проверено на 3.5.17.30: сервер предлагает Basic256Sha256
+   (Sign, SignAndEncrypt) со входом по имени и паролю, неизвестный клиент — в `quarantine`,
+   `BadSecurityChecksFailed`. Прав на объект `OPCUAServer` пользователю `cdsci` выдавать не понадобилось.
+   Запасной путь — IDE: «Экран безопасности» → «Устройства» → сертификат OPC UA-сервера, перезапуск рантайма,
+   перенос сертификата клиента из отклонённых в доверенные (`docs/MANUAL_STEPS.md`, раздел 9.5).
 6. **WebVisu.** По `docs/08_hmi_spec.md`: менеджер визуализации, WebVisu, экраны «Обзор», «Насос»,
    «Тревоги», «Тренды», «Журнал», «Настройки», «Имитация»; стиль ISA-101 (серый фон, цвет — только
    отклонения); текстовые списки `TL_Alarm`, `TL_Reason`, `TL_Event` — импорт CSV из

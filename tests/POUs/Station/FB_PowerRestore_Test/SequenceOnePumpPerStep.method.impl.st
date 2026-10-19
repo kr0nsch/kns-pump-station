@@ -14,7 +14,12 @@ Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 
 AssertEquals_UINT(Expected := 1, Actual := fbDut.uiRequestLimit, Message := 'step 1 until tSeqStep after confirmation');
 Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 1);
 
-AssertEquals_UINT(Expected := 3, Actual := fbDut.uiRequestLimit, Message := 'step 2 reached required: done, no limit');
+AssertEquals_UINT(Expected := 2, Actual := fbDut.uiRequestLimit, Message := 'step 2 after tSeqStep');
+AssertTrue(Condition := fbDut.xRestart, Message := 'not done before the second start is confirmed');
+fbDut.uiRunningRequested := 2;
+Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 1);
+
+AssertEquals_UINT(Expected := 3, Actual := fbDut.uiRequestLimit, Message := 'all requested started: done, no limit');
 AssertFalse(Condition := fbDut.xRestart, Message := 'restart finished');
 AssertEquals_REAL(Expected := 2.0, Actual := fbSink.ValueOf(eFind := E_StationEvent.RestartDone), Delta := 0.0,
                   Message := 'event 101010 with 2');
