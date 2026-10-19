@@ -99,12 +99,14 @@ scenarios/                                       сценарии ПМИ (не �
   kns_scenarios/  __init__.py, values.py, enums.py (генерируется), client.py, credentials.py,
                   backend_opcua.py, backend_cds.py, context.py, scenario.py, alarms.py, journal.py,
                   report.py                                                      К3 (обвязка, раздел 14.3)
-  mock_plc.py, plc_fixtures.py, test_harness.py, test_pmi.py, test_scenario_files.py (без ПЛК, в CI)   К3
+  mock_plc.py, plc_fixtures.py, test_harness.py, test_harness_robustness.py, test_pmi.py,
+  test_scenario_files.py (без ПЛК, в CI)                                          К3
   examples/PMI-12.toml, PMI-13.toml, PMI-28.toml — примеры схемы                 К3
   pmi/PMI-NN.toml — 39 файлов по 06, приложение А                                К2 (сценарии ПМИ)
 tools_project/                                   инструменты проекта (Python 3.11+, ruff, mypy strict, pytest в CI)
   check_docs_consistency.py, test_check_docs_consistency.py, data/plc_process_lib.json   К3 (есть с этапа документов)
-  generate.py, gen_textlists.py, gen_enums.py, eventlog_decode.py, demo.py         К3
+  generate.py, gen_textlists.py, gen_enums.py, eventlog_decode.py, demo.py,
+  test_alarm_code_tables.py (суффиксы F_AlarmCode против alarms.csv, 05, шаблонов библиотеки)  К3
   persist_station.txt  блок станции GVL_Persist для persist_extra iolistgen      К3 (текст блока — раздел 4.7, заморожен)
   codesys/  codesys_pvl.py (Persistent Variables импортом PLCopenXML), symbol_config.py,
             symbol_rules.json (символьная конфигурация, раздел 13), *_cds.py — скрипты CODESYS   К3
@@ -671,7 +673,7 @@ VAR_GLOBAL
     stEventView     : ST_EventView;      // страница журнала HMI (uiPage — ReadWrite)
     stEventFeed     : ST_EventFeed;      // курсор журнала внешнего клиента (udiFromSeq — ReadWrite)
     stAlarmView     : ST_AlarmView;      // тревоги не в Normal: баннер, таблица, сценарии (Read)
-    xExportReq      : BOOL;              // MainTask → SlowTask: снимок готов, писать файл
+    xExportReq      : BOOL;              // MainTask → SlowTask: снимок готов (снимает PRG_Slow при старте)
     eExportState    : E_LogExportState;  // SlowTask → MainTask
     udiExportError  : UDINT;             // код ошибки FILE.* последней выгрузки
     uiExportLines   : UINT;
@@ -1373,7 +1375,8 @@ END_VAR
 адаптер её не знает, на HMI фактическая частота помечается недостоверной по `MOT_WRN_COMM_LOSS`.
 
 Тесты: `DecodeBits`, `DecodeScale5000Is100Pct`, `NoCommForcesStatusFalseHoldsSpeed`,
-`EncodeResetBitWhileQReset`, `EncodeScaleAndClamp`, `EncodeNanIsZero`.
+`EncodeResetBitWhileQReset`, `EncodeScaleAndClamp`, `EncodeNanIsZero`; сверх списка — `DefaultsAllFalse`,
+`EncodeRoundsToNearest` (округление до ближайшего отсчёта, а не отбрасывание дробной части).
 
 ### 8.3 `PRG_FieldOut`
 
@@ -1432,15 +1435,23 @@ END_VAR
 Тесты: `AlarmEventStored`, `StationEventIdIsBasePlusCode`, `RingOverwritesOldestAndCounts`,
 `GetRecordNewestFirst`, `ViewPagination`, `FeedFromSeqOldestFirst`, `FeedReportsOverwrittenGap`,
 `MonoTimeIsProcessTime`, `SnapshotIndependentOfLaterEvents`; сверх списка — `EmptyLogDefaults`,
-`EventRecordSizeIs40`, `TimeBackwardsRecordedAsIs`. Журнал (≈16 КБ) в тестах — `VAR_INST` метода, а не стек.
+`EventRecordSizeIs40`, `TimeBackwardsRecordedAsIs`, `SnapshotAfterWrapOldestFirst` (снимок полного кольца
+после затирания — без разрыва на границе), `ViewPageEqualToCountClamped` (номер страницы, равный их числу). Журнал (≈16 КБ) в тестах — `VAR_INST` метода, а не стек.
 
 ### 9.2 `FB_EventLogCsv` (вызывает `PRG_Slow` в `SlowTask`)
 
 Входы: `xExecute` (фронт; `PRG_Slow` подаёт `GVL_Log.xExportReq`), `sFileName` (`LOG_CSV_FILE`).
 Выходы: `eState : E_LogExportState`, `uiLines`, `udiError` (код `FILE.ERROR`), `xDone`, `xError`.
 Шаги: `FILE.Open` (`MWRITE`) → заголовок → строки снимка по `LOG_CSV_LINES_PER_WRITE` за `FILE.Write` →
-`FILE.Close`; по завершении `PRG_Slow` пишет `GVL_Log.eExportState`, `uiExportLines`,
-`udiExportError` и сбрасывает `xExportReq`.
+`FILE.Close`.
+
+Обмен MainTask ↔ SlowTask (`PRG_Slow`): запрос `GVL_Log.xExportReq` принимается, когда выгрузка не идёт
+(фронт `xExecute` — по принятию), и снимается сразу после публикации `eExportState = Writing`. MainTask
+ставит запрос только вне `Snapshot`/`Writing`, поэтому его запись TRUE не теряется; команда до старта
+SlowTask сливается с первой (один файл, одно событие 101019). `uiExportLines` и `udiExportError`
+публикуются раньше `Done`/`Error`: события 101019/101020 берут их по переходу состояния. Прежний обмен
+(запрос снимался в каждом цикле SlowTask, пока держится `Done`) терял команду, поданную в течение
+цикла SlowTask после завершения выгрузки (ASSUMPTIONS К3-16).
 
 Формат (ASCII, `;`, CRLF; заголовок — первая строка):
 
@@ -1462,8 +1473,11 @@ seq;time_utc;kind;id;code;priority;old_state;new_state;reason;value
 
 Тесты (многоцикловые, на рантайме): `WritesHeaderAndAllLines`, `ReadBackMatchesSnapshot` (как зонд Z1),
 `ErrorOnBadPathReported` (пустое имя файла: несуществующий каталог CAA File на Control Win создаёт сам),
-`EmptySnapshotHeaderOnly`; формат строки — `EventCsvLineFormat`; `F_UtcToIso` и `F_AlarmCode` — наборы
-`FB_F_UtcToIso_Test`, `FB_F_AlarmCode_Test`.
+`EmptySnapshotHeaderOnly`; обмен с MainTask — `SlowTaskRequestHandshake` (запрос снят при старте, запрос
+сразу после `Done` даёт вторую выгрузку); формат строки — `EventCsvLineFormat`; `F_UtcToIso` и
+`F_AlarmCode` — наборы `FB_F_UtcToIso_Test` (в том числе `CenturyLeapDay2000` — граница 400-летнего цикла),
+`FB_F_AlarmCode_Test` (в том числе `SlotWithoutSuffixIsNumber`); таблицы суффиксов `F_AlarmCode` —
+ещё и `tools_project/test_alarm_code_tables.py` (сверка с `docs/alarms.csv`, 05 и шаблонами библиотеки).
 
 ### 9.3 `FB_AlarmSummary` и `FB_DeviceAudit`
 
@@ -1508,7 +1522,9 @@ END_VAR
 
 Тесты: `CountsByPriority`, `PrioUnackHighest`, `NewHighSeqOnlyOnTransition`, `ViewSortedUnackFirst`,
 `ViewLimitedToRows`, `AckByIdDeviceStationPid`, `ShelveByIdRespectsTShelveMax`, `UnshelveById`,
-`AuditLogsModeChange`.
+`AuditLogsModeChange`; сверх списка — `PrioUnackHighestBeforeLower`, `ViewNewerFirstInGroup`,
+`ShelveByIdUsesFullTShelveMax` (срок откладывания — весь `tShelveMax` тревоги), `LargeDevNoValueNoOverflow`
+(значение события 101018 для dev_no 9999 считается в UDINT).
 
 ## 10. Время: `FB_ScaledClock IMPLEMENTS PL.I_TimeSource` (К2, заморожен)
 
@@ -1686,7 +1702,7 @@ Persistent Variables в проекте тестов — тот же объект
 | `GVL_IO` | все | Read | все |
 | `GVL_Station` | `stStationCmd`, `stLIC101Cmd` | ReadWrite | все |
 | `GVL_Station` | `stStationSts`, `fbLIC101`, `fbAlarms`, `axPumpRun`, `awPumpInterlock`, `rSpeedSp_pct`, `stCfgLkg` | Read | все |
-| `GVL_Log` | `stEventView` (номер страницы HMI), `stEventFeed` (курсор клиента) | ReadWrite | все |
+| `GVL_Log` | `stEventView` (номер страницы HMI), `stEventFeed` (курсор клиента) | ReadWrite; запись — только `uiPage` и `udiFromSeq` (поля типов, ниже) | все |
 | `GVL_Log` | `stAlarmView`, `eExportState`, `uiExportLines`, `udiExportError` | Read | все |
 | `GVL_Persist` | `st*Cfg` | Read (`site`), ReadWrite (`sim`: сценарии меняют уставки) | по сборке |
 | `GVL_Persist` | `st*Retain` | Read (`site`), ReadWrite (`sim`: наработка насосов в И0, 06 §5.2, п. 8) | по сборке |
@@ -1696,6 +1712,11 @@ Persistent Variables в проекте тестов — тот же объект
 | `GVL_Iiot` | по атрибутам проекта 06 | — | после встраивания |
 | `GVL_Const`, `GVL_DeviceList`, программы, локальные | — | не выгружаются | — |
 
+Поля структур — настройка типа (раздел `types` правил, действует для всех переменных типа; права поля не
+выше прав переменной): `ST_EventView` — запись только `uiPage`, `ST_EventFeed` — только `udiFromSeq`,
+`ST_EventRecord` (строки страницы и курсора) — только чтение. Клиент OPC UA не может подменить строки
+журнала и счётчики, которые читают другие клиенты; типы без правила не настраиваются.
+
 Скрипт идемпотентен (`configured_access` меняется, только если отличается); после `import --force`
 или нового `.project` выполняется снова автоматически. Результат проверяется по файлу символов
 `<проект>.Device.Application.xml`, который пишет генерация кода (так проверено в проекте 06): скрипт сверяет
@@ -1703,7 +1724,9 @@ Persistent Variables в проекте тестов — тот же объект
 `test_symbol_config.py` — правила обеих сборок и разбор файла символов. Прогон 19.10.2026 (сборка `sim`):
 `GVL_Devices` — 29 Read, `GVL_Hmi` — 30 ReadWrite, `GVL_IO` — 86 Read, `GVL_Log` — 4 Read и 2 ReadWrite,
 `GVL_Persist` — 37 ReadWrite, `GVL_Sim` — 3 Read и 3 ReadWrite, `GVL_Time` — 1 Read; повторный запуск —
-0 изменений. Запись в Cfg и Retain по OPC UA
+0 изменений. Прогон с правилами полей (19.10.2026, обе сборки): поля `ST_EventView`, `ST_EventFeed`,
+`ST_EventRecord` в файле символов — как в правилах; сборка `site` — `GVL_Persist` 37 Read, `GVL_Sim` —
+3 Read (команды и инъекции модели не выгружаются). Запись в Cfg и Retain по OPC UA
 в сборке `site` закрыта и на уровне символов, и правами группы пользователей рантайма (MANUAL_STEPS).
 
 ## 14. Тесты
@@ -1815,7 +1838,7 @@ clear_faults = true
 | `write` | пакет записи (один запрос); `{имя}` — значение из `capture` |
 | `pulse` | записать TRUE и дождаться, что ПЛК сбросил импульс; для `stStationCmd` — ещё рост `uiCmdSeq` |
 | `wait` | ждать выражение `путь оператор литерал` (`=`, `<>`, `<`, `<=`, `>`, `>=`) или `путь & маска` |
-| `wait_alarm` | ждать состояние ISA-18.2 тревоги по коду `05_alarm_list.csv` (строка `GVL_Log.stAlarmView` с этим номером; нет строки — `Normal`) |
+| `wait_alarm` | ждать состояние ISA-18.2 тревоги по коду `05_alarm_list.csv` (строка `GVL_Log.stAlarmView` с этим номером; нет строки — `Normal`; список переполнен, `uiActiveTotal > uiCount`, и строки нет — состояние неизвестно, ожидание не завершается) |
 | `expect` | список проверок «здесь и сейчас»; неуспех не прерывает сценарий, отчёт собирает все |
 | `expect_delay` | интервал между меткой `mark` и записью журнала или между двумя записями журнала (`from_alarm`/`from_event` → `alarm`/`event`), `min_s`/`max_s` в секундах контура |
 | `capture`, `mark` | запомнить значение или время контура (`GVL_Time.lrMainNow_s`) |
@@ -1825,14 +1848,20 @@ clear_faults = true
 
 Внутри шага действия выполняются в порядке: `reset`, `write`, `pulse`, `mark`, `capture`, `hold_s`, `wait`,
 `wait_alarm`, `expect`, `expect_delay`, `repeat` (другой порядок — отдельные шаги). `expect_delay` от метки
-сценария получает допуск «период опроса · k» (метка читается после записи), между записями журнала — без
-допуска. `[setup]` — И0 06 §5.2 (`skip_initial_state = true` — без него) и отличия: `method`, `level_m`,
+сценария: метка читается после записи, поэтому она не раньше действия (с точностью до цикла MainTask) и
+запаздывает не больше чем на «период опроса · k». Запись журнала ищется среди записей с номером больше
+последнего номера журнала перед действиями шага — она может оказаться и раньше метки; допуск
+«(период опроса + цикл MainTask) · k» — только для `min_s`, для `max_s` — цикл MainTask · k (измеренная
+задержка не больше настоящей). Между записями журнала — без допуска. `[setup]` — И0 06 §5.2
+(`skip_initial_state = true` — без него) и отличия: `method`, `level_m`,
 `inflow_m3h`, `run_hours_s`; `[teardown]` — `clear_faults`, `inflow_m3h`.
 
 Литералы перечислений (`E_MotorState.Fault`, `E_CmdResult.RejectedFault`, `E_ControlAct.Float`) —
 по таблице `kns_scenarios/enums.py`, которую генерирует `tools_project/gen_enums.py` из DUT `src/` и
 DUT библиотеки (путь — `PL_REPO`): в сценариях нет «магических» чисел. Таймауты — в секундах
-контура; исполнитель делит их на k и добавляет запас на задержку опроса.
+контура; исполнитель делит их на k и добавляет запас на задержку опроса. Литералы длительности — в
+единицах ПЛК: `T#…`/`TIME#…` — целые миллисекунды, `LTIME#…` — целые наносекунды (так `TIME` и `LTIME`
+передаёт OPC UA): запись PMI-11 `Cfg.tMaxContRun = T#10M` доходит до ПЛК как 600 000 мс.
 
 **Протокол клиента** (`client.py`) — один для обоих исполнителей:
 
@@ -1873,8 +1902,11 @@ class PlcClient(Protocol):
 журнала — курсор `GVL_Log.stEventFeed`, метки `lrMono_s`: погрешность — цикл задачи. Интервалы от
 действия сценария — от `lrMainNow_s`, прочитанного сразу после записи: погрешность —
 `(период опроса + задержка исполнителя) · k`, при k = 20 и мосте — до 8–10 с контура; поэтому
-выдержки короче 30 с проверяются по журналу, а проверки «не позже» от действия сценария получают
-этот допуск. Пропуск номеров в курсоре журнала (затёрто между опросами) — ошибка сценария.
+выдержки короче 30 с проверяются по журналу, а проверки «не раньше» от действия сценария получают
+этот допуск («не позже» — только цикл MainTask · k: метка не раньше действия). Пропуск номеров в
+курсоре журнала (затёрто между опросами) — ошибка сценария: она, как и любая другая ошибка шага,
+попадает в отчёт, завершение выполняется. Номера ПЛК пошли назад (сброс, перезапуск: журнал в ОЗУ) —
+курсор переходит на первую запись нового журнала.
 
 **Отчёт** (`report.py`): по каждому пункту — номер, итог («соответствует» / «не соответствует» /
 «не проверялось» с причиной), измеренные значения (задержки, уровни, токи), исполнитель, k,

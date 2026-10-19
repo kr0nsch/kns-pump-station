@@ -80,8 +80,8 @@
 
 | Инструмент | Вход | Итог |
 |---|---|---|
-| `st_lint --strict` | `src/`, `tests/` (202 файла) | 0 ошибок, 0 предупреждений; STL003 выключено только для сгенерированного `GVL_Persist.pvl.st` (ASSUMPTIONS К3-01) |
-| `run_iec_checker.py --tests` (iec_checker 0.4) | 44 объекта `src/` и `tests/` | ошибок разбора нет; необоснованных 0; обоснованных 808 |
+| `st_lint --strict` | `src/`, `tests/` (222 файла) | 0 ошибок, 0 предупреждений; STL003 выключено только для сгенерированного `GVL_Persist.pvl.st` (ASSUMPTIONS К3-01) |
+| `run_iec_checker.py --tests` (iec_checker 0.4) | 44 объекта `src/` и `tests/` | ошибок разбора нет; необоснованных 0; обоснованных 871 (808 до проверочных тестов и исправлений 19.10.2026: новые находки — те же правила CP3, L17, CP9, UnusedVariable в новых тестах и в `PRG_Slow`) |
 | `run_rusty.py` (RuSTy 1.0.6) | 12 файлов, исключено 33 (`rusty_exclude.txt`, раздел К3) | 0 ошибок |
 | `run_rusty.py` с прокладками: сборка `assembled/rusty` plc-process-lib 1.0.0, CAA File (`Open`, `Write`, `Read`, `Close`, `MODE`, `ERROR`) и `SysTimeRtcHighResGet` по сигнатурам, `--strip-namespace PL --strip-namespace FILE` | все файлы К3, кроме `GVL_Persist`, `GVL_CfgProject`, `PRG_ApplyProjectCfg`, `PRG_Devices` | 0 ошибок; предупреждения E049 (`PRG_FieldOut` обращается к `PRG_FieldIn.fbVfdP10n` — в CODESYS допустимо), E067 (неявное сужение литералов и `SIZEOF`), E040, E091 |
 

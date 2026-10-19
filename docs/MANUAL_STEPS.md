@@ -340,7 +340,8 @@ python tools\codesys\cds.py roundtrip
 `python tools/codesys/cds.py deps --check` — библиотека `plc-process-lib, 1.0.0.0 (plc-portfolio)`, CAA File
 и SysTimeRtc есть в репозитории библиотек. Если нет — `cds.py deps` соберёт и установит её из соседнего
 репозитория `../plc-process-lib`; в рабочей копии `git worktree` (каталог `_wt/…`) задайте путь явно:
-`set PL_REPO=<путь>\plc-process-lib`.
+`set PL_REPO=<путь>\plc-process-lib` (нужно, только если библиотеки нет в репозитории библиотек).
+Сверка документов (`check_docs_consistency.py`) находит соседние репозитории и из `_wt/…` сама.
 
 ### 9.2. Генерация слоя устройств
 
@@ -380,8 +381,9 @@ python tools_project\codesys\symbol_config.py --build site
 
 Скрипт создаёт объект Symbol Configuration с «Support OPC UA features» (если его нет), выставляет доступ по
 `tools_project\codesys\symbol_rules.json`, собирает приложение и сверяет файл символов
-`build\<имя>.Device.Application.xml` с правилами (расхождение — код 1). Повторный запуск — «изменено
-переменных: 0». После нового `.project` — запустить снова. Запасной путь — IDE по таблице DESIGN, раздел 13.
+`build\<имя>.Device.Application.xml` с правилами (расхождение — код 1): доступ переменных и полей типов
+из раздела `types` (у страницы журнала и курсора клиент пишет только `uiPage` и `udiFromSeq`; в выводе —
+«тип ST_EventFeed: запись — udiFromSeq»). Повторный запуск — «изменено переменных: 0». После нового `.project` — запустить снова. Запасной путь — IDE по таблице DESIGN, раздел 13.
 
 ### 9.5. Сценарии ПМИ (`scenarios/`)
 
