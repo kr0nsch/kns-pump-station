@@ -9,4 +9,7 @@
 {attribute 'linkalways'}
 VAR_GLOBAL
     fbScaledClockTest     : FB_ScaledClock_Test;
+    fbInflowProfileTest   : FB_InflowProfile_Test;
+    fbStormGeneratorTest  : FB_StormGenerator_Test;
+    fbTankModelTest       : FB_TankModel_Test;
 END_VAR
