@@ -165,8 +165,11 @@ expect_alarm = { code = "KNS1.EHL", state = "ActiveUnack" }
 manual = "KNS1.EHL остаётся в баннере"
 
 [[step]]
-note = "шаг 7: кнопка HS501 — сброс устройств, квитирование тревог станции, событие 101016 (кнопка)"
+note = "шаг 7: счётчики команд устройств до кнопки"
 capture = { seq_p1 = "GVL_Devices.fbP101.stSts.stCommon.uiCmdSeq", seq_lt = "GVL_Devices.fbLT101.stSts.stCommon.uiCmdSeq", seq_v1 = "GVL_Devices.fbV1.stSts.stCommon.uiCmdSeq" }
+
+[[step]]
+note = "шаг 7: кнопка HS501 — сброс устройств, квитирование тревог станции, событие 101016 (кнопка)"
 pulse = "GVL_Sim.stSimCmd.xPressReset"
 mark = "t7"
 timeout_s = 10

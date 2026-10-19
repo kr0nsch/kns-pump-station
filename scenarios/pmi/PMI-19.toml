@@ -71,7 +71,7 @@ wait_alarm = [
   { code = "KNS1.DRY", state = "SuppressedByDesign" },
 ]
 timeout_s = 30
-expect_delay = { from = "t_ls", alarm = "LS103.ALM", state = "ActiveUnack", min_s = 1.0, max_s = 1.0 }
+expect_delay = { from = "t_ls", alarm = "LS103.ALM", state = "ActiveUnack", min_s = 1.0, max_s = 1.04 }
 
 [[step]]
 note = "Н1 остановлен блокировкой «сухой ход» (бит 0 всем насосам, первопричина — бит 0)"

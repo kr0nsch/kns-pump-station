@@ -11,6 +11,11 @@
 # 10 мин после снятия условий — сценарий ждёт останова В1, где 06 требует «остановленный В1». ZS404.ALM от записи
 # SimCmd.xDoorOpen (записи журнала у команды модели нет): цепочка «модель → GVL_IO → DI → тревога» при k = 20 даёт
 # 3,7 с (≈ +4 цикла MainTask · k сверх 2 с), при k = 1 — 2,07 с (прогон ПМИ 19.10.2026) — верхний допуск 4 с.
+# Цепочки «запись команды модели → задача модели → устройство → станция → устройство» при k = 20 — до +4 циклов
+# MainTask · k (1,6 с): TT403.H/L от записи температуры — 60,8…61,8 с, V1.FTS от ZS404.ALM — 6,2 с; те же
+# цепочки при k = 1 — 2,05 с для двери и 5,03 с для V1.FTS (прогон ПМИ 19.10.2026), выдержки логики точно
+# проверяют юнит-тесты. Перед дверью для V1.FTS выдерживается пауза tMinStop В1 (10 с) после его останова — иначе
+# команда пуска откладывается (FTS приходил через 6,9 с).
 id = "PMI-38"
 title = "Коллектор и павильон: уставки, отказы сигналов, вентиляция"
 time_scale = 20.0
@@ -320,7 +325,7 @@ mark = "t_th"
 note = "шаг 4: через 60 с TT403.H"
 wait_alarm = { code = "TT403.H", state = "ActiveUnack" }
 timeout_s = 120
-expect_delay = { from = "t_th", alarm = "TT403.H", state = "ActiveUnack", min_s = 60.0, max_s = 60.0 }
+expect_delay = { from = "t_th", alarm = "TT403.H", state = "ActiveUnack", min_s = 60.0, max_s = 62.0 }
 
 [[step]]
 note = "шаг 4: температура 3 °C"
@@ -331,7 +336,7 @@ mark = "t_tl"
 note = "шаг 4: через 60 с TT403.L"
 wait_alarm = { code = "TT403.L", state = "ActiveUnack" }
 timeout_s = 120
-expect_delay = { from = "t_tl", alarm = "TT403.L", state = "ActiveUnack", min_s = 60.0, max_s = 60.0 }
+expect_delay = { from = "t_tl", alarm = "TT403.L", state = "ActiveUnack", min_s = 60.0, max_s = 62.0 }
 
 # --- шаг 5: авария вентилятора, связь с TT403 ----------------------------------------------------
 
@@ -388,9 +393,10 @@ wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Stopped"
 timeout_s = 900
 
 [[step]]
-note = "шаг 6: при остановленном В1 — ОС не приходит, открыть дверь"
+note = "шаг 6: при остановленном В1 — ОС не приходит; пауза tMinStop В1 (10 с) прошла — пуск не задерживается"
 write = { "GVL_Sim.stFaultInj.xFanNoFeedback" = true }
-hold_s = 2
+hold_s = 12
+expect = ["GVL_Devices.fbV1.stSts.uiInhibitRemain_s = 0"]
 
 [[step]]
 note = "шаг 6: дверь открыта — команда пуска В1"
@@ -401,7 +407,7 @@ mark = "t_fts"
 note = "шаг 6: через 5 с после команды — V1.FTS"
 wait_alarm = { code = "V1.FTS", state = "ActiveUnack" }
 timeout_s = 30
-expect_delay = { since = "t_fts", from_alarm = "ZS404.ALM", state = "ActiveUnack", alarm = "V1.FTS", min_s = 4.6, max_s = 5.8 }
+expect_delay = { since = "t_fts", from_alarm = "ZS404.ALM", state = "ActiveUnack", alarm = "V1.FTS", min_s = 4.6, max_s = 6.6 }
 
 # --- шаг 7: отказы и выход за диапазон сигналов 4–20 мА ------------------------------------------
 

@@ -3,7 +3,8 @@
 # Приток 250 м³/ч больше подачи трёх насосов (≈ 224 м³/ч на 4,0 м): от И0 HH через ≈ 33 мин контура, 4,20 м —
 # ≈ 38 мин, перелив 4,60 м — ≈ 50 мин (DESIGN 14.4). При срабатывании LS102 приток снижается до 100 м³/ч.
 # Задержки уставки HH (3 с) и входа LS102 (2 с) — от наблюдения уровня (метка, допуск обвязки); KNS1.EHL — в
-# следующем цикле станции после LT101.HH.
+# следующем цикле станции после LT101.HH. Последние 2 см до LS102 и его выдержка — при k = 1 (К3-23): при k = 20
+# период опроса — 5 с контура, и тревога появлялась раньше метки (прогон ПМИ 19.10.2026).
 id = "PMI-20"
 title = "Аварийно высокий уровень по уровнемеру"
 time_scale = 20.0
@@ -69,9 +70,16 @@ expect = [
 ]
 
 [[step]]
-note = "уровень 4,20 м (поплавок LS102)"
-wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+note = "уровень подходит к 4,20 м (поплавок LS102)"
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.18"
 timeout_s = 900
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[[step]]
+note = "уровень 4,20 м — без ускорения"
+time_scale = 1.0
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+timeout_s = 180
 during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
 
 [[step]]
@@ -83,6 +91,7 @@ expect_delay = { from = "t_ls", alarm = "LS102.ALM", state = "ActiveUnack", min_
 
 [[step]]
 note = "шаг 2: приток 100 м³/ч — LS102 снят и уровень < 3,50 м: выход из аварийного режима"
+time_scale = 20.0
 write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
 wait = "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped"
 timeout_s = 900
