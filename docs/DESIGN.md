@@ -72,9 +72,9 @@ src/
   POUs/
     Generated/  PRG_Devices, PRG_ApplyProjectCfg, PRG_DeviceList                генератор (К3)
     Field/      PRG_FieldIn, PRG_FieldOut, FB_VfdAdapter_Cond                    К3
-    Station/    PRG_Station, FB_StationMode, FB_ControlSelector, FB_LevelControlStepped,
-                FB_LevelControlPid, FB_PumpRotation, FB_Ats, FB_Protections, FB_PumpProtection,
-                FB_PowerRestore, FB_Ventilation, FB_StationAlarms, FB_Annunciator,
+    Station/    PRG_Station, FB_StationCore, FB_StationMode, FB_ControlSelector,
+                FB_LevelControlStepped, FB_LevelControlPid, FB_PumpRotation, FB_Ats, FB_Protections,
+                FB_PumpProtection, FB_PowerRestore, FB_Ventilation, FB_StationAlarms, FB_Annunciator,
                 F_StationCfgCheck                                                К1
     Log/        FB_EventLog, FB_EventLogCsv, FB_AlarmSummary, FB_DeviceAudit, F_AlarmCode,
                 F_UtcToIso, PRG_Slow                                             К3
@@ -159,6 +159,7 @@ VAR_GLOBAL CONSTANT
     STN_LS103_MARK_M : REAL := 0.40;
     STN_PID_RECOVER : TIME := T#30S;         // связь с ПЧ восстановлена → ПИД снова готов (04 §12)
     STN_HANDOVER_RETRY : TIME := T#10M;      // повтор передачи роли (04 §8.2)
+    STN_HANDOVER_START_TIMEOUT : TIME := T#30S;  // передача роли: замена не в работе за это время — пуск не удался
     STN_SEQ_START_TIMEOUT : TIME := T#30S;   // шаг последовательного пуска: пуск не подтвердился → следующий
     STN_ATS_WINDOW : TIME := T#10S;          // окно поиска насоса, введённого АВР (событие 101006)
     STN_LAMP_HALF_PERIOD : TIME := T#500MS;  // HL1 мигает 1 Гц
@@ -188,12 +189,71 @@ VAR_GLOBAL CONSTANT
     STN_CFG_PID_STAGING : WORD := 16#0008;   // rAssistOn_pct, rAssistOff_pct, выдержки
     STN_CFG_DUTY : WORD := 16#0010;          // uiDutyMax
     STN_CFG_ROTATION : WORD := 16#0020;      // eRotation, tMaxContRun, tOverlap, tStagger
-    STN_CFG_TIMES : WORD := 16#0040;         // питание, tDryRelease, tLtRecover, tLvlConfirm
+    STN_CFG_TIMES : WORD := 16#0040;         // питание, tDryRelease, tLtRecover, tLvlConfirm, tV1Overrun
     STN_CFG_FLOAT_CHECK : WORD := 16#0080;   // rLdev*, tLdev
     STN_CFG_UNDERLOAD : WORD := 16#0100;
     STN_CFG_ALARM : WORD := 16#0200;         // приоритет тревоги вне перечисления
     STN_CFG_SETPOINT : WORD := 16#0400;      // rLevelSp_m вне rSpMin_eu…rSpMax_eu LIC101
-    // диапазоны параметров 04 §18.2 — константы STN_<ПАРАМЕТР>_MIN / _MAX (полный список — при реализации)
+    // диапазоны параметров 04 §18.2 (F_StationCfgCheck)
+    STN_LVL_STOP_MIN_M : REAL := 0.90;       // № 2
+    STN_LVL_STOP_MAX_M : REAL := 2.00;
+    STN_LVL_START_LEAD_MAX_M : REAL := 3.00; // № 3
+    STN_LVL_START_ASSIST_MAX_M : REAL := 3.30;   // № 5
+    STN_LVL_GAP_M : REAL := 0.30;            // зазоры № 3–5: пуск выше останова не меньше чем на 0,3 м
+    STN_CFG_EPS : REAL := 0.001;             // допуск сравнения суммы двух уставок REAL (зазоры № 3–5, 11)
+    STN_LVL_CONFIRM_MAX : TIME := T#60S;     // № 6
+    STN_STEP_SPEED_MIN_PCT : REAL := 60.0;   // № 7 (верх — PL.GVL_Const.PCT_FULL)
+    STN_ASSIST_ON_MIN_PCT : REAL := 80.0;    // № 9
+    STN_ASSIST_ON_T_MIN : TIME := T#5S;      // № 10
+    STN_ASSIST_ON_T_MAX : TIME := T#300S;
+    STN_ASSIST_OFF_MIN_PCT : REAL := 60.0;   // № 11
+    STN_ASSIST_GAP_PCT : REAL := 10.0;       // № 11: rAssistOff_pct <= rAssistOn_pct - 10
+    STN_ASSIST_OFF_T_MIN : TIME := T#10S;    // № 12
+    STN_ASSIST_OFF_T_MAX : TIME := T#600S;
+    STN_DUTY_MIN : UINT := 1;                // № 13 (верх — STN_PUMP_COUNT)
+    STN_MAX_CONT_RUN_MIN : TIME := T#10M;    // № 15 (T#0S — выключено)
+    STN_MAX_CONT_RUN_MAX : TIME := T#24H;
+    STN_OVERLAP_MAX : TIME := T#60S;         // № 16
+    STN_STAGGER_MAX : TIME := T#30S;         // № 17
+    STN_PWR_RESTART_MAX : TIME := T#120S;    // № 18
+    STN_SEQ_STEP_MIN : TIME := T#5S;         // № 19
+    STN_SEQ_STEP_MAX : TIME := T#120S;
+    STN_PLC_START_MAX : TIME := T#120S;      // № 20
+    STN_DRY_RELEASE_MIN : TIME := T#10S;     // № 21
+    STN_DRY_RELEASE_MAX : TIME := T#600S;
+    STN_LDEV102_ON_MIN_M : REAL := 2.50;     // № 22
+    STN_LDEV102_ON_MAX_M : REAL := 4.10;
+    STN_LDEV102_OFF_MIN_M : REAL := 4.25;    // № 23
+    STN_LDEV102_OFF_MAX_M : REAL := 4.90;
+    STN_LDEV103_ON_MIN_M : REAL := 0.50;     // № 24
+    STN_LDEV103_ON_MAX_M : REAL := 1.50;
+    STN_LDEV103_OFF_MIN_M : REAL := 0.05;    // № 25
+    STN_LDEV103_OFF_MAX_M : REAL := 0.35;
+    STN_LDEV_T_MIN : TIME := T#10S;          // № 26
+    STN_LDEV_T_MAX : TIME := T#300S;
+    STN_LT_RECOVER_MAX : TIME := T#300S;     // № 27
+    STN_UNDERLOAD_MAX_A : REAL := 30.0;      // № 28 (0 — выключено)
+    STN_UNDERLOAD_SPEED_MIN_PCT : REAL := 60.0;  // № 29
+    STN_UNDERLOAD_T_MIN : TIME := T#5S;      // № 30
+    STN_UNDERLOAD_T_MAX : TIME := T#120S;
+    STN_V1_OVERRUN_MAX : TIME := T#60M;      // № 31
+    // событие 101017: номер параметра 04 §18.2 (№ 2–31 по порядку полей ST_StationCfg)
+    STN_CFG_PARAM_FIRST : UINT := 2;         // № первого поля ST_StationCfg (rLvlStop_m)
+    STN_CFG_PARAM_ALARMS : UINT := 44;       // таблица тревог astAlarm или резерв (после № 43 раздела 18.2)
+    STN_CFG_RESERVE_REAL_LAST : UINT := 7;   // верхняя граница ST_StationCfg.arReserve (тест соответствия)
+    STN_CFG_RESERVE_SHORT_LAST : UINT := 3;  // верхняя граница atReserve и auiReserve
+    // значения событий станции
+    STN_EVT_LS102 : REAL := 102.0;           // 101011/101012: поплавок LS102
+    STN_EVT_LS103 : REAL := 103.0;           // 101011/101012: поплавок LS103
+    STN_EVT_SRC_BUTTON : REAL := 1.0;        // 101016/101023: кнопка шкафа
+    STN_EVT_SRC_HMI : REAL := 2.0;           // 101016/101023: команда HMI
+    // биты FB_Protections.wLdev (04 §10.5)
+    STN_LDEV_LS102_FALSE : WORD := 16#0001;  // LS102 сработал ложно (уровень ниже rLdev102On_m)
+    STN_LDEV_LS102_MISSED : WORD := 16#0002; // LS102 не сработал (уровень выше rLdev102Off_m)
+    STN_LDEV_LS103_FALSE : WORD := 16#0004;  // LS103 сработал ложно (уровень выше rLdev103On_m)
+    STN_LDEV_LS103_MISSED : WORD := 16#0008; // LS103 не сработал (уровень ниже rLdev103Off_m)
+    STN_LDEV_LT_MASKED : WORD := 16#0010;    // LT101 исключён по противоречию (вне диапазона)
+    STN_MS_PER_S : UDINT := 1000;            // мс в секунде: остаток в целых секундах вверх (uiSeqRemain_s)
     // ===== Модель (К2) =====
     SIM_TIME_SCALE_MAX : REAL := 50.0;       // k · T_MainTask ≤ 1 с (ARCHITECTURE, раздел 11)
     SIM_DT_SUBSTEP : LTIME := LTIME#200MS;   // шаг интегрирования резервуара
@@ -908,7 +968,12 @@ END_VAR
   (`tLvlConfirm`); 2 → 1 при `rPidOut_pct ≤ rAssistOff_pct` дольше `tAssistOff` и уровне
   < `rLvlStartAssist_m`; любое → 0 при уровне ≤ `rLvlStop_m` (`tLvlConfirm`). Не больше `uiDutyMax`.
 - Готовность ПИД (04 §7.4): `ePidMode = Auto`, `xLevelValid`, и есть насос со связью — среди
-  работающих, а если насосы стоят — среди готовых к пуску (`ReadyToStart`).
+  работающих в `Auto`, а если насосы стоят — среди доступных (`Available`: пауза `tMinStop` и лимит
+  пусков готовность не снимают, иначе `KNS1.STEP` появлялась бы после каждого останова). Потеря связи —
+  насосы есть, а связи нет ни у одного: готовность снимается сразу, после восстановления — через
+  `STN_PID_RECOVER`; при старте выдержки нет.
+- Условия по выходу ПИД (подключение и отключение подпорного) действуют только при `xPidControls`: в
+  слежении выход повторяет задание ведущего и о нагрузке не говорит.
 - Задание ПИД ФБ не считает: оно внешнее (`stCfgLkg.rLevelSp_m`, раздел 7).
 
 Тесты: `StartsLeadAtStartLevel`, `AssistOnOutputHighForTAssistOn`, `AssistOnLevelAboveAssistStart`,
@@ -967,6 +1032,15 @@ END_VAR
   `STN_HANDOVER_RETRY`. `tMaxContRun = T#0S` — выключено.
 - Отказавший насос теряет запрос сразу (у него `Available = FALSE`); после сброса становится
   резервным (АВР — 04 §9).
+- `uiRequestLimit` ограничивает только **новые** запросы: насос, уже работающий по запросу (подхват при
+  старте ПЛК, когда последовательный пуск ещё не начался), им не снимается; `uiRequests` — выданные
+  запросы. Сторонний — работает не в `Auto` и не запрошен станцией: подхваченный насос, который ещё
+  не перешёл в `Auto` (запрос режима выполнит устройство), сторонним не считается.
+- `xAdopt` добавляет запросы работающим насосам к прежним (идущий пуск не обрывается) и в этом вызове
+  доступность не проверяет; ведущий без роли — запрошенный насос с меньшей наработкой.
+- Интервал `tStagger` не ждётся, если насос предыдущего нового запроса уже потерял запрос (отказ при
+  пуске, АВР без задержки). Замена при передаче роли — только `ReadyToStart`; не в работе за
+  `STN_HANDOVER_START_TIMEOUT` — пуск не удался, повтор через `STN_HANDOVER_RETRY`.
 
 Тесты (`FB_PumpRotation_Test`, подменные насосы): `RunHoursPicksLeastHours`, `TieBreakStartsThenIndex`,
 `CyclicAdvancesNextLeadRetained`, `FixedOrder`, `ReadyBeforeInhibited`, `RunningKeepRoles`,
@@ -1006,8 +1080,9 @@ END_VAR
 - Отказ насоса, у которого был запрос в прошлом цикле: `Fault` или `axTrip` (04 §9.1: нет ОС,
   авария ПЧ, пропадание ОС, недогрузка, перегрев через аварию ПЧ). Смена режима оператором,
   пропадание напряжения и сухой ход станции — не АВР.
-- `axRemoved[i]` держится, пока насос снова не станет `Available`. Событие 101006 со значением —
-  номер насоса, получившего новый запрос в окне `STN_ATS_WINDOW`.
+- `axRemoved[i]` держится, пока насос снова не станет `Available` без отказа и без фиксации станции
+  (фиксация действует на устройство только с его вызова). Событие 101006 со значением — номер насоса,
+  получившего новый запрос в окне `STN_ATS_WINDOW`.
 
 Тесты: `RequestedPumpFaultRaisesAts`, `ModeChangeIsNotAts`, `PowerLossIsNotAts`, `UnderloadTripIsAts`,
 `AtsClearsWhenPumpAvailableAgain`, `EventNamesReplacementPump`, `LackWhenRequiredExceedsAvailable`,
@@ -1055,7 +1130,10 @@ END_VAR
 вернулся в норму (`Good`) и противоречия нет дольше `tLtRecover`. Маски поплавков снимаются сами,
 когда поплавок вернулся, и сразу при `xLevelUsable = FALSE`. Режим по поплавкам — диаграмма 04 §11:
 вход при работающих насосах — сразу «откачка». События 101011…101014 (101011/101012 — значение
-102 или 103; исключение уровнемера отмечается событием 101013).
+102 или 103; исключение уровнемера отмечается событием 101013). Снятие сухого хода без уровнемера —
+`LS103` снят дольше `tDryRelease`, отсчёт идёт, пока защита действует при негодном уровнемере (PMI-26:
+через `tDryRelease` после исключения LT101). В первом вызове (выходы устройств ещё не посчитаны,
+`xValid = FALSE`) режим по поплавкам не включается.
 
 Тесты: `DryRunByFloat`, `DryRunByLtLl`, `DryRunReleaseAboveL`, `DryRunReleaseWithoutLtAfterTDryRelease`,
 `EmergencyByFloatAndByHh`, `EmergencyReleaseBelowH`, `FalseLs103MaskedAfterTLdev`,
@@ -1116,7 +1194,9 @@ END_VAR
 (`uiRequestLimit := 0`, событие 101008); ↑ — «задержка» `tPwrRestart` (событие 101009); затем шаги:
 `uiRequestLimit := k`, следующий шаг — через `tSeqStep` после `uiRunningRequested ≥ k` или через
 `STN_SEQ_START_TIMEOUT`, если пуск не подтвердился (АВР уже назначил замену); конец — когда
-`uiRequestLimit ≥ uiRequired` (событие 101010, значение — число пущенных).
+`uiRequestLimit ≥ uiRequired` (событие 101010, значение — число разрешённых пусков
+`MIN(шаг, uiRequired)`). В первом вызове `xPowerOk` не используется (ES301 ещё не вызывался), событие
+101009 пишется и при старте ПЛК.
 
 Тесты: `PlcStartDelaysAllRequests`, `PowerLossBlocksRequests`, `RestoreWaitsTPwrRestart`,
 `SequenceOnePumpPerStep`, `StepAdvancesOnTimeoutIfStartFails`, `PowerLossDuringSequenceRestarts`,
@@ -1219,9 +1299,12 @@ END_VAR
 ```
 
 Проверки: порядок `0,4 < LL < L < rLvlStop_m < rLvlStopAssist_m < rLvlStartLead_m < rLvlStartAssist_m < H
-< HH < 4,2` (04 §1, с учётом `rLvlStopAssist_m` между остановом и пуском ведущего), диапазоны и
-зазоры 04 §18.2, `rAssistOff_pct < rAssistOn_pct − 10`, приоритеты `astAlarm` в перечислении,
-`rLevelSp_m` в пределах задания LIC101, все REAL конечны (`PL.F_IsFinite`).
+< HH < 4,2` (04 §1, с учётом `rLvlStopAssist_m` между остановом и пуском ведущего; LL и HH в функцию не
+передаются — порядок проверяется от `STN_LS103_MARK_M` через L…H до `STN_LS102_MARK_M`), диапазоны и
+зазоры 04 §18.2 (сумма двух уставок — с допуском `STN_CFG_EPS`), `rAssistOff_pct ≤ rAssistOn_pct − 10`
+(04 §18.3), выдержка `tV1Overrun` — в бите `STN_CFG_TIMES`, приоритеты `astAlarm` в перечислении,
+`rLevelSp_m` в пределах задания LIC101; неконечное значение (NaN, ±Inf) не проходит проверки своей
+группы.
 
 Тесты: `DefaultsPass`, по тесту на каждый бит, `NanRejected`.
 
@@ -1230,13 +1313,130 @@ END_VAR
 - `FB_FakeMotorVfd IMPLEMENTS PL.I_MotorVfd`: поля `xAvailable`, `xRunning`, `xReady`, `eMode`, `xFault`,
   `udiRunSeconds`, `udiCurrentRunSeconds`, `udiStarts`, `rSpeedRef`, `rSpeedAct`, `xSpeedAuto` — задаёт
   тест; методы `RequestMode`, `Reset`, `AckAll` считают вызовы и запоминают последний режим; `GetAlarm` → 0.
+  `Available` выводится как у устройства (`xAvailable`, `Auto`, нет отказа), `ReadyToStart` — ещё
+  `xReady` и стоит; `xFollowRequests` — `RequestMode` меняет режим сразу (у `Local` — запомненный).
 - `FB_FakeEventSink IMPLEMENTS I_StationEventSink`: кольцо 16 последних `(eEvent, rValue)`, счётчик,
-  метод `Has(eEvent) : BOOL`.
+  методы `Has(eEvent) : BOOL`, `CountOf`, `ValueOf` (значение новейшего), `Clear`.
+
+### 6.15 `FB_StationCore` — ядро порядка цикла станции (04 §19)
+
+Шаги 2–15 раздела 7 без обращений к глобальным переменным: устройства — `PL.I_MotorVfd` и значениями
+входов, журнал — `I_StationEventSink`, время — `PL.I_TimeSource`, данные `GVL_Station` и `GVL_Persist` —
+параметрами `VAR_IN_OUT`. Экземпляры ФБ раздела 6 живут в его `VAR`, `PRG_Station` только связывает
+ядро со сгенерированным слоем (раздел 7). Так порядок цикла — требуемое число и задание частоты по
+действующему управлению, подавления тревог, `wState`, NE 107, команды — проверяется юнит-тестами с
+подменными насосами, без модели и устройств.
+
+```st
+FUNCTION_BLOCK FB_StationCore
+VAR_INPUT
+    itfTime           : PL.I_TimeSource;      // GVL_Time.fbClockMain
+    itfEvents         : I_StationEventSink;   // GVL_Log.fbEventLog
+    aitfPump          : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF PL.I_MotorVfd;   // GVL_Devices.fbP101…fbP103
+    axCommOk          : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // нет MOT_WRN_COMM_LOSS в wWarning насоса
+    axRunFeedback     : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // GVL_IO.xP10n_RFB: подхват при старте ПЛК
+    axPumpReset       : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // GVL_Hmi.stP10nCmd.stCommon.xReset
+    arCurrent_A       : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF REAL;   // fbIT1n1.rValue_eu
+    axCurrentValid    : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // fbIT1n1.xValid
+    axOverheat        : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // fbTS1n2.xValue
+    rLevel_m          : REAL;                 // fbLT101.rValue_eu
+    xLevelValid       : BOOL;                 // fbLT101.xValid
+    eLevelNe107       : PL.E_Ne107Status;     // fbLT101.stSts.stCommon.eNe107
+    xLevelL           : BOOL;                 // fbLT101.xL, xLL, xH, xHH
+    xLevelLL          : BOOL;
+    xLevelH           : BOOL;
+    xLevelHH          : BOOL;
+    rLvlL_m           : REAL;                 // GVL_Persist.stLT101Cfg: уставка L (порядок отметок)
+    rLvlH_m           : REAL;                 // уставка H
+    xFloatHigh        : BOOL;                 // fbLS102.xValue
+    xFloatDry         : BOOL;                 // fbLS103.xValue
+    xPowerOk          : BOOL;                 // fbES301.xValue
+    xResetButton      : BOOL;                 // fbHS501.xValue (фронт выделяет ФБ)
+    xSilenceButton    : BOOL;                 // fbHS502.xValue
+    xGasHigh          : BOOL;                 // fbAT401.xH OR fbAT402.xH
+    xDoorOpen         : BOOL;                 // fbZS404.xValue
+    xTempHigh         : BOOL;                 // fbTT403.xH
+    xFire             : BOOL;                 // fbYS405.xValue
+    xApplyProjectCfg  : BOOL;                 // GVL_Hmi.xApplyProjectCfg (импульс сбрасывает PRG_Devices)
+    xAckIdFound       : BOOL;                 // GVL_Log.fbAlarmSummary.AckById(stCmd.udiAckId) этого цикла
+    xShelveIdFound    : BOOL;                 // … ShelveById(stCmd.udiShelveId, TRUE)
+    xUnshelveIdFound  : BOOL;                 // … ShelveById(stCmd.udiUnshelveId, FALSE)
+    xSimulation       : BOOL;                 // GVL_Sim.xSimulation
+    udiSimFaultSeq    : UDINT;                // GVL_Sim.stSimSts.udiFaultSeq
+    eLogExport        : E_LogExportState;     // GVL_Log.eExportState
+    uiExportLines     : UINT;                 // GVL_Log.uiExportLines
+    udiExportError    : UDINT;                // GVL_Log.udiExportError
+    udiEventSeq       : UDINT;                // GVL_Log.fbEventLog.udiSeqLast
+    udiLogOverwritten : UDINT;                // GVL_Log.fbEventLog.udiOverwritten
+    auiUnack          : ARRAY[1..GVL_Const.ALM_PRIO_COUNT] OF UINT;   // GVL_Log.fbAlarmSummary (прошлый цикл)
+    auiActive         : ARRAY[1..GVL_Const.ALM_PRIO_COUNT] OF UINT;
+    ePrioUnack        : PL.E_AlarmPriority;
+    udiNewHighSeq     : UDINT;
+END_VAR
+VAR_IN_OUT
+    stCmd          : ST_StationCmd;           // GVL_Station.stStationCmd: импульсы и номера сбрасываются
+    stCfgPersist   : ST_StationCfg;           // GVL_Persist.stStationCfg
+    stCfgLkg       : ST_StationCfg;           // GVL_Station.stCfgLkg
+    stRetain       : ST_StationRetain;        // GVL_Persist.stStationRetain
+    fbLIC101       : PL.FB_PID;               // GVL_Station.fbLIC101
+    stLIC101Cmd    : PL.ST_PidCmd;            // GVL_Station.stLIC101Cmd
+    stLIC101Cfg    : PL.ST_PidCfg;            // GVL_Persist.stLIC101Cfg
+    stLIC101Retain : PL.ST_DeviceRetain;      // GVL_Persist.stLIC101Retain
+    fbAlarms       : FB_StationAlarms;        // GVL_Station.fbAlarms
+END_VAR
+VAR_OUTPUT
+    stSts               : ST_StationSts;      // → GVL_Station.stStationSts
+    axRun               : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // → fbP10n.xAutoRun, GVL_Station.axPumpRun
+    awInterlock         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF WORD;   // → fbP10n.wInterlock, awPumpInterlock
+    rSpeedSp_pct        : REAL;               // → fbP10n.rSpeedSpAuto_pct, GVL_Station.rSpeedSp_pct
+    xSuppressFlowAlarms : BOOL;               // → fbPT201, fbFT202.xSuppressLimitAlarms
+    xV1Run              : BOOL;               // → fbV1.xAutoRun
+    wV1Interlock        : WORD;               // → fbV1.wInterlock
+    xHorn               : BOOL;               // → GVL_IO.xHA1
+    xLamp               : BOOL;               // → GVL_IO.xHL1
+    xK1                 : BOOL;               // → GVL_IO.xK1 (TRUE — норма)
+    xResetAllReq        : BOOL;               // импульс: Reset() всех GVL_DeviceList.aitfDevice
+    xAckAllReq          : BOOL;               // импульс: AckAll() всех GVL_DeviceList.aitfDevice
+    xExportReq          : BOOL;               // импульс: GVL_Log.fbEventLog.TakeSnapshot(), GVL_Log.xExportReq := TRUE
+END_VAR
+// ChangedParam(stOld, stNew : VAR_IN_OUT CONSTANT ST_StationCfg) : UINT — номер первого различающегося
+//   параметра 04 §18.2 (событие 101017); таблица тревог или резерв — STN_CFG_PARAM_ALARMS
+```
+
+Внутренние переменные — `src/POUs/Station/FB_StationCore/`. Уточнения к шагам раздела 7:
+
+- Номера тревог (`udiAckId`, `udiShelveId`, `udiUnshelveId`) выполняет сводка в `PRG_Station` до ядра;
+  ядро засчитывает команду, пишет результат (`RejectedState`, если номер не найден) и сбрасывает номер.
+  Выгрузка, пока идёт прежняя (`Snapshot`, `Writing`), — `RejectedState`. Каждый импульс — команда
+  (`xSetAuto` и `xSetManual` в одном цикле — две).
+- Событие 101017: номер параметра № 2–31, таблица тревог или резерв — `STN_CFG_PARAM_ALARMS`, команда
+  («Применить уставки проекта», откат) — 0; при старте записанные уставки принимаются без события.
+  Событие 101021 — значение `udiFaultSeq` (номер поля инъекции станции неизвестен).
+- Последовательный пуск идёт по ступенчатому автомату (`Restart` — выход `FB_LevelControlStepped`, ПИД в
+  слежении); переход `Restart` ↔ `Stepped` автомат не переинициализирует.
+- «Ручной»: общее задание частоты — задание работающего насоса с меньшей наработкой (будущего
+  ведущего, 04 §3.2); сухой ход и нет напряжения — прежнее.
+- NE 107 станции — по тревогам после их задержек и без подавления по условию; биты `NO_RESERVE`,
+  `LACK`, `STEP_FALLBACK` `wState` — условие тревоги без подавления.
+- `FB_Annunciator` берёт счётчики сводки прошлого цикла (сводка вызывается после ядра): задержка
+  сирены, лампы и K1 — один цикл `MainTask`.
+
+Тесты (`FB_StationCore_Test`, подменные насосы): `StationStsSizeIs72`, `StationDefaultsMatchTypeDefaults`,
+`PlcStartLogsEventAndDelaysRequests`, `ManualDryRunInterlocksAllPumps`, `CommandPulsesClearedAndCounted`,
+`ResetButtonEdgeResetsAndLogs`, `LkgRejectsInvalidCfg`, `RevertCfgRestoresLkg`, `ApplyProjectCfgRestoresDefaults`,
+`EmergencyRequiresAllAtFullSpeed`, `PowerLostSuppressesLackNoresAts`, `LackSuppressesNoReserve`,
+`StepFallbackSuppressedInEmergency`, `PidControlsLeadSpeed`, `FloatModeStartsAllOnLs102`,
+`AtsReplacesFaultedLead`, `UnderloadTripInterlocksAndAts`, `ManualToAutoAdoptsRunningPump`,
+`ExportCommandAndEvents`, `AlarmIdCommandsResultAndClear`, `SimulationAlarmAndFaultEvent`,
+`FlowAlarmsSuppressedUntilSettled`, `VentilationAndAnnunciatorOutputs`.
 
 ## 7. `PRG_Station` — порядок цикла (К1)
 
-`PRG_Station` вызывается в `MainTask` после `PRG_DeviceList` и до `PRG_Devices`. Экземпляры ФБ
-раздела 6 — в его `VAR`; `aitfPump`, `arefPump : ARRAY[1..3] OF REFERENCE TO PL.FB_MotorVfd`,
+`PRG_Station` вызывается в `MainTask` после `PRG_DeviceList` и до `PRG_Devices`. Шаги 2–15 выполняет
+ядро `FB_StationCore` (раздел 6.15; экземпляр `PRG_Station.fbCore`, экземпляры ФБ раздела 6 — в его
+`VAR`), `PRG_Station` — шаг 1 и привязку ядра к сгенерированному слою: выходы устройств прошлого цикла
+во входы ядра, номера тревог через сводку, сброс и квитирование всех устройств, входы автоматики,
+сводку тревог и журнал. `aitfPump`, `arefPump : ARRAY[1..3] OF REFERENCE TO PL.FB_MotorVfd`,
 `itfTime := GVL_Time.fbClockMain`, `itfEvents := GVL_Log.fbEventLog` присваиваются в начале каждого
 цикла.
 
@@ -1293,7 +1493,155 @@ END_VAR
     `FillFeed(GVL_Log.stEventFeed)` — после всех событий цикла.
 15. **Состояние:** заполнить `GVL_Station.stStationSts` (поля раздела 3.1, `eNe107` по 04 §19.3).
 
-Тест размера: `StationStsSizeIs72`.
+Код `PRG_Station` создаётся в `src/POUs/Station/PRG_Station/` при сборке контура (этап 2 раздела 15.2):
+до слияния с веткой команды К3 нет `GVL_Devices`, `GVL_Hmi`, `GVL_IO`, `GVL_Persist`, `GVL_Log`,
+`GVL_DeviceList` (и `GVL_Time`, `GVL_Sim` команды К2), и `cds.py check` его не скомпилирует. Пути ниже
+сверяет `check_docs_consistency.py` (C10) по выводу генератора и контракту библиотеки; логики в программе
+нет — она в ядре и проверена его тестами.
+
+```st
+// Назначение: программа станции (MainTask, после PRG_DeviceList, до PRG_Devices) — привязка ядра
+//             FB_StationCore к сгенерированному слою, журналу и сводке тревог (DESIGN 7)
+// Автор:      <ИМЯ ФАМИЛИЯ>
+// Версия:     0.1.0
+// Документ:   docs/DESIGN.md, раздел 7
+PROGRAM PRG_Station
+VAR
+    fbCore           : FB_StationCore;                                           // шаги 2–15 (6.15)
+    aitfPump         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF PL.I_MotorVfd;      // насосы для ядра
+    arefPump         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF REFERENCE TO PL.FB_MotorVfd;   // входы автоматики
+    aitfSource       : ARRAY[1..GVL_Const.ALM_SOURCE_MAX] OF PL.I_AlarmSource;   // источники сводки
+    uiIdx            : UINT;                                                     // насос, устройство, приоритет
+    xAckIdFound      : BOOL;                                                     // ответ сводки на udiAckId
+    xShelveIdFound   : BOOL;                                                     // … на udiShelveId
+    xUnshelveIdFound : BOOL;                                                     // … на udiUnshelveId
+END_VAR
+```
+
+```st
+// 1. Ссылки и приёмник журнала — каждый цикл (L12 контракта)
+PL.GVL_Lib.itfAlarmSink := GVL_Log.fbEventLog;
+GVL_Log.fbEventLog.itfTime := GVL_Time.fbClockMain;
+aitfPump[1] := GVL_Devices.fbP101;
+aitfPump[2] := GVL_Devices.fbP102;
+aitfPump[3] := GVL_Devices.fbP103;
+arefPump[1] REF= GVL_Devices.fbP101;
+arefPump[2] REF= GVL_Devices.fbP102;
+arefPump[3] REF= GVL_Devices.fbP103;
+
+// 2. Номера тревог выполняет сводка (ядро засчитывает команду, пишет результат, сбрасывает номер)
+xAckIdFound := FALSE;
+xShelveIdFound := FALSE;
+xUnshelveIdFound := FALSE;
+IF GVL_Station.stStationCmd.udiAckId <> 0 THEN
+    xAckIdFound := GVL_Log.fbAlarmSummary.AckById(udiId := GVL_Station.stStationCmd.udiAckId);
+END_IF
+IF GVL_Station.stStationCmd.udiShelveId <> 0 THEN
+    xShelveIdFound := GVL_Log.fbAlarmSummary.ShelveById(udiId := GVL_Station.stStationCmd.udiShelveId, xShelve := TRUE);
+END_IF
+IF GVL_Station.stStationCmd.udiUnshelveId <> 0 THEN
+    xUnshelveIdFound := GVL_Log.fbAlarmSummary.ShelveById(udiId := GVL_Station.stStationCmd.udiUnshelveId,
+                                                          xShelve := FALSE);
+END_IF
+
+// 3. Входы ядра — выходы устройств прошлого цикла (шаг 4); импульс сброса насоса — до PRG_Devices
+FOR uiIdx := 1 TO GVL_Const.STN_PUMP_COUNT DO
+    fbCore.axCommOk[uiIdx] := (arefPump[uiIdx].stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0;
+END_FOR
+fbCore.axRunFeedback[1] := GVL_IO.xP101_RFB;
+fbCore.axRunFeedback[2] := GVL_IO.xP102_RFB;
+fbCore.axRunFeedback[3] := GVL_IO.xP103_RFB;
+fbCore.axPumpReset[1] := GVL_Hmi.stP101Cmd.stCommon.xReset;
+fbCore.axPumpReset[2] := GVL_Hmi.stP102Cmd.stCommon.xReset;
+fbCore.axPumpReset[3] := GVL_Hmi.stP103Cmd.stCommon.xReset;
+fbCore.arCurrent_A[1] := GVL_Devices.fbIT111.rValue_eu;
+fbCore.arCurrent_A[2] := GVL_Devices.fbIT121.rValue_eu;
+fbCore.arCurrent_A[3] := GVL_Devices.fbIT131.rValue_eu;
+fbCore.axCurrentValid[1] := GVL_Devices.fbIT111.xValid;
+fbCore.axCurrentValid[2] := GVL_Devices.fbIT121.xValid;
+fbCore.axCurrentValid[3] := GVL_Devices.fbIT131.xValid;
+fbCore.axOverheat[1] := GVL_Devices.fbTS112.xValue;
+fbCore.axOverheat[2] := GVL_Devices.fbTS122.xValue;
+fbCore.axOverheat[3] := GVL_Devices.fbTS132.xValue;
+FOR uiIdx := 1 TO GVL_Const.ALM_PRIO_COUNT DO
+    fbCore.auiUnack[uiIdx] := GVL_Log.fbAlarmSummary.auiUnack[uiIdx];
+    fbCore.auiActive[uiIdx] := GVL_Log.fbAlarmSummary.auiActive[uiIdx];
+END_FOR
+fbCore(itfTime := GVL_Time.fbClockMain, itfEvents := GVL_Log.fbEventLog, aitfPump := aitfPump,
+       rLevel_m := GVL_Devices.fbLT101.rValue_eu, xLevelValid := GVL_Devices.fbLT101.xValid,
+       eLevelNe107 := GVL_Devices.fbLT101.stSts.stCommon.eNe107, xLevelL := GVL_Devices.fbLT101.xL,
+       xLevelLL := GVL_Devices.fbLT101.xLL, xLevelH := GVL_Devices.fbLT101.xH, xLevelHH := GVL_Devices.fbLT101.xHH,
+       rLvlL_m := GVL_Persist.stLT101Cfg.astLimit[PL.E_AiAlarm.L].rSetpoint_eu,
+       rLvlH_m := GVL_Persist.stLT101Cfg.astLimit[PL.E_AiAlarm.H].rSetpoint_eu,
+       xFloatHigh := GVL_Devices.fbLS102.xValue, xFloatDry := GVL_Devices.fbLS103.xValue,
+       xPowerOk := GVL_Devices.fbES301.xValue, xResetButton := GVL_Devices.fbHS501.xValue,
+       xSilenceButton := GVL_Devices.fbHS502.xValue, xGasHigh := GVL_Devices.fbAT401.xH OR GVL_Devices.fbAT402.xH,
+       xDoorOpen := GVL_Devices.fbZS404.xValue, xTempHigh := GVL_Devices.fbTT403.xH,
+       xFire := GVL_Devices.fbYS405.xValue, xApplyProjectCfg := GVL_Hmi.xApplyProjectCfg,
+       xAckIdFound := xAckIdFound, xShelveIdFound := xShelveIdFound, xUnshelveIdFound := xUnshelveIdFound,
+       xSimulation := GVL_Sim.xSimulation, udiSimFaultSeq := GVL_Sim.stSimSts.udiFaultSeq,
+       eLogExport := GVL_Log.eExportState, uiExportLines := GVL_Log.uiExportLines,
+       udiExportError := GVL_Log.udiExportError, udiEventSeq := GVL_Log.fbEventLog.udiSeqLast,
+       udiLogOverwritten := GVL_Log.fbEventLog.udiOverwritten, ePrioUnack := GVL_Log.fbAlarmSummary.ePrioUnack,
+       udiNewHighSeq := GVL_Log.fbAlarmSummary.udiNewHighSeq,
+       stCmd := GVL_Station.stStationCmd, stCfgPersist := GVL_Persist.stStationCfg, stCfgLkg := GVL_Station.stCfgLkg,
+       stRetain := GVL_Persist.stStationRetain, fbLIC101 := GVL_Station.fbLIC101,
+       stLIC101Cmd := GVL_Station.stLIC101Cmd, stLIC101Cfg := GVL_Persist.stLIC101Cfg,
+       stLIC101Retain := GVL_Persist.stLIC101Retain, fbAlarms := GVL_Station.fbAlarms);
+
+// 4. Общий сброс и квитирование всех устройств — только из MainTask (R3 контракта); выгрузка журнала
+FOR uiIdx := 1 TO GVL_DeviceList.DEVICE_COUNT DO
+    IF GVL_DeviceList.aitfDevice[uiIdx] <> 0 THEN
+        IF fbCore.xResetAllReq THEN
+            GVL_DeviceList.aitfDevice[uiIdx].Reset();
+        END_IF
+        IF fbCore.xAckAllReq THEN
+            GVL_DeviceList.aitfDevice[uiIdx].AckAll();
+        END_IF
+    END_IF
+END_FOR
+IF fbCore.xExportReq THEN
+    GVL_Log.fbEventLog.TakeSnapshot();
+    GVL_Log.xExportReq := TRUE;
+END_IF
+
+// 5. Входы автоматики устройств (шаг 12, R5): запросы, блокировки, задание; копии для HMI
+FOR uiIdx := 1 TO GVL_Const.STN_PUMP_COUNT DO
+    arefPump[uiIdx].xAutoRun := fbCore.axRun[uiIdx];
+    arefPump[uiIdx].wInterlock := fbCore.awInterlock[uiIdx];
+    arefPump[uiIdx].rSpeedSpAuto_pct := fbCore.rSpeedSp_pct;
+    GVL_Station.axPumpRun[uiIdx] := fbCore.axRun[uiIdx];
+    GVL_Station.awPumpInterlock[uiIdx] := fbCore.awInterlock[uiIdx];
+END_FOR
+GVL_Station.rSpeedSp_pct := fbCore.rSpeedSp_pct;
+GVL_Devices.fbPT201.xSuppressLimitAlarms := fbCore.xSuppressFlowAlarms;
+GVL_Devices.fbFT202.xSuppressLimitAlarms := fbCore.xSuppressFlowAlarms;
+GVL_Devices.fbV1.xAutoRun := fbCore.xV1Run;
+GVL_Devices.fbV1.wInterlock := fbCore.wV1Interlock;
+GVL_IO.xHA1 := fbCore.xHorn;
+GVL_IO.xHL1 := fbCore.xLamp;
+GVL_IO.xK1 := fbCore.xK1;
+
+// 6. Сводка тревог (шаг 13): устройства, LIC101, станция
+FOR uiIdx := 1 TO GVL_DeviceList.DEVICE_COUNT DO
+    aitfSource[uiIdx] := GVL_DeviceList.aitfDevice[uiIdx];
+END_FOR
+aitfSource[GVL_DeviceList.DEVICE_COUNT + 1] := GVL_Station.fbLIC101;
+aitfSource[GVL_DeviceList.DEVICE_COUNT + 2] := GVL_Station.fbAlarms;
+GVL_Log.fbAlarmSummary(aitfSource := aitfSource, uiSourceCount := GVL_DeviceList.DEVICE_COUNT + 2,
+                       itfTime := GVL_Time.fbClockMain, stView := GVL_Log.stAlarmView);
+
+// 7. Журнал (шаг 14): аудит режимов устройств; страница HMI и курсор — после всех событий цикла
+GVL_Log.fbDeviceAudit(aitfDevice := GVL_DeviceList.aitfDevice, auiDevNo := GVL_DeviceList.auiDevNo,
+                      itfEvents := GVL_Log.fbEventLog);
+GVL_Log.fbEventLog.FillView(stView := GVL_Log.stEventView);
+GVL_Log.fbEventLog.FillFeed(stFeed := GVL_Log.stEventFeed);
+
+// 8. Состояние станции (шаг 15)
+GVL_Station.stStationSts := fbCore.stSts;
+```
+
+Тест размера: `StationStsSizeIs72` (набор `FB_StationCore_Test`).
 
 ## 8. Полевой слой (К3)
 
