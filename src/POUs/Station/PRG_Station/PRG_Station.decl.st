@@ -13,4 +13,5 @@ VAR
     xAckIdFound      : BOOL;                                                     // ответ сводки на udiAckId
     xShelveIdFound   : BOOL;                                                     // … на udiShelveId
     xUnshelveIdFound : BOOL;                                                     // … на udiUnshelveId
+    xDevicesCalled   : BOOL;                                                     // PRG_Devices уже выполнялся
 END_VAR

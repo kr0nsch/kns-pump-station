@@ -120,9 +120,14 @@ aitfSource[GVL_DeviceList.DEVICE_COUNT + 2] := GVL_Station.fbAlarms;
 GVL_Log.fbAlarmSummary(aitfSource := aitfSource, uiSourceCount := GVL_DeviceList.DEVICE_COUNT + 2,
                        itfTime := GVL_Time.fbClockMain, stView := GVL_Log.stAlarmView);
 
-// 7. Журнал (шаг 14): аудит режимов устройств; страница HMI и курсор — после всех событий цикла
-GVL_Log.fbDeviceAudit(aitfDevice := GVL_DeviceList.aitfDevice, auiDevNo := GVL_DeviceList.auiDevNo,
-                      itfEvents := GVL_Log.fbEventLog);
+// 7. Журнал (шаг 14): аудит режимов устройств — с цикла после первого вызова устройств (до него режим устройства —
+//    начальное значение, а не восстановленный: каждый старт давал бы событие 101018 по каждому устройству);
+//    страница HMI и курсор — после всех событий цикла
+IF xDevicesCalled THEN
+    GVL_Log.fbDeviceAudit(aitfDevice := GVL_DeviceList.aitfDevice, auiDevNo := GVL_DeviceList.auiDevNo,
+                          itfEvents := GVL_Log.fbEventLog);
+END_IF
+xDevicesCalled := TRUE;                                 // PRG_Devices выполняется следом в этом цикле
 GVL_Log.fbEventLog.FillView(stView := GVL_Log.stEventView);
 GVL_Log.fbEventLog.FillFeed(stFeed := GVL_Log.stEventFeed);
 
