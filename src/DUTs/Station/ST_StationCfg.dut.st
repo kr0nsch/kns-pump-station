@@ -57,7 +57,7 @@ STRUCT
         (ePriority := PL.E_AlarmPriority.Medium),                        // 5 ATS
         (ePriority := PL.E_AlarmPriority.Medium),                        // 6 FLOAT
         (ePriority := PL.E_AlarmPriority.Medium),                        // 7 LDEV
-        (ePriority := PL.E_AlarmPriority.Low),                           // 8 STEP
+        (ePriority := PL.E_AlarmPriority.Low, tOnDelay := T#10S),        // 8 STEP: без переходных циклов старта
         (ePriority := PL.E_AlarmPriority.Low, tOnDelay := T#10M),        // 9 NOAUTO
         (ePriority := PL.E_AlarmPriority.Medium),                        // 10 UL1
         (ePriority := PL.E_AlarmPriority.Medium),                        // 11 UL2

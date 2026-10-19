@@ -54,4 +54,5 @@ FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
     axRunPrev[uiPump] := axRun[uiPump];
 END_FOR
 xLack := uiRequired > uiAvailable + uiForeign;
-xNoReserve := uiAvailable < stCfg.uiDutyMax + 1;
+// резерв — сверх насосов обычного режима: ступенчатое и ПИД работают не больше чем MIN(uiDutyMax, STN_DUTY_MAX)
+xNoReserve := uiAvailable < MIN(stCfg.uiDutyMax, GVL_Const.STN_DUTY_MAX) + 1;

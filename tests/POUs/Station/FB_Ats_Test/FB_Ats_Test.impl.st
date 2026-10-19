@@ -10,3 +10,4 @@ NoReserveWhenOnePumpUnavailable();
 ForeignRunningCountsAgainstLack();
 UnrequestedOrManualFaultIsNotAts();
 TimeBackwardsWindowRestarts();
+NoReserveUsesEffectiveDuty();

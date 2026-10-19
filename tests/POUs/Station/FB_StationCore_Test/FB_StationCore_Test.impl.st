@@ -22,3 +22,5 @@ AlarmIdCommandsResultAndClear();
 SimulationAlarmAndFaultEvent();
 FlowAlarmsSuppressedUntilSettled();
 VentilationAndAnnunciatorOutputs();
+DryRunStopSuppressesNoReserve();
+StepAlarmNoFlickerOnStartAndAutoEntry();

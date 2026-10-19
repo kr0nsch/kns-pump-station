@@ -291,7 +291,8 @@ axCond[E_StationAlarm.LACK] := fbAts.xLack;
 axSuppress[E_StationAlarm.LACK] := fbPower.xPowerLost OR xManual;
 arValue[E_StationAlarm.LACK] := UINT_TO_REAL(uiRequired);
 axCond[E_StationAlarm.NORES] := fbAts.xNoReserve;
-axSuppress[E_StationAlarm.NORES] := fbAts.xLack OR fbPower.xPowerLost OR xManual;
+// сухой ход станции блокирует все насосы: они недоступны по защите, а не из-за отказов (дубль KNS1.DRY)
+axSuppress[E_StationAlarm.NORES] := fbAts.xLack OR fbPower.xPowerLost OR xManual OR fbProt.xDryRun;
 arValue[E_StationAlarm.NORES] := UINT_TO_REAL(fbRotation.uiAvailable);
 axCond[E_StationAlarm.ATS] := fbAts.xAtsActive;
 axSuppress[E_StationAlarm.ATS] := fbPower.xPowerLost;

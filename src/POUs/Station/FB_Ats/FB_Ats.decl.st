@@ -27,7 +27,7 @@ VAR_OUTPUT
     xAtsActive  : BOOL;             // есть насос, снятый АВР и ещё недоступный (KNS1.ATS)
     axRemoved   : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;
     xLack       : BOOL;             // uiRequired > uiAvailable + uiForeign (KNS1.LACK; задержка — в Cfg тревоги)
-    xNoReserve  : BOOL;             // uiAvailable < uiDutyMax + 1 (KNS1.NORES; подавления — в PRG_Station)
+    xNoReserve  : BOOL;             // uiAvailable < MIN(uiDutyMax, STN_DUTY_MAX) + 1 (KNS1.NORES; подавления — в ядре)
     udiAtsCount : UDINT;            // АВР с запуска (HMI)
 END_VAR
 VAR

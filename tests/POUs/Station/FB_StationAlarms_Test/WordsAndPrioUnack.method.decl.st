@@ -1,4 +1,4 @@
-// 04 §19.3: слова wAlmActive, wAlmUnack и высший приоритет неквитированных (Critical EHL выше Low STEP)
+// 04 §19.3: слова wAlmActive, wAlmUnack и высший приоритет неквитированных (Critical EHL выше Low SIM)
 METHOD PRIVATE WordsAndPrioUnack
 VAR
     fbDut  : FB_StationAlarms;          // ФБ под тестом
