@@ -65,6 +65,14 @@
       "title_contains": "unittest framework for CODESYS",
       "install_from": {"env": "COUNIT_LIBRARY", "default": null}
     },
+    "plc-process-lib": {
+      "label": "plc-process-lib 1.0.0.0 (библиотека портфолио, пространство имён PL)",
+      "namespace": "PL",
+      "title": "plc-process-lib",
+      "company": "plc-portfolio",
+      "version": "1.0.0.0",
+      "build_from_repo": {"env": "PL_REPO", "default": "../plc-process-lib"}
+    },
     "standard": {
       "label": "Standard (плейсхолдер #Standard, версию задаёт профиль CODESYS)",
       "title": "Standard",
@@ -90,7 +98,7 @@
     "description": "Шаблон ПЛК-репозитория портфолио: пример ФБ с режимами и диагностикой, функция F_Clamp",
     "released": false,
     "exclude": ["PRG_Main"],
-    "libraries": ["standard"],
+    "libraries": ["standard", "plc-process-lib"],
     "path": {"env": "CDS_LIBRARY", "default": "build/{name}.library"},
     "compiled_path": {"env": "CDS_COMPILED_LIBRARY", "default": "build/{name}.compiled-library"}
   },
