@@ -14,4 +14,5 @@ VAR_GLOBAL
     fbTankModelTest       : FB_TankModel_Test;
     fbHydraulicSolverTest : FB_HydraulicSolver_Test;
     fbVfdSimTest          : FB_VfdSim_Test;
+    fbPlantModelTest      : FB_PlantModel_Test;
 END_VAR

@@ -1,0 +1,19 @@
+// Тело набора вызывает каждый тест в каждом цикле; coUnit отмечает завершённые (TEST_FINISHED)
+DefaultsInitialState();
+MassBalanceNoPumps();
+SteadyStateOnePump87();
+TimeAccelerationConsistency();
+ClearFaultsZeroesFaultsOnly();
+StormNowTrapezoid();
+AiFaultCurrents();
+FloatStuckNormalTripped();
+FanNoFeedback();
+FaultSeqCountsChanges();
+PumpAndStationInjectionsReachIo();
+ButtonsPulse();
+ResetPlantRestoresLevelAndDrives();
+AirLockAndClogCurrents();
+IntakeDryStopsPumping();
+TimeBackwardsHoldsState();
+SetTimeOfDayKeepsDay();
+StepCappedAtMax();
