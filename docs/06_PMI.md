@@ -168,7 +168,7 @@ ISA-18.2, журнал и суточный режим работы. Функци
 | `axOverheat[i]` | `BOOL` | перегрев обмотки: `TS1n2` сработал, цепь аварии ПЧ разомкнута (авария ПЧ) |
 | `axLeak[i]` | `BOOL` | протечка в камеру статора: `MS1n3` сработал |
 | `axVfdCommLoss[i]` | `BOOL` | ПЧ не отвечает: `GVL_IO.xMbOk_RS485_1_Sn = FALSE`, регистры замирают; через 5 с без запросов ПЧ переходит на 50 Гц (сторожевой таймер ПЧ, [04_algorithms.md](04_algorithms.md), раздел 12; модель ПЧ — так же). Все три — потеря линии RS485-1 |
-| `axLocal[i]`, `axLocalRun[i]` | `BOOL` | переключатель `HS1n4` в «Местное»; пуск с местного поста |
+| `axLocal[i]`, `axLocalRun[i]` | `BOOL` | переключатель `HS1n4` в «Местное»; пуск с местного поста (ПЧ — на частоте местного поста 50 Гц, `SIM_VFD_LOCAL_FREQ_HZ`) |
 | `aeAiFault[k]`, `arAiForced_mA[k]` | `E_SimAiFault`, `REAL` | сигнал 4–20 мА датчика, индекс `SIM_AI_*`: 1 LT101, 2 PT201, 3 FT202, 4 AT401, 5 AT402. Значения: `WireBreak` 0 мА, `FailLow` 3,0 мА, `FailHigh` 22 мА, `UnderRange` 3,7 мА, `OverRange` 20,8 мА, `Freeze` — последнее значение, `Forced` — ток `arAiForced_mA[k]` |
 | `eLs102Stuck`, `eLs103Stuck` | `E_SimFloatStuck` | поплавок: `None`, `StuckNormal` (не срабатывает), `StuckTripped` (сработал и не возвращается; то же — обрыв цепи НЗ-контакта) |
 | `xPowerLoss` | `BOOL` | нет напряжения на вводе: `ES301 = FALSE`, ПЧ обесточены, ИБП на батареях (`YS302`) |

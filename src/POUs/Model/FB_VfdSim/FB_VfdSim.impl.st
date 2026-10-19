@@ -59,8 +59,11 @@ IF xResetReq THEN
     xResetReq := FALSE;
 END_IF
 
-// 4. Задание (FREF или предустановленная частота сторожевого таймера) и пуск
-IF xWatchdog THEN
+// 4. Задание (местный пост, предустановленная частота сторожевого таймера или FREF) и пуск
+IF xLocal THEN
+    // «Местное»: задание по сети не действует (FB_MotorVfd в Local следит за фактом — у стоящего насоса 0 %)
+    rRef_Hz := GVL_Const.SIM_VFD_LOCAL_FREQ_HZ;
+ELSIF xWatchdog THEN
     rRef_Hz := GVL_Const.SIM_VFD_WATCHDOG_FREQ_HZ;
 ELSE
     rRef_Hz := UINT_TO_REAL(uiFrefRx) / GVL_Const.SIM_VFD_COUNTS_PER_HZ;

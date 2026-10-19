@@ -10,6 +10,7 @@ PowerLossAndBoot();
 NoFeedbackInjection();
 FeedbackStuckInjection();
 LocalRun();
+LocalRunAtLocalPreset();
 TimeBackwardsHoldsFrequency();
 CurrentRegisterScaled();
 ResetDriveClearsFault();
