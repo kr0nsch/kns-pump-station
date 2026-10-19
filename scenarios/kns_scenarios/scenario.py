@@ -7,7 +7,14 @@
 ``timeout_s``. Внутри шага действия выполняются в этом порядке: reset, write, pulse, mark, capture,
 hold_s, wait, wait_alarm, expect, expect_delay, repeat (другой порядок — отдельные шаги). Неуспех
 ``expect`` не прерывает сценарий — отчёт собирает все проверки; таймаут ``wait``
-прерывает (дальше проверять нечего).
+прерывает (дальше проверять нечего). Любая другая ошибка шага (пропуск записей журнала, неверный литерал,
+обрыв связи) тоже прерывает сценарий и попадает в отчёт как его ошибка, завершение выполняется всегда.
+
+``expect_delay`` от метки сценария: метка ``lrMainNow_s`` читается после записи, поэтому она не раньше
+действия (с точностью до цикла MainTask, в начале которого ``lrMainNow_s`` обновляется) и запаздывает не
+больше чем на «период опроса · k». Запись журнала ищется среди записей с номером больше последнего номера
+журнала перед записью шага (она может оказаться раньше метки), допуск «период опроса · k» — только для
+``min_s``, для ``max_s`` — один цикл MainTask · k: измеренная задержка не больше настоящей.
 """
 
 from __future__ import annotations
@@ -47,6 +54,7 @@ TEARDOWN_KEYS = frozenset({"clear_faults", "inflow_m3h"})
 BACKENDS = frozenset({"opcua", "cds"})
 PUMPS = 3  # GVL_Const.STN_PUMP_COUNT
 DEFAULT_INFLOW_M3H = 100.0  # 06 §5.2, п. 3
+MAIN_CYCLE_S = 0.02  # период MainTask (DESIGN, раздел 12): шаг метки lrMainNow_s
 PASS = "соответствует"
 FAIL = "не соответствует"
 NOT_CHECKED = "не проверялось"
@@ -168,6 +176,7 @@ class Runner:
         self.backend = backend
         self.alarms = alarms
         self.feed = feed
+        self.mark_seq: dict[str, int] = {}  # метка → последний номер журнала перед записью шага
 
     # --- И0 и завершение ------------------------------------------------------------------------
 
@@ -249,12 +258,19 @@ class Runner:
         target = target_id("alarm", "event")
         if target is None:
             raise ScenarioError(f"{label}: expect_delay без alarm или event")
-        # от метки сценария — допуск «период опроса · k» (метка читается после записи, DESIGN 14.3);
-        # между записями журнала — без допуска (погрешность — цикл задачи)
-        tolerance = 0.0
+        # от метки сценария: метка не раньше действия (с точностью до цикла MainTask) и запаздывает не больше
+        # чем на период опроса · k — запись журнала может оказаться раньше метки; между записями журнала —
+        # без допуска (погрешность — цикл задачи)
+        late = early = 0.0
+        after_seq: int | None = None
+        after_mono: float | None = None
         if "from" in spec:
-            start = self.ctx.marks[str(spec["from"])]
-            tolerance = self.ctx.poll_s * self.ctx.time_scale
+            name = str(spec["from"])
+            start = self.ctx.marks[name]
+            early = MAIN_CYCLE_S * self.ctx.time_scale
+            late = self.ctx.poll_s * self.ctx.time_scale + early
+            after_seq = self.mark_seq.get(name)
+            after_mono = start - late if after_seq is None else None
         else:
             source = target_id("from_alarm", "from_event")
             if source is None:
@@ -270,11 +286,12 @@ class Runner:
                 result.checks.append(Check(label, "начальная запись журнала", False, note="не найдена"))
                 return
             start = rec_from.mono_s
+            after_mono = start
         rec = None
         deadline = self.ctx.clock() + self.ctx.real_timeout(timeout_s)
         while rec is None and self.ctx.clock() < deadline:
             self._poll_feed()
-            rec = find(feed.records, id=target[0], new_state=target[1], after_mono_s=start)
+            rec = find(feed.records, id=target[0], new_state=target[1], after_mono_s=after_mono, after_seq=after_seq)
             if rec is None:
                 self.ctx.sleep(self.ctx.poll_s)
         if rec is None:
@@ -282,8 +299,8 @@ class Runner:
             return
         delay = rec.mono_s - start
         result.measured[label] = delay
-        ok = delay >= float(spec.get("min_s", 0.0)) - tolerance and (
-            "max_s" not in spec or delay <= float(spec["max_s"]) + tolerance
+        ok = delay >= float(spec.get("min_s", 0.0)) - late and (
+            "max_s" not in spec or delay <= float(spec["max_s"]) + early
         )
         result.checks.append(Check(label, f"задержка {delay:.3f} с", ok, delay))
 
@@ -294,6 +311,9 @@ class Runner:
         for index, step in enumerate(steps, 1):
             label = f"{prefix}{index}" + (f" ({step['note']})" if "note" in step else "")
             timeout = float(step.get("timeout_s", default_timeout_s))
+            if "mark" in step and self.feed is not None:
+                # граница поиска записей журнала для expect_delay от этой метки — до действий шага
+                self.mark_seq[str(step["mark"])] = self.feed.last_seq()
             if "reset" in step:
                 try:
                     ctx.client.reset(step["reset"])
@@ -342,6 +362,8 @@ class Runner:
             self.run_steps(scenario.steps, scenario.timeout_s, result)
         except (ScenarioTimeout, ScenarioError, KeyError) as exc:
             result.error = str(exc)
+        except Exception as exc:  # пропуск журнала, литерал, обрыв связи: итог сценария — с ошибкой, не исключение
+            result.error = f"{type(exc).__name__}: {exc}"
         finally:
             result.marks = dict(self.ctx.marks)
             try:

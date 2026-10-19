@@ -1,7 +1,9 @@
 """Тревоги в сценариях: коды по ``docs/05_alarm_list.csv``, состояние ISA-18.2 по ``GVL_Log.stAlarmView``.
 
 ``stAlarmView`` содержит все тревоги в состоянии, отличном от ``Normal`` (в том числе отложенные, подавленные
-и выведенные из работы, DESIGN, раздел 3.2): нет строки с номером тревоги — ``Normal``.
+и выведенные из работы, DESIGN, раздел 3.2): нет строки с номером тревоги — ``Normal``. Если тревог не в
+``Normal`` больше, чем строк списка (``uiActiveTotal > uiCount``), отсутствие строки ничего не говорит: состояние
+такой тревоги — ``UNKNOWN``, и ожидание ``Normal`` не завершается ложным успехом.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ ALARM_VIEW = "GVL_Log.stAlarmView"
 VIEW_ROWS = 50  # GVL_Const.ALM_VIEW_ROWS
 ALARM_LIST = Path(__file__).resolve().parents[2] / "docs" / "05_alarm_list.csv"
 NORMAL = "Normal"
+UNKNOWN = "Unknown"  # тревоги нет в переполненном списке
 STATE_ENUM = "E_AlarmState"
 
 
@@ -58,9 +61,10 @@ class AlarmView:
             raise KeyError(f"тревоги {code} нет в 05_alarm_list.csv")
         return self.catalog[code].id
 
-    def states(self) -> dict[int, str]:
-        """Номер тревоги → имя состояния для всех строк списка."""
-        count = min(int(self.client.read([f"{ALARM_VIEW}.uiCount"])[0]), VIEW_ROWS)
+    def _read(self) -> tuple[dict[int, str], bool]:
+        """Номер тревоги → имя состояния по строкам списка и признак переполнения списка."""
+        count_raw, total_raw = self.client.read([f"{ALARM_VIEW}.uiCount", f"{ALARM_VIEW}.uiActiveTotal"])
+        count = min(int(count_raw), VIEW_ROWS)
         paths: list[str] = []
         for row in range(1, count + 1):
             paths += [f"{ALARM_VIEW}.astRow[{row}].udiId", f"{ALARM_VIEW}.astRow[{row}].eState"]
@@ -69,8 +73,13 @@ class AlarmView:
         for i in range(0, len(values), 2):
             state = int(values[i + 1])
             out[int(values[i])] = self.state_names.get(state, str(state))
-        return out
+        return out, int(total_raw) > count
+
+    def states(self) -> dict[int, str]:
+        """Номер тревоги → имя состояния для всех строк списка."""
+        return self._read()[0]
 
     def state(self, code: str) -> str:
-        """Состояние тревоги ``code`` (``ActiveUnack``, ``Normal``…)."""
-        return self.states().get(self.alarm_id(code), NORMAL)
+        """Состояние тревоги ``code`` (``ActiveUnack``, ``Normal``…; ``UNKNOWN`` — нет в переполненном списке)."""
+        rows, overflow = self._read()
+        return rows.get(self.alarm_id(code), UNKNOWN if overflow else NORMAL)

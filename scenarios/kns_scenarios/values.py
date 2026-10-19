@@ -1,9 +1,14 @@
 """Значения ПЛК в сценариях: литералы CODESYS, перечисления, сравнения (DESIGN, раздел 14.3).
 
 Литералы — как в ST и в ``cds_common.plc_value`` инструментов: ``TRUE``/``FALSE``, ``INT#5``, ``REAL#1.5``,
-длительности ``T#1M30S`` (в секундах), перечисления ``E_MotorState.Fault`` и ``PL.E_MotorState.Fault`` (по
-таблице ``enums.py``, которую генерирует ``tools_project/gen_enums.py``), числа и строки в одинарных
-кавычках. В сценариях нет «магических» чисел для состояний: только имена перечислений.
+перечисления ``E_MotorState.Fault`` и ``PL.E_MotorState.Fault`` (по таблице ``enums.py``, которую генерирует
+``tools_project/gen_enums.py``), числа и строки в одинарных кавычках. В сценариях нет «магических» чисел для
+состояний: только имена перечислений.
+
+Длительности — в единицах ПЛК: ``T#10M`` / ``TIME#…`` — целые миллисекунды (``TIME`` в CODESYS — 32-битное
+число мс, сервер OPC UA отдаёт и принимает его числом), ``LTIME#…`` / ``LT#…`` — целые наносекунды. Так запись
+``Cfg.tMaxContRun = T#10M`` (PMI-11) доходит до ПЛК как 600 000 мс, а не 600, и сравнение с прочитанным
+значением идёт в тех же единицах. ``parse_time`` — та же длительность в секундах (выдержки сценария).
 """
 
 from __future__ import annotations
@@ -19,7 +24,10 @@ OPERATORS = ("=", "<>", "<", "<=", ">", ">=", "&")
 _TYPED_RE = re.compile(r"^(?P<type>[A-Za-z_]+)#(?P<value>.+)$")
 _TIME_RE = re.compile(r"(?P<num>\d+(?:\.\d+)?)(?P<unit>MS|US|NS|D|H|M|S)", re.IGNORECASE)
 _TIME_UNITS = {"D": 86400.0, "H": 3600.0, "M": 60.0, "S": 1.0, "MS": 1e-3, "US": 1e-6, "NS": 1e-9}
-_TIME_TYPES = ("T", "TIME", "LT", "LTIME")
+_TIME_TYPES = ("T", "TIME")
+_LTIME_TYPES = ("LT", "LTIME")
+MS_PER_S = 1000
+NS_PER_S = 1_000_000_000
 _INT_TYPES = ("SINT", "USINT", "INT", "UINT", "DINT", "UDINT", "LINT", "ULINT", "BYTE", "WORD", "DWORD", "LWORD")
 _REAL_TYPES = ("REAL", "LREAL")
 _ENUM_RE = re.compile(r"^(?:PL\.)?(?P<type>E_\w+)\.(?P<value>\w+)$")
@@ -81,7 +89,9 @@ def parse_literal(text: str | PlcValue, enums: EnumTable | None = None) -> PlcVa
     if typed is not None and not t.startswith(("16#", "2#", "8#")):
         kind, value = typed.group("type").upper(), typed.group("value")
         if kind in _TIME_TYPES:
-            return parse_time(t)
+            return round(parse_time(t) * MS_PER_S)
+        if kind in _LTIME_TYPES:
+            return round(parse_time(t) * NS_PER_S)
         if kind == "BOOL":
             return value.upper() in ("TRUE", "1")
         if kind in _INT_TYPES:

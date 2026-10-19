@@ -99,6 +99,7 @@ def variables() -> dict[str, tuple[Any, ua.VariantType]]:
         "GVL_Log.stEventFeed.udiSeqLast": (0, V.UInt32),
         "GVL_Log.stEventFeed.uiCount": (0, V.UInt16),
         "GVL_Log.stAlarmView.uiCount": (0, V.UInt16),
+        "GVL_Log.stAlarmView.uiActiveTotal": (0, V.UInt16),
     }
     for name in STATION_PULSES:
         v[f"GVL_Station.stStationCmd.{name}"] = (False, V.Boolean)
@@ -238,7 +239,8 @@ class MockPlc:
             alarm_id, state = rows[i - 1] if i <= len(rows) else (0, 0)
             self.set(f"GVL_Log.stAlarmView.astRow[{i}].udiId", alarm_id)
             self.set(f"GVL_Log.stAlarmView.astRow[{i}].eState", state)
-        self.set("GVL_Log.stAlarmView.uiCount", len(rows))
+        self.set("GVL_Log.stAlarmView.uiCount", min(len(rows), VIEW_ROWS))
+        self.set("GVL_Log.stAlarmView.uiActiveTotal", len(rows))
 
     def fill_feed(self) -> None:
         last = len(self.journal)

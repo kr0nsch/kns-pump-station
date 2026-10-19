@@ -3,7 +3,9 @@
 Клиент пишет ``udiFromSeq`` — первый нужный номер, ПЛК (``FB_EventLog.FillFeed`` в каждом цикле MainTask)
 отдаёт до LOG_FEED_ROWS записей от старой к новой. Интервалы между событиями ПЛК сценарии берут из
 меток ``lrMono_s`` (время процесса): погрешность — цикл задачи при любом ускорении. Пропуск номеров
-(записи затёрты между опросами) — ошибка сценария (``JournalGap``).
+(записи затёрты между опросами) — ошибка сценария (``JournalGap``). Журнал в ОЗУ: после сброса или
+перезапуска ПЛК номера снова начинаются с 1 — курсор замечает, что последний номер ПЛК меньше уже
+прочитанного, и переходит на первую запись нового журнала (``restarts``), а не ждёт прежних номеров.
 """
 
 from __future__ import annotations
@@ -71,6 +73,7 @@ class EventFeed:
         self.rows = rows
         self.next_seq = 1
         self.records: list[EventRecord] = []
+        self.restarts = 0  # замечено перезапусков журнала (сброс ПЛК)
 
     def _paths(self) -> list[str]:
         paths = [f"{FEED}.{name}" for name in HEADER_FIELDS]
@@ -78,17 +81,26 @@ class EventFeed:
             paths += [f"{FEED}.astRow[{row}].{name}" for name in RECORD_FIELDS]
         return paths
 
+    def last_seq(self) -> int:
+        """Номер последней записи журнала ПЛК (0 — записей нет)."""
+        return int(self.client.read([f"{FEED}.udiSeqLast"])[0])
+
     def start_at_end(self) -> int:
         """Пропустить уже записанное: следующий номер — после последней записи журнала."""
-        last = int(self.client.read([f"{FEED}.udiSeqLast"])[0])
-        self.next_seq = last + 1
+        self.next_seq = self.last_seq() + 1
         self.client.write({f"{FEED}.udiFromSeq": self.next_seq})
         return self.next_seq
 
     def poll(self) -> list[EventRecord]:
         """Новые записи с номера ``next_seq``; курсор сдвигается за последнюю прочитанную."""
         values = self.client.read(self._paths())
-        _from, first, _last, count = (int(v) for v in values[: len(HEADER_FIELDS)])
+        _from, first, last, count = (int(v) for v in values[: len(HEADER_FIELDS)])
+        if last + 1 < self.next_seq:
+            # номера ПЛК пошли назад: журнал начат заново (сброс, перезапуск) — читать с его первой записи
+            self.restarts += 1
+            self.next_seq = first
+            self.client.write({f"{FEED}.udiFromSeq": self.next_seq})
+            return []
         if self.next_seq < first:
             raise JournalGap(f"записи {self.next_seq}…{first - 1} затёрты между опросами журнала")
         width = len(RECORD_FIELDS)
@@ -116,13 +128,21 @@ class EventFeed:
 
 
 def find(
-    records: Iterable[EventRecord], *, id: int, new_state: int | None = None, after_mono_s: float | None = None
+    records: Iterable[EventRecord],
+    *,
+    id: int,
+    new_state: int | None = None,
+    after_mono_s: float | None = None,
+    after_seq: int | None = None,
 ) -> EventRecord | None:
-    """Первая запись с номером ``id`` (и состоянием ``new_state``) не раньше ``after_mono_s``."""
+    """Первая запись с номером ``id`` (и состоянием ``new_state``) не раньше ``after_mono_s`` и с номером
+    журнала больше ``after_seq``."""
     for rec in records:
         if rec.id != id or (new_state is not None and rec.new_state != new_state):
             continue
         if after_mono_s is not None and rec.mono_s < after_mono_s:
+            continue
+        if after_seq is not None and rec.seq <= after_seq:
             continue
         return rec
     return None
