@@ -1,2 +1,2 @@
 // Раскладка: запись — 40 байт без скрытого выравнивания; страница HMI и курсор — заголовок и строки
-METHOD PRIVATE RecordSizeIs40
+METHOD PRIVATE EventRecordSizeIs40

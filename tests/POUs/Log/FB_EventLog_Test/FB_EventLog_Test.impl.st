@@ -1,6 +1,6 @@
 // Тело набора вызывает каждый тест; тест проходит за один вызов
 EmptyLogDefaults();
-RecordSizeIs40();
+EventRecordSizeIs40();
 AlarmEventStored();
 StationEventIdIsBasePlusCode();
 RingOverwritesOldestAndCounts();

@@ -58,5 +58,5 @@ pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_p
 addopts = "-ra --strict-markers"
 markers = [
     "integration: проверки с настоящими plc (RuSTy) и iec_checker; пропускаются, если инструмента нет",
-    "plc: сценарий ПМИ на рантайме CODESYS (scenarios/test_pmi.py, запуск с KNS_PLC=1)",
+    "plc: сценарий ПМИ на рантайме CODESYS (scenarios/test_pmi.py, запуск с PMI_LIVE=1)",
 ]

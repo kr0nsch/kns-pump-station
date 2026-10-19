@@ -1,4 +1,4 @@
-coUnit.TEST('EventLog_RecordSizeIs40');
+coUnit.TEST('EventLog_EventRecordSizeIs40');
 
 AssertEquals_UDINT(Expected := 40, Actual := SIZEOF(ST_EventRecord), Message := 'ST_EventRecord 40 bytes');
 AssertEquals_UDINT(Expected := 8 + 20 * 40, Actual := SIZEOF(ST_EventView), Message := 'ST_EventView 808 bytes');

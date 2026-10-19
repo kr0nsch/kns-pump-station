@@ -1,5 +1,5 @@
-"""Сценарии ПМИ на рантайме CODESYS Control Win через OPC UA (маркер plc; запуск — ``KNS_PLC=1``, адрес
-сервера — ``KNS_OPCUA_URL``, по умолчанию ``opc.tcp://localhost:4840``).
+"""Сценарии ПМИ на рантайме CODESYS Control Win через OPC UA (маркер plc; запуск — ``PMI_LIVE=1``, адрес
+сервера — ``PMI_OPCUA_URL``, по умолчанию ``opc.tcp://localhost:4840``).
 
 Нужны: приложение имитации собрано и загружено (``cds.py import``, ``codesys_pvl.py``, символьная
 конфигурация ``tools_project/codesys/symbol_config.py``, загрузка и «Старт»), сертификат OPC UA-сервера и
@@ -28,8 +28,8 @@ HERE = Path(__file__).resolve().parent
 BUILD = HERE.parent / "build"
 FILES = sorted((HERE / "pmi").glob("PMI-*.toml")) or sorted((HERE / "examples").glob("PMI-*.toml"))
 RESULTS: list[ScenarioResult] = []
-LIVE = os.environ.get("KNS_PLC") == "1"
-URL = os.environ.get("KNS_OPCUA_URL", "opc.tcp://localhost:4840")
+LIVE = os.environ.get("PMI_LIVE") == "1"
+URL = os.environ.get("PMI_OPCUA_URL", "opc.tcp://localhost:4840")
 
 
 @pytest.fixture(scope="module")
@@ -45,7 +45,7 @@ def plc() -> Iterator[OpcUaClient]:
 
 
 @pytest.mark.plc
-@pytest.mark.skipif(not LIVE, reason="сценарий на рантайме: KNS_PLC=1 (DESIGN, раздел 14.3)")
+@pytest.mark.skipif(not LIVE, reason="сценарий на рантайме: PMI_LIVE=1 (DESIGN, раздел 14.3)")
 @pytest.mark.parametrize("path", FILES, ids=[f.stem for f in FILES])
 def test_pmi(plc: OpcUaClient, path: Path) -> None:
     ctx = ScenarioContext(plc, enums=ENUMS)
