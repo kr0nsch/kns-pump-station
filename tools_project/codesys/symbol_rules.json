@@ -1,0 +1,30 @@
+{
+  "_doc": [
+    "Правила символьной конфигурации OPC UA КНС-1 (docs/DESIGN.md, раздел 13). Применяет tools_project/codesys/symbol_config.py.",
+    "Правило: gvl — имя списка, vars — шаблоны имён переменных (fnmatch, без учёта регистра), access — Read, ReadWrite или по сборке {\"sim\": ..., \"site\": ...}.",
+    "Первое подходящее правило выигрывает. Переменные без правила и правило без доступа для сборки не выгружаются (None).",
+    "Сборка sim — CODESYS Control Win с имитацией (сценарии ПМИ пишут уставки, наработку и инъекции); site — ПЛК210 на объекте.",
+    "types — доступ к полям структур (настройка типа, действует для всех переменных этого типа; права поля не выше прав переменной): members — пары [шаблон поля, Read или ReadWrite], первая подходящая выигрывает. Типы без правила не трогаются (у полей — права переменной)."
+  ],
+  "builds": ["sim", "site"],
+  "rules": [
+    {"gvl": "GVL_Devices", "vars": ["fb*"], "access": "Read"},
+    {"gvl": "GVL_Hmi", "vars": ["st*Cmd", "xApplyProjectCfg"], "access": "ReadWrite"},
+    {"gvl": "GVL_IO", "vars": ["*"], "access": "Read"},
+    {"gvl": "GVL_Station", "vars": ["stStationCmd", "stLIC101Cmd"], "access": "ReadWrite"},
+    {"gvl": "GVL_Station",
+     "vars": ["stStationSts", "fbLIC101", "fbAlarms", "axPumpRun", "awPumpInterlock", "rSpeedSp_pct", "stCfgLkg"],
+     "access": "Read"},
+    {"gvl": "GVL_Log", "vars": ["stEventView", "stEventFeed"], "access": "ReadWrite"},
+    {"gvl": "GVL_Log", "vars": ["stAlarmView", "eExportState", "uiExportLines", "udiExportError"], "access": "Read"},
+    {"gvl": "GVL_Persist", "vars": ["st*Cfg", "st*Retain"], "access": {"sim": "ReadWrite", "site": "Read"}},
+    {"gvl": "GVL_Sim", "vars": ["stSimCmd", "stFaultInj", "stSimCfg"], "access": {"sim": "ReadWrite"}},
+    {"gvl": "GVL_Sim", "vars": ["xSimulation", "xSimulationReq", "stSimSts"], "access": "Read"},
+    {"gvl": "GVL_Time", "vars": ["lrMainNow_s"], "access": "Read"}
+  ],
+  "types": [
+    {"type": "ST_EventView", "members": [["uiPage", "ReadWrite"], ["*", "Read"]]},
+    {"type": "ST_EventFeed", "members": [["udiFromSeq", "ReadWrite"], ["*", "Read"]]},
+    {"type": "ST_EventRecord", "members": [["*", "Read"]]}
+  ]
+}

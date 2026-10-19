@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 16:09:30. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 16:39:24. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 16:09:30 |
-| Коммит | faf1ef2 |
+| Дата прогона | 2026-10-19 16:39:24 |
+| Коммит | a47fd41-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -23,228 +23,75 @@
 
 | Набор | Тестов | Пройдено | Упало | Пропущено | Итог |
 |---|---|---|---|---|---|
-| `GVL_TestsStation.fbStationModeTest` | 10 | 10 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbControlSelectorTest` | 5 | 5 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | 11 | 11 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbLevelControlPidTest` | 15 | 15 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbPumpRotationTest` | 28 | 28 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbAtsTest` | 13 | 13 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbProtectionsTest` | 21 | 21 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbPumpProtectionTest` | 9 | 9 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbPowerRestoreTest` | 10 | 10 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbVentilationTest` | 4 | 4 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbStationAlarmsTest` | 9 | 9 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbAnnunciatorTest` | 7 | 7 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbStationCfgCheckTest` | 13 | 13 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbStationCoreTest` | 27 | 27 | 0 | 0 | пройдено |
-| `PRG_Tests.fbF_ClampTest` | 7 | 7 | 0 | 0 | пройдено |
-| `PRG_Tests.fbExampleTest` | 11 | 11 | 0 | 0 | пройдено |
-| **Всего** | 200 | 200 | 0 | 0 | **пройдено** |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | 8 | 8 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbEventLogTest` | 14 | 14 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbEventLogCsvTest` | 6 | 6 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbUtcToIsoTest` | 4 | 4 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmCodeTest` | 5 | 5 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | 15 | 15 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbDeviceAuditTest` | 4 | 4 | 0 | 0 | пройдено |
+| **Всего** | 56 | 56 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
 | Набор | Тест | Итог |
 |---|---|---|
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_EmptyRetainStartsManual_A3` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_GarbageRetainSanitized_A3` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_ManualToAutoRequestsAutoExceptOos_A3_PMI30` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_AutoToManualRequestsManual_A3_PMI30` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_LocalPumpGetsRememberedMode_A3_PMI31` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_ManualWinsOverAutoSameCall_A3` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_MethodSwitchLoggedAndRetained_A3_PMI07` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_EnteredAutoPulsesOnFirstCallInAuto_A3_A13` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_SameModeCommandAcceptedNoRequests_A3` | пройден |
-| `GVL_TestsStation.fbStationModeTest` | `StationMode_NoEventSinkIsSafe_A3` | пройден |
-| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_PrecedenceTable_A4` | пройден |
-| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_ManualModeAlwaysManual_A4` | пройден |
-| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_PidNotReadyFallsBackToStepped_A4_A7_PMI28` | пройден |
-| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_ChangedPulsesOnce_A4` | пройден |
-| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_GarbageMethodIsStepped_A4` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_StartsLeadAtStartLevelAfterConfirm_A6_PMI02` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_NoStartIfLevelDropsDuringConfirm_A6` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_StopsAllAtStopLevel_A6_PMI02` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_AssistOnAndOffWithHysteresis_A6_PMI03` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_TwoToZeroAtStopLevel_A6` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_DutyMaxOneLimitsToOne_A6` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_InitFromRunningPumpsNoStop_A6_PMI07` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_InvalidLevelHoldsState_A6_PMI25` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_BoundaryLevelsInclusive_A6` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_DisabledOutputsZeroInitRestores_A6` | пройден |
-| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_TimeBackwardsRestartsConfirm_A6` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_StartsLeadAtStartLevel_A7_PMI04` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistOnOutputHighForTAssistOn_A7_PMI05` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistOnLevelAboveAssistStart_A7_PMI05` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistOffOutputLowForTAssistOff_A7_PMI05` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistNotOffAboveAssistStartLevel_A7` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_StopAllAtStopLevel_A7_PMI06` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TrackWhenLeadNotSpeedAuto_A7_PMI04` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TrackWhenLeadCommLost_A7_A12_PMI28` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NotReadyWithoutCommPump_A7_PMI29` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_ReadyAfterCommRecoverDelay_A7_A12_PMI28` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NotReadyWhenPidManual_A7` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_InitFromRunningPumps_A7_PMI07` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_OutputStagingOnlyWhenPidControls_A7` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NanOutputNoStaging_A7` | пройден |
-| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TimeBackwardsRestartsConfirm_A7` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RunHoursPicksLeastHours_A8_PMI09` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_TieBreakStartsThenIndex_A8` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicAdvancesNextLeadRetained_A8_PMI10` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_FixedOrder_A8` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_ReadyBeforeInhibited_A5` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RunningKeepRoles_A5` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_ForeignRunningReducesRequests_A5_PMI31` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RequestLimitCapsRequests_A13_PMI34` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StaggerDelaysSecondStart_A5` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StopMoreHoursWhenFewerNeeded_A5_PMI03` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicStopsAssist_A5` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RequireCommPicksCommPumpAsLead_A5_A12_PMI28` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_LeadSwapWithoutStartStop_A12_PMI28` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverAfterTMaxContRunWithOverlap_A8_PMI11` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverRetryWhenNoStandby_A8_PMI11` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverDisabledInEmergency_A8` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_FaultedPumpLosesRequestImmediately_A9_PMI12_PMI13` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_ResetPumpBecomesStandby_A9_PMI12` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_AdoptKeepsRunningPumpsOnAutoEntry_A3_PMI30` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_AdoptAtPlcStartFromFeedback_A13_PMI35` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_EmergencyRequiresAllThree_A10_PMI20` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_DisabledNoRequestsRolesStandby_A5` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_GarbageNextLeadSanitized_A8` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StaggerSkippedWhenPreviousDropped_A5_A9` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_TimeBackwardsRestartsStagger_A5` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverLeadNeedsCommInPid_A5_A8_A12_PMI11` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicNextLeadFollowsRoleTransfer_A8_PMI10_PMI11` | пройден |
-| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StopKeepsCommPumpInPid_A5_A12_PMI05_PMI28` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_RequestedPumpFaultRaisesAts_A9_PMI12_PMI13` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_ModeChangeIsNotAts_A9_PMI31` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_PowerLossIsNotAts_A9_PMI33` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_UnderloadTripIsAts_A9_A10_PMI15` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_AtsClearsWhenPumpAvailableAgain_A9_PMI12` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_EventNamesReplacementPump_A9_A16_PMI12` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_LackWhenRequiredExceedsAvailable_A9_PMI17` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_NoReserveWhenOnePumpUnavailable_A9_A15_PMI32` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_ForeignRunningCountsAgainstLack_A9_PMI31` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_UnrequestedOrManualFaultIsNotAts_A9_PMI14` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_TimeBackwardsWindowRestarts_A9` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_NoReserveUsesEffectiveDuty_A5_A15_PMI32` | пройден |
-| `GVL_TestsStation.fbAtsTest` | `Ats_TripEventNamesReplacementNotTrippedPump_A9_A16_PMI15_PMI16` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunByFloat_A10_PMI19` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunByLtLl_A10_PMI18` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunReleaseAboveL_A10_PMI18` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunReleaseWithoutLtAfterTDryRelease_A10_PMI19` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_EmergencyByFloatAndByHh_A10_PMI20_PMI23` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_EmergencyReleaseBelowH_A10_PMI20` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_FalseLs103MaskedAfterTLdev_A10_PMI22` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_FalseLs102MaskedAfterTLdev_A10_PMI23` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_Ls102NotTrippedAboveOffMark_A10_PMI24` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_MaskReleasedWhenFloatReturns_A10_PMI22` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_MaskReleasedWhenLtInvalid_A10_PMI25` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_OorLtContradictingFloatMaskedAfterTLdev_A10_A11_PMI26` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_GoodLtContradictingFloatMasksFloat_A10_PMI22` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_LtMaskReleasedAfterTLtRecover_A10_A11_PMI27` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeStartsAllOnLs102StopsOnLs103_A11_PMI21_PMI25` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeEntryWhilePumpingKeepsPumping_A11_PMI25` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeExitAfterTLtRecover_A11_PMI27` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunAndEmergencyBothDryRunWins_A10` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_FirstCallDoesNotEnterFloatMode_A11_PMI01` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_Ls103NotTrippedBelowOffMark_A10` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_TimeBackwardsRestartsLdev_A10` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_UnderloadTripsAfterTUnderload_A10_PMI15` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_NoUnderloadBelowMinSpeed_A10` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_NoUnderloadWhenCurrentInvalid_A10_PMI29` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_UnderloadLatchedUntilReset_A10_PMI15` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_ResetClearsLatch_A10_PMI15` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_DisabledWhenThresholdZero_A10` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_OverheatInterlockWhileActive_A10_PMI16` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_CurrentAtThresholdIsNotUnderload_A10` | пройден |
-| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_TimeBackwardsRestartsUnderload_A10` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_PlcStartDelaysAllRequests_A13_PMI01_PMI35` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_PowerLossBlocksRequests_A13_PMI33` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_RestoreWaitsTPwrRestart_A13_PMI34` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_SequenceOnePumpPerStep_A13_PMI34` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_StepAdvancesOnTimeoutIfStartFails_A13` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_PowerLossDuringSequenceRestarts_A13_PMI34` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_NothingRequiredFinishesImmediately_A13` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_SeqRemainCountsDown_A13_PMI34` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_FirstCallIgnoresPowerInput_A13_PMI01` | пройден |
-| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_TimeBackwardsRestartsDelay_A13` | пройден |
-| `GVL_TestsStation.fbVentilationTest` | `Ventilation_RunsOnGasDoorTemp_A17_PMI38` | пройден |
-| `GVL_TestsStation.fbVentilationTest` | `Ventilation_OverrunAfterConditionsClear_A17_PMI38` | пройден |
-| `GVL_TestsStation.fbVentilationTest` | `Ventilation_FireInterlocksAndStops_A17_PMI38` | пройден |
-| `GVL_TestsStation.fbVentilationTest` | `Ventilation_TimeBackwardsRestartsOverrun_A17` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_IdsAreBasePlusSlot_A15` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_SuppressionPutsSuppressedByDesign_A15_PMI21` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_AckMaskAcksSlot_A15_PMI36` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_AckAllViaInterface_A15_PMI36` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_GetAlarmIndexOutOfRangeReturnsZero_A15` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_WordsAndPrioUnack_A15_PMI36` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_ShelveRejectedForEhl_A15_PMI36` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_OnDelayFromCfg_A15_PMI17` | пройден |
-| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_TimeBackwardsOnDelayRestarts_A15` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_HornOnNewHighUnack_A14_PMI36` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_SilenceStopsHornUntilNextNew_A14_PMI36` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_HornOffWhenAllAcked_A14_PMI36` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_LampBlinksAt1Hz_A14_PMI36` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_LampSteadyWhenActiveAcked_A14_PMI36` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_K1DeenergizedOnActiveHigh_A14_PMI17` | пройден |
-| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_TimeBackwardsRestartsBlink_A14` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_DefaultsPass_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_LevelOrderBit_A18_PMI08` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_LevelRangeBit_A18_PMI08` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_SpeedBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_PidStagingBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_DutyBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_RotationBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_TimesBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_FloatCheckBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_UnderloadBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_AlarmBit_A18` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_SetpointBit_A18_PMI08` | пройден |
-| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_NanRejected_A18` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StationStsSizeIs72_A19` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StationDefaultsMatchTypeDefaults_A18` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PlcStartLogsEventAndDelaysRequests_A13_PMI01_PMI35` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualDryRunInterlocksAllPumps_A10_PMI18` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_CommandPulsesClearedAndCounted_A19_PMI30_PMI36` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ResetButtonEdgeResetsAndLogs_A14_PMI36` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_LkgRejectsInvalidCfg_A18_PMI08` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_RevertCfgRestoresLkg_A18_PMI08` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ApplyProjectCfgRestoresDefaults_A18` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_EmergencyRequiresAllAtFullSpeed_A10_PMI20` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PowerLostSuppressesLackNoresAts_A13_A15_PMI33` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_LackSuppressesNoReserve_A9_A15_PMI17` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepFallbackSuppressedInEmergency_A7_A15_PMI28` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidControlsLeadSpeed_A7_PMI04` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_FloatModeStartsAllOnLs102_A11_PMI21_PMI25` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_AtsReplacesFaultedLead_A9_PMI12_PMI13` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_UnderloadTripInterlocksAndAts_A10_PMI15` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualToAutoAdoptsRunningPump_A3_PMI30` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ExportCommandAndEvents_A16_PMI37` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_AlarmIdCommandsResultAndClear_A15_PMI36` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_SimulationAlarmAndFaultEvent_A15_A16_PMI01` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_FlowAlarmsSuppressedUntilSettled_A15_PMI38` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_VentilationAndAnnunciatorOutputs_A14_A17_PMI36_PMI38` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_DryRunStopSuppressesNoReserve_A10_A11_A15_PMI21` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepAlarmNoFlickerOnStartAndAutoEntry_A3_A7_A15_PMI01_PMI30` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_OverheatTripIsAts_A9_A10_PMI16` | пройден |
-| `GVL_TestsStation.fbStationCoreTest` | `StationCore_RestartSequencesEmergencyPumps_A10_A13_PMI34` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `InsideRangeReturnsValue` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `BelowLowReturnsLow` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AboveHighReturnsHigh` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AtLowBoundaryReturnsLow` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AtHighBoundaryReturnsHigh` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `EqualBoundsReturnsBound` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `LowGreaterThanHighSwapsBounds` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoSwitchesOnBelowThreshold` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoThresholdsAreInclusive` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoHoldsStateInsideHysteresis` | пройден |
-| `PRG_Tests.fbExampleTest` | `InvalidValueLatchesFault` | пройден |
-| `PRG_Tests.fbExampleTest` | `AcknowledgeClearsFaultWhenValid` | пройден |
-| `PRG_Tests.fbExampleTest` | `AcknowledgeKeepsFaultWhileInvalid` | пройден |
-| `PRG_Tests.fbExampleTest` | `ManualFollowsCommand` | пройден |
-| `PRG_Tests.fbExampleTest` | `LocalAndOutOfServiceSwitchOff` | пройден |
-| `PRG_Tests.fbExampleTest` | `DefaultModeIsOutOfService` | пройден |
-| `PRG_Tests.fbExampleTest` | `ParametersAreClamped` | пройден |
-| `PRG_Tests.fbExampleTest` | `CountsSwitchOnsAndResetClears` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DefaultsAllFalse` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeBits` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeScale5000Is100Pct` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_NoCommForcesStatusFalseHoldsSpeed` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeResetBitWhileQReset` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeScaleAndClamp` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeRoundsToNearest` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeNanIsZero` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EmptyLogDefaults` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EventRecordSizeIs40` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_AlarmEventStored` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_StationEventIdIsBasePlusCode` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_RingOverwritesOldestAndCounts` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_GetRecordNewestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPagination` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPageEqualToCountClamped` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedFromSeqOldestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedReportsOverwrittenGap` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_MonoTimeIsProcessTime` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_TimeBackwardsRecordedAsIs` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotIndependentOfLaterEvents` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotAfterWrapOldestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EventCsvLineFormat` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_WritesHeaderAndAllLines` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EmptySnapshotHeaderOnly` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ReadBackMatchesSnapshot` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ErrorOnBadPathReported` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_SlowTaskRequestHandshake` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroIsEmpty` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_KnownDates` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_CenturyLeapDay2000` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroPadDigits` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_DeviceSuffixesByType` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_StationAlarms` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_Lic101AndEvents` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_UnknownIsNumber` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_SlotWithoutSuffixIsNumber` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_EmptyDefaults` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_SlotMaxMatchesLibrary` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_CountsByPriority` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighest` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighestBeforeLower` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_NewHighSeqOnlyOnTransition` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewSortedUnackFirst` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewNewerFirstInGroup` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewLimitedToRows` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewPeriodRespected` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_TimeBackwardsRebuildsView` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_AckByIdDeviceStationPid` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdRespectsTShelveMax` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdUsesFullTShelveMax` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_UnshelveById` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoEventOnFirstCall` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_AuditLogsModeChange` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoSinkIsSafe` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_LargeDevNoValueNoOverflow` | пройден |
 
 ### Упавшие тесты
 
@@ -255,58 +102,63 @@ _Нет._
 
 ## Сборка и полная проверка компиляции в CODESYS
 
-CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 2026-10-16. `build` компилирует
-объекты, достижимые из задач; `check` — все объекты раскладки (docs/MANUAL_STEPS.md, раздел 5).
+CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 19.10.2026 — ветка команды К3
+(сгенерированный слой, полевой слой, журнал). Объекты логики станции и модели (К1, К2), на которые
+ссылаются задачи и сгенерированный слой (`PRG_Station`, `PRG_PlantModel`, `GVL_Time`, `GVL_Sim`, типы станции
+и имитации), подставлены копиями из веток команд (в коммиты К3 не входят): итог для объединённого проекта —
+после слияния.
 
 | Команда | Итог | Примечание |
 |---|---|---|
-| `cds.py build` | 0 ошибок, 0 предупреждений | ссылки проекта: `#Standard` из `config.json` и плейсхолдеры устройства (`#IoStandard`, `#3SLicense`, `#CAA Device Diagnosis`, `#BreakpointLogging`); повторный импорт — 0 изменений |
-| `cds.py check` | 0 ошибок, 0 предупреждений | 8 объектов `src/` (включая `PRG_Main`) |
-| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 11 объектов `src/` и `tests/` |
-| `cds.py test` | 18 из 18 | раздел выше |
-| `cds.py roundtrip` | без диффа (60 файлов), повторный импорт — 0 изменений | — |
-| `cds.py library` | 0 ошибок проверки пула | 7 объектов, ссылка библиотеки — `#Standard` |
+| `cds.py deps --check` | все есть | plc-process-lib 1.0.0.0, CAA File 3.5.17.0, SysTimeRtc 3.5.17.0, coUnit 1.2.0.0, Standard |
+| `cds.py check` | 0 ошибок, 0 предупреждений | 58 объектов `src/` (с копиями объектов К1, К2) |
+| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 68 объектов `src/` и `tests/` |
+| `cds.py build` | 0 ошибок, 0 предупреждений | MainTask, PlantModelTask, SlowTask; Persistent Variables — `codesys_pvl.py` (MANUAL_STEPS 9.3) |
+| `cds.py build --tests` | 0 ошибок, 0 предупреждений | — |
+| `cds.py test` | 56 из 56 | раздел выше; мутационное тестирование — раздел ниже |
+| `symbol_config.py` (сборки `sim` и `site`) | файл символов совпал с правилами | `sim`: `GVL_Devices` 29 Read, `GVL_Hmi` 30 ReadWrite, `GVL_IO` 86 Read, `GVL_Log` 4 Read + 2 ReadWrite, `GVL_Persist` 37 ReadWrite, `GVL_Sim` 3 + 3, `GVL_Time` 1; поля типов: `ST_EventView` — запись только `uiPage`, `ST_EventFeed` — только `udiFromSeq`, `ST_EventRecord` — только чтение; `site`: `GVL_Persist` 37 Read, `GVL_Sim` 3 Read; повтор — 0 изменений |
+| `cds.py roundtrip` | не запускался | в чистом проекте нет объекта Persistent Variables (создаёт только `codesys_pvl.py`), экспорт без `GVL_Persist` дал бы дифф |
 
-Проверка самой команды `check` на копии шаблона (вне репозитория): программа без задачи с
-`iX := diZ;`, ФБ без экземпляра с ошибкой в методе, неиспользуемый DUT, вспомогательный ФБ в
-`tests/` с ошибкой — `build` «0 ошибок» (код 0), `check` / `check --tests` — каждая ошибка с файлом
-и строкой раскладки (код 1); после удаления — код 0. GVL с типами библиотек устройства
-(`IoStandard.IoConfigConnector`, `DED.DEVICE_STATE`): `build` и `check` — 0 ошибок (ссылки
-устройства копируются в пул проверки). Standard в той же копии (TON, R_TRIG, CTU, CONCAT без
-пространства имён и с `Standard.`): `build`, `check --tests`, `library` — 0 ошибок, `test` — 19 из
-19; без ссылки `standard` — C0077 «Неизвестный тип: 'TON'» (docs/ASSUMPTIONS.md, D37–D39).
+## Мутационное тестирование (19.10.2026)
+
+Копия рабочей копии с объектами К1 и К2 (вне репозитория), по одному изменению поведения на мутант (у ST —
+группами по непересекающимся наборам тестов), `cds.py test` в CODESYS Control Win и `pytest` для Python.
+Мутант убит, если упал хотя бы один тест его набора. Выжившие после первого прохода закрыты новыми тестами
+(указаны в скобках) и прогнаны повторно.
+
+| Поведение | Мутантов | Убито | Примеры мутантов и тесты, которые их ловят |
+|---|---:|---:|---|
+| Адаптер ПЧ, `Decode`: связь, биты, масштаб | 6 | 6 | `xCommOk := TRUE`, авария без связи, скорость без связи, бит «готов» от «в работе», масштаб 1/100 — `NoCommForcesStatusFalseHoldsSpeed`, `DecodeBits`, `DecodeScale5000Is100Pct` |
+| Адаптер ПЧ, `Encode`: бит сброса, масштаб, предел, округление, NaN | 6 | 6 | инверсия и не тот бит сброса, отбрасывание дробной части (`EncodeRoundsToNearest`), без предела 100 %, NaN держит задание — `EncodeResetBitWhileQReset`, `EncodeScaleAndClamp`, `EncodeNanIsZero` |
+| Журнал: кольцо, затирание, номера, время | 5 | 5 | затирание не считается, кольцо короче на запись, время мимо `itfTime`, пропуск номеров, `GetRecord` со сдвигом — `RingOverwritesOldestAndCounts`, `MonoTimeIsProcessTime` и др. |
+| Журнал: курсор и страницы | 5 | 5 | курсор без ограничения самой старой записью, первая запись со сдвигом, неочищенные строки, счётчик строк, ограничение номера страницы (`ViewPageEqualToCountClamped`) |
+| Журнал: снимок | 3 | 3 | порядок кольца без перестановки (`SnapshotAfterWrapOldestFirst`), «новые первыми», граница индекса |
+| Выгрузка CSV и обмен `PRG_Slow` | 7 | 6 | прежний обмен, снятие запроса только по `Done`, вторая выгрузка не стартует, без заголовка, без счёта строк, потеря кода ошибки открытия — `SlowTaskRequestHandshake`, `ReadBackMatchesSnapshot`, `WritesHeaderAndAllLines`, `ErrorOnBadPathReported`. Выжил: «успех после ошибки записи» — ветка ошибки `FILE.Write`/`FILE.Close`, её на Control Win не вызвать без внедрения отказа в CAA File (закрыта ревью кода) |
+| `F_UtcToIso` | 5 | 5 | февраль без переноса года, сдвиг эпохи, миллисекунды без двух нулей, правило 400 лет (`CenturyLeapDay2000`), 0 → не пусто |
+| `F_AlarmCode` | 4 | 4 | таблица задвижки для двигателя, номер события со сдвигом, первая тревога станции, слот без суффикса (`SlotWithoutSuffixIsNumber`) |
+| `FB_AlarmSummary` | 7 | 7 | RtnUnack как активная, приоритет последней вместо высшей (`PrioUnackHighestBeforeLower`), новые High каждый цикл, квитированные в группе неквитированных, без «новые выше» (`ViewNewerFirstInGroup`), пересчёт каждый цикл, свой срок откладывания (`ShelveByIdUsesFullTShelveMax`) |
+| Обвязка сценариев (Python) | 12 | 11 | граница поиска по номеру журнала, допуск `max_s`/`min_s`, единицы TIME/LTIME, перезапуск журнала, пропуск одной записи, ошибки шага в отчёте, переполнение списка тревог, импульс без ожидания сброса — `scenarios/test_harness_robustness.py`, `test_harness.py`. Выжил: курсор принимает строки «номер ≥ ожидаемого» вместо «=» — эквивалентен: `FillFeed` отдаёт строки подряд с `MAX(udiFromSeq, первая)`, а пропуск ловится раньше |
+| Символьная конфигурация (Python) | 6 | 6 | последнее правило вместо первого, регистр имён, поля всегда ReadWrite, без сверки полей, доступ без учёта сборки, переменная без правила не замечена — `test_symbol_config.py`, `test_scenario_files.py` |
+| **Всего** | **66** | **64** | |
 
 ## Что проверяют тесты
 
-| Набор | Тест | Что проверяет |
-|---|---|---|
-| `FB_F_Clamp_Test` | `InsideRangeReturnsValue` | значение внутри диапазона не меняется |
-| `FB_F_Clamp_Test` | `BelowLowReturnsLow` | значение ниже диапазона → нижняя граница |
-| `FB_F_Clamp_Test` | `AboveHighReturnsHigh` | значение выше диапазона → верхняя граница |
-| `FB_F_Clamp_Test` | `AtLowBoundaryReturnsLow` | значение на нижней границе не меняется |
-| `FB_F_Clamp_Test` | `AtHighBoundaryReturnsHigh` | значение на верхней границе не меняется |
-| `FB_F_Clamp_Test` | `EqualBoundsReturnsBound` | вырожденный диапазон `rLow = rHigh` |
-| `FB_F_Clamp_Test` | `LowGreaterThanHighSwapsBounds` | `rLow > rHigh`: границы меняются местами |
-| `FB_Example_Test` | `AutoSwitchesOnBelowThreshold` | авторежим: значение ниже порога включения (уставка − гистерезис) включает выход, отказа нет |
-| `FB_Example_Test` | `AutoThresholdsAreInclusive` | авторежим: на пороге включения выход включается, на уставке — отключается |
-| `FB_Example_Test` | `AutoHoldsStateInsideHysteresis` | авторежим: в зоне гистерезиса выход сохраняет состояние (после включения и после отключения) |
-| `FB_Example_Test` | `InvalidValueLatchesFault` | недостоверное измерение в авторежиме: отказ, выход отключён; отказ держится после восстановления измерения |
-| `FB_Example_Test` | `AcknowledgeClearsFaultWhenValid` | `Acknowledge()` при достоверном измерении снимает отказ и возвращает TRUE, выход снова управляется |
-| `FB_Example_Test` | `AcknowledgeKeepsFaultWhileInvalid` | `Acknowledge()` при недостоверном измерении возвращает FALSE, отказ остаётся |
-| `FB_Example_Test` | `ManualFollowsCommand` | ручной режим: выход повторяет `xManualOn`, недостоверное измерение отказа не даёт |
-| `FB_Example_Test` | `LocalAndOutOfServiceSwitchOff` | `Local` и `OutOfService` отключают выход при любых измерении и команде |
-| `FB_Example_Test` | `DefaultModeIsOutOfService` | режим по умолчанию — `OutOfService`: выход отключён |
-| `FB_Example_Test` | `ParametersAreClamped` | уставка и гистерезис вне диапазона ограничиваются `EXAMPLE_SP_MAX_PCT` и `EXAMPLE_HYST_MIN_PCT` |
-| `FB_Example_Test` | `CountsSwitchOnsAndResetClears` | счётчик `Count` считает только фронты включения; `Reset()` через `I_Resettable` отключает выход и обнуляет счётчик |
+| Набор | Тестов | Что проверяет |
+|---|---:|---|
+| `FB_VfdAdapter_Cond_Test` | 8 | биты слова состояния, масштаб 5000 = 100 %, без связи статусы FALSE и последняя скорость, бит сброса, задание с ограничением и округлением до ближайшего отсчёта, NaN и +Inf → 0, умолчания |
+| `FB_EventLog_Test` | 14 | запись тревоги и события станции (101000 + код), кольцо на 200 и счётчик затёртых, «новые первыми», страницы HMI (в том числе номер, равный числу страниц), курсор и пропуск затёртых, время процесса, «время назад», снимок (в том числе после затирания кольца), размер записи 40 байт, пустой журнал |
+| `FB_EventLogCsv_Test` | 6 | формат строки CSV; в рантайме через CAA File: заголовок и 25 строк, пустой снимок, чтение файла назад побайтно, ошибка открытия, обмен `PRG_Slow` ↔ MainTask (запрос снят при старте, вторая выгрузка сразу после `Done`) |
+| `FB_F_UtcToIso_Test` | 4 | ISO 8601 по эталонам Python (29.02.2024, 2100 год, 29.02.2000 — граница 400-летнего цикла), 0 → пусто, ведущие нули |
+| `FB_F_AlarmCode_Test` | 5 | коды устройств по типу и слоту (слот без суффикса — номер слота), тревоги станции, LIC101.PVF, KNS1.E<код>, неизвестные номера |
+| `FB_AlarmSummary_Test` | 15 | счётчики по приоритетам, высший неквитированный (независимо от порядка обхода), новые High/Critical, порядок списка (группа, приоритет, новые выше) и его предел, период и «время назад», квитирование и откладывание по номеру с `tShelveMax` (весь срок тревоги), соответствие `ALM_SLOT_MAX` библиотеке |
+| `FB_DeviceAudit_Test` | 4 | событие 101018 со значением dev_no · 10 + режим (dev_no 9999 — без переполнения), без события при старте и без журнала |
 
 ## Проверки без CODESYS
 
-Итоги последнего прогона CI (ссылка на запуск GitHub Actions) или локального прогона.
-
 | Проверка | Итог | Примечание |
 |---|---|---|
-| `ruff check`, `ruff format --check`, `mypy`, `pytest` | пройдено, 2026-10-16, локально | pytest: все тесты, включая интеграционные с настоящими `plc` и iec_checker |
-| `tools/assemble.py` (все варианты, с `--tests` и без) | пройдено, 2026-10-16, локально | 8 объектов `src/` + 3 объекта `tests/` |
-| `tools/check/st_lint.py --strict` | пройдено, 2026-10-16, локально | 60 файлов, 0 замечаний |
-| iec_checker 0.4 (локально, `run_iec_checker.py --tests`) | пройдено, 2026-10-16 | 11 файлов, ошибок разбора нет; необоснованных находок 0, обоснованных 100 — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
-| RuSTy 1.0.6 (локально, `run_rusty.py`) | пройдено, 2026-10-16 | 11 файлов (`src/` и `tests/` с прокладкой coUnit), исключений нет, 0 ошибок, 0 предупреждений |
+| `ruff check`, `ruff format --check`, `mypy` (strict) | пройдено, 19.10.2026, локально | `tools/`, `tools_project/`, `scenarios/` |
+| `pytest` | 675 пройдено, 4 пропущено (19.10.2026) | сверка генерации побайтно (`test_generate.py`), таблица перечислений, правила символов (переменные и поля типов), обвязка сценариев на имитаторе OPC UA-сервера (PMI-13 целиком) и на подменном клиенте (единицы TIME, задержки от метки, перезапуск журнала, пропуск записей, переполнение списка тревог), таблицы суффиксов `F_AlarmCode` против `docs/alarms.csv` и 05, офлайн-проверка файлов сценариев; пропущены — сценарии на рантайме (`PMI_LIVE=1`) и каталог 39 сценариев (ещё нет) |
+| `tools_project/generate.py --check` | дрейфа нет (20 файлов) | iolistgen 0.2.0 |
+| `tools_project/check_docs_consistency.py` | 20 проверок, 0 расхождений | сверки с генератором и исходниками библиотеки — по `IOLISTGEN_REPO`/`PL_REPO` или соседним репозиториям (из рабочей копии `_wt/` — на уровень выше) |
+| `st_lint --strict`, iec_checker 0.4, RuSTy 1.0.6 | 0 ошибок, необоснованных находок 0 | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md), раздел К3 |

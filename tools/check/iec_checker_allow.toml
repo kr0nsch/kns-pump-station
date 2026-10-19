@@ -22,29 +22,8 @@ reason = "Как для src/: значения по умолчанию типо�
 
 [[allow]]
 id = "PLCOPEN-CP9"
-file = "src/POUs/FB_Example/*"
-reason = "Сложность тела FB_Example по классической метрике — 8; iec_checker 0.4 считает её завышенно (docs/STATIC_ANALYSIS.md)"
-
-[[allow]]
-id = "PLCOPEN-CP9"
 file = "tests/*"
 reason = "Наборы тестов — последовательные вызовы без ветвлений (классическая сложность — 1); завышенный подсчёт iec_checker 0.4, метрика для тестов не показательна"
-
-[[allow]]
-id = "PLCOPEN-L17"
-file = "src/POUs/FB_Example/FB_Example.impl.st"
-reason = "Действия «иначе» нет: в зоне гистерезиса выход сохраняет состояние, без фронта счётчик не меняется"
-
-[[allow]]
-id = "PLCOPEN-L17"
-file = "src/POUs/PRG_Main/PRG_Main.impl.st"
-reason = "Однократная команда HMI не пришла — делать нечего; пустая ветка ELSE только добавит шум"
-
-[[allow]]
-id = "UnusedVariable"
-file = "src/POUs/PRG_Main/PRG_Main.decl.st"
-match = "STCMD|STSTS"
-reason = "Ложное срабатывание iec_checker 0.4: обращения к полям структуры (stCmd.xAck, stSts.xOut) он не считает использованием"
 
 [[allow]]
 id = "UnusedVariable"
@@ -52,17 +31,75 @@ file = "tests/POUs/*_Test/*_Test.decl.st"
 match = "variable: [A-Z][A-Z0-9]*(_[A-Z0-9]+)+$"
 reason = "Артефакт понижения: константы набора (VAR CONSTANT, UPPER_SNAKE_CASE) используются в методах-тестах, которые сборка выносит в отдельные функции"
 
+# ===== Команда К3: сгенерированный слой, полевой слой, журнал (docs/STATIC_ANALYSIS.md, раздел К3) =====
+
 [[allow]]
-id = "UnusedVariable"
-file = "tests/POUs/FB_Example_Test/*.method.decl.st"
-match = "FBDUT"
-reason = "Ложное срабатывание iec_checker 0.4: экземпляр ФБ используется вызовом fbDut(...), чтением выходов и вызовом методов — это он не считает использованием (как stCmd/stSts в PRG_Main)"
+id = "PLCOPEN-CP9"
+file = "src/POUs/Generated/*"
+match = "Code is too complex"
+reason = "Сгенерированный код (iolistgen, tools_project/generate.py): вызовы 29 устройств и присваивания по одному на строку без ветвлений логики; сложность растёт с числом устройств, а не с логикой"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/Generated/PRG_Devices/PRG_Devices.impl.st"
+reason = "Сгенерированный код iolistgen: команда «применить уставки проекта» не пришла — делать нечего"
+
+[[allow]]
+id = "PLCOPEN-CP9"
+file = "src/POUs/Field/PRG_FieldIn/*"
+match = "Code is too complex"
+reason = "Линейное копирование выходов трёх адаптеров ПЧ в GVL_IO (имена у каждого насоса свои, DESIGN 8.1): одно ветвление (первый цикл); McCabe iec_checker 0.4 завышен"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/Field/*"
+reason = "Ветки «иначе» нет по смыслу: первый цикл уже прошёл — признак имитации не меняется (решение D-02)"
+
+[[allow]]
+id = "PLCOPEN-CP9"
+file = "src/POUs/Log/*"
+match = "Code is too complex"
+reason = "Тела журнала, сводки тревог и даты — последовательность шагов с комментариями (DESIGN 9.1–9.3); классическая сложность (ветвления + 1): FB_AlarmSummary — 12, BuildView — 12, F_UtcToIso — 4, FB_EventLog.Store — 3; iec_checker 0.4 считает завышенно"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/Log/*"
+reason = "IF без ELSE — нет действия по умолчанию: условие не выполнено — состояние не меняется (кольцо не полно, запись снимка отсутствует, команда не пришла, тревога не изменилась)"
 
 [[allow]]
 id = "UnusedVariable"
-file = "tests/POUs/PRG_Tests/PRG_Tests.decl.st"
-match = "FBF_CLAMPTEST|FBEXAMPLETEST"
-reason = "Экземпляры наборов регистрируются в coUnit самим объявлением и используются вызовом AreAllTestsFinished()"
+file = "src/POUs/Field/*"
+match = "variable: (FBVFDP10[1-3]|XCOMMOK|XREADY|XRUNNING|XFAULT|XWARNING|XREMOTE|RSPEEDACT_PCT|WCTW|UIFREF)$"
+reason = "Артефакт понижения: выходы адаптера пишут методы Decode/Encode, а экземпляры fbVfdP10n используются вызовами методов и чтением выходов (в PRG_FieldOut — PRG_FieldIn.fbVfdP10n) — это iec_checker 0.4 не считает использованием"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Log/*"
+match = "variable: (ASTRING|ASTSNAPSHOT|UIHEAD|UISNAPCOUNT|UICOUNT|UDISEQLAST|UDIOVERWRITTEN|XCLOCKVALID|ITFTIME|FBSYSTIME|STVIEW|STFEED|STEVENT|STRECORD|EEVENT|UISOURCECOUNT|AUIDEVNO|FBCSV|UIDIGITS|FBLOG|FBOPEN|FBWRITE|FBCLOSE|ABBUF)$"
+reason = "Артефакт понижения: переменные ФБ и параметры используются в методах (сборка выносит их в отдельные функции), структуры — обращениями к полям, экземпляры — вызовами методов; iec_checker 0.4 этого не связывает"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Log/*"
+match = "variable: (CRLF|SEP|STATION_TAG|PID_TAG|EVENT_PREFIX|DIGITS_YEAR|S_PER_HOUR|S_PER_MIN)$"
+reason = "Ложное срабатывание iec_checker 0.4: константы VAR CONSTANT используются как аргументы CONCAT и F_ZeroPad внутри вложенных вызовов"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "tests/POUs/Log/*"
+reason = "Тесты: многоцикловый шаг (IF … THEN проверки и TEST_FINISHED) и подготовка первого вызова — ветки «иначе» нет по смыслу"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/*/*.method.decl.st"
+match = "variable: (FBDUT|FBLOG|FBCSV|FBOPEN|FBREAD|FBCLOSE|FBSRC[0-9]?|STREC|STEVENT|UBITS)$"
+reason = "Ложное срабатывание iec_checker 0.4: экземпляры ФБ используются вызовами, методами и чтением выходов, структуры — обращениями к полям (VAR_INST и VAR методов-тестов)"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Log/FB_TestAlarmSource/FB_TestAlarmSource.decl.st"
+match = "variable: (UISLOTS|AFBALARM)$"
+reason = "Артефакт понижения: входы и тревоги тестового источника используются свойством AlarmCount и методами GetAlarm, AckAll"
 
 # =====================================================================================================
 # Логика станции (src/POUs/Station/) и её тесты (tests/POUs/Station/, tests/POUs/Fakes/) — раздел

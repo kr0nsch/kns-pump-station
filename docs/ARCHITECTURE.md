@@ -104,58 +104,55 @@ flowchart TB
 ```mermaid
 flowchart LR
     csv["docs/03_io_list.csv<br/>(источник истины)"]
-    toml["iolistgen.toml<br/>time_source, alarm_sink,<br/>template_dir, persist_check = false"]
-    tpl["tools_project/iolistgen_templates/st/<br/>GVL_Persist.pvl.st.j2 + блок станции"]
+    toml["iolistgen.toml<br/>time_source, alarm_sink,<br/>persist_extra"]
+    tpl["tools_project/persist_station.txt<br/>блок станции"]
     gen["tools_project/generate.py"]
-    iol["iolistgen generate"]
-    dl["генератор списка устройств<br/>(проект)"]
-    chk["tools_project/check_persist.py<br/>сверка с git HEAD"]
+    iol["iolistgen generate<br/>(persist_check)"]
+    dl["список устройств<br/>(GVL_DeviceList)"]
     out["src/GVLs/Generated/*, src/POUs/Generated/*,<br/>docs/alarms.csv, 03_io_list.md, modbus_*.csv,<br/>scada/*.csv"]
     csv --> gen
     toml --> iol
     tpl --> iol
     gen --> iol --> out
     gen --> dl --> out
-    gen --> chk
 ```
 
 `tools_project/generate.py` (одна команда) запускает iolistgen по `docs/03_io_list.csv` с настройками
-`iolistgen.toml` из корня репозитория, дописывает файлы проекта (список устройств) и сверяет новый
-`GVL_Persist` с версией в git. В CI тот же скрипт запускается в режиме проверки: если сгенерированные
-файлы не совпадают с перечнем — ошибка («дрейф» генерации).
+`iolistgen.toml` из корня репозитория (сверку нового `GVL_Persist` с прежним делает сам генератор,
+`persist_check`) и дописывает файлы проекта (список устройств). В CI тот же скрипт запускается в режиме
+проверки (`--check`, с `--strict`): если сгенерированные файлы не совпадают с перечнем — ошибка («дрейф»
+генерации); `tools_project/test_generate.py` — та же побайтная сверка в pytest.
 
 | Файл | Генератор | Что в нём |
 |---|---|---|
 | `src/GVLs/Generated/GVL_IO.gvl.st` | iolistgen | каналы модулей, регистры Modbus, переменные адаптеров ПЧ, состояние обмена со слейвами (`xMbOk_RS485_1_S1`…) |
 | `GVL_Devices.gvl.st` | iolistgen | 29 экземпляров `PL.FB_*` (`fbP101`…`fbHS502`) |
 | `GVL_Hmi.gvl.st` | iolistgen | `st<TAG>Cmd` всех устройств и импульс `xApplyProjectCfg` |
-| `GVL_Persist.pvl.st` | iolistgen + шаблон проекта | Persistent Variables: `st<TAG>Cfg`, `st<TAG>Retain` и **блок станции** `stStationCfg`, `stStationRetain`, `stLIC101Cfg`, `stLIC101Retain` (раздел 10) |
+| `GVL_Persist.pvl.st` | iolistgen (`persist_extra`) | Persistent Variables: `st<TAG>Cfg`, `st<TAG>Retain` и **блок станции** `stStationCfg`, `stStationRetain`, `stLIC101Cfg`, `stLIC101Retain` (раздел 10) |
 | `GVL_CfgProject.gvl.st`, `PRG_ApplyProjectCfg` | iolistgen | уставки проекта и команда «применить уставки проекта» |
 | `GVL_DevIdx.gvl.st` | iolistgen | номера устройств `dev_no` |
 | `PRG_Devices` | iolistgen | вызовы устройств; `itfTime := GVL_Time.fbClockMain`, `PL.GVL_Lib.itfAlarmSink := GVL_Log.fbEventLog` (опции `time_source`, `alarm_sink`) |
 | `GVL_DeviceList.gvl.st`, `PRG_DeviceList` | `tools_project/generate.py` | `aitfDevice : ARRAY OF PL.I_Device` (присваивается каждый цикл), теги, `dev_no` и типы устройств для общего сброса, сводки тревог и кодов в CSV |
 | `docs/alarms.csv`, `docs/03_io_list.md`, `docs/modbus_*.csv`, `docs/modbus_map.md`, `scada/*.csv` | iolistgen | документы и импорт SCADA (`docs/03_io_list.md` и `docs/alarms.csv` уже в репозитории: по ним сверяются 05 и документы) |
 
-Опции `time_source`, `alarm_sink`, `template_dir` iolistgen 0.1.0 проверены прогоном генератора
-по перечню КНС-1 (раздел 14).
+Опции `time_source`, `alarm_sink` проверены прогоном iolistgen 0.1.0 (раздел 14), `persist_extra` —
+генерацией 0.2.0 и сборкой в CODESYS (0 ошибок, 0 предупреждений, 19.10.2026).
 
 ### 3.2 Почему блок станции — в `GVL_Persist`
 
 В приложении CODESYS может быть **только один** объект Persistent Variables (проверено на стенде:
 второй объект скриптом не создаётся, раздел 14). Уставки станции, состояние чередования и регулятор
-LIC101 должны переживать загрузку программы, поэтому они живут в том же `GVL_Persist`. Генератор
-перекрывает шаблон `st/GVL_Persist.pvl.st.j2` своим (опция `template_dir`): после переменных
-устройств он вставляет фиксированный блок станции. Собственная сверка iolistgen (`persist_check`)
-выключена — она приняла бы переменные станции за удалённые; её заменяет `check_persist.py`
-(те же правила для всех переменных списка: тип не меняется, удаление — предупреждение). Это
-временное решение до доработки генератора (раздел 19).
+LIC101 должны переживать загрузку программы, поэтому они живут в том же `GVL_Persist`. iolistgen 0.2.0
+дописывает их после переменных устройств из файла проекта `tools_project/persist_station.txt` (опция
+`persist_extra`, запрос раздела 19 выполнен) и сверяет с прежним списком так же, как устройства
+(`persist_check`: тип не меняется, удаление, перестановка — предупреждение, с `--strict` — ошибка).
+Перекрытие шаблона и собственная сверка проекта больше не нужны.
 
 ### 3.3 Правила
 
 - Файлы в `Generated/` руками не правятся: правка пропадёт при следующей генерации.
 - Новое устройство — строка перечня с `dev_no` больше прежних (контракт 18.3, правило 1).
-- Шаблон-перекрытие сверяется тестом с шаблоном пакета iolistgen: отличие допускается только во
-  вставке блока станции.
+- Блок станции — только в `tools_project/persist_station.txt`, новые переменные — в его конец.
 
 ## 4. Абстракция ввода-вывода: реальный режим и имитация
 
@@ -460,7 +457,7 @@ flowchart LR
 |---|---|---|---|
 | юнит | каждый ФБ: границы, отказы, переходы, безударность; без модели | `tests/POUs/<Область>/FB_*_Test` | `cds.py test` |
 | интеграция | замкнутый контур в детерминированном времени: сутки притока, АВР, поплавки, питание | `tests/POUs/Integration/` (`TEST_ORDERED`) | `cds.py test` |
-| сценарии ПМИ | приложение имитации целиком через внешний интерфейс: инъекция → ожидание → проверка (39 пунктов 06) | `tests/scenarios/` (pytest), сценарии `pmi/PMI-NN.toml` | `cds.py scenarios` |
+| сценарии ПМИ | приложение имитации целиком через внешний интерфейс: инъекция → ожидание → проверка (39 пунктов 06) | `scenarios/` (pytest), сценарии `pmi/PMI-NN.toml` | `cds.py scenarios` |
 | без CODESYS | файлы сценариев (пути, доступ, номера ПМИ), генерация без дрейфа, инструменты Python | CI | `pytest`, `st_lint`, iec_checker |
 
 - Сценарий = пункт ПМИ: файл `PMI-NN.toml` с тем же номером, что в [06_PMI.md](06_PMI.md) (приложение
@@ -476,7 +473,8 @@ flowchart LR
   и не печатаются.
 - Время в сценариях — время контура (06 §5.3): таймауты делятся на k; интервалы между событиями ПЛК
   берутся из журнала (`lrMono_s`, курсор `stEventFeed`) с точностью до цикла задачи, интервалы от
-  действия сценария — от `GVL_Time.lrMainNow_s` с допуском «период опроса × k» (D-14). Мост читает
+  действия сценария — от `GVL_Time.lrMainNow_s` с допуском «период опроса × k» для нижней границы
+  (метка читается после записи и только запаздывает; D-14, DESIGN 14.3). Мост читает
   пакет переменных за ≈ 200 мс (Z7), поэтому опрос — не чаще 4 раз в секунду.
 - Схема файла сценария, ключи шагов, протокол моста, И0 и отчёт — [DESIGN.md](DESIGN.md), раздел 14.3.
 
@@ -584,7 +582,7 @@ CODESYS 3.5.17.30 (32 бит, сборка ОВЕН), CODESYS Control Win V3 в 
 
 | Проект | Запрос |
 |---|---|
-| 07 iolistgen | (а) переменные приложения в `GVL_Persist` из файла-вставки и их учёт в `persist_check` (сейчас — ложное «удалена», Z6); (б) тип устройства `Pid`; (в) генерация `GVL_DeviceList` (массив `PL.I_Device`, теги, типы); (г) тексты `TL_Reason` для битов блокировок, заданных проектом |
+| 07 iolistgen | (а) переменные приложения в `GVL_Persist` из файла-вставки с учётом в `persist_check` и (б) тип устройства `Pid` — выполнено в 0.2.0 (`persist_extra`, блок станции — `tools_project/persist_station.txt`); (в) генерация `GVL_DeviceList` (массив `PL.I_Device`, теги, типы; пока — `tools_project/generate.py`); (г) тексты `TL_Reason` для битов блокировок, заданных проектом; (д) значение `none` опции `templates` в `iolistgen.toml` (сейчас читается как путь) |
 | 01 plc-process-lib | вход подавления тревоги состояния у `FB_DigitalInput` (1.1); имя `I_Alarm.AlarmPriority` уже закреплено в контракте 1.0.0 (F-17) |
 | 06 plc-iiot-stack | изменения раздела 8 |
 | шаблон `plc-repo-template` | создание Persistent Variables импортом через PLCopenXML (Z3, Z4), заменитель GVL в проекте тестов, онлайн-мост `online_bridge.py` (Z7) |

@@ -1,0 +1,48 @@
+# Пример сценария ПМИ для обвязки (DESIGN, раздел 14.3; 06_PMI, раздел 5.6, PMI-12).
+id = "PMI-12"
+title = "АВР: нет подтверждения пуска"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.5
+inflow_m3h = 100.0
+run_hours_s = [360000, 720000, 1080000]   # ведущий Н1
+
+[[step]]
+note = "ОС «в работе» Н1 не приходит — инъекция до пуска"
+write = { "GVL_Sim.stFaultInj.axNoFeedback[1]" = true }
+
+[[step]]
+note = "пуск ведущего Н1 на 1,60 м, через 10 с — FailToStart"
+wait_alarm = { code = "P101.FTS", state = "ActiveUnack" }
+timeout_s = 120
+expect = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Fault",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.None",
+]
+
+[[step]]
+note = "АВР в том же цикле, «нет резерва» через 10 с"
+wait_alarm = { code = "KNS1.NORES", state = "ActiveUnack" }
+timeout_s = 30
+expect = ["GVL_Station.stStationSts.uiPumpsRunning >= 1"]
+expect_delay = { from_alarm = "P101.FTS", state = "ActiveUnack", alarm = "KNS1.ATS", max_s = 0.1 }
+
+[[step]]
+note = "задержка KNS1.NORES — 10 с (tOnDelay)"
+expect_delay = { from_alarm = "KNS1.ATS", alarm = "KNS1.NORES", state = "ActiveUnack", min_s = 9.9, max_s = 10.1 }
+
+[[step]]
+note = "снять инъекцию, сброс Н1: резервный, сам не пускается"
+write = { "GVL_Sim.stFaultInj.axNoFeedback[1]" = false }
+pulse = "GVL_Hmi.stP101Cmd.stCommon.xReset"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Standby"
+timeout_s = 30
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"]
+
+[teardown]
+clear_faults = true

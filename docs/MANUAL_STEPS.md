@@ -332,3 +332,79 @@ python tools\codesys\cds.py roundtrip
    ```
 
 3. После каждого релиза повторять `git push mirror --all` и `git push mirror --tags`.
+
+## 9. КНС-1: генерация, Persistent Variables, символы OPC UA, сценарии
+
+### 9.1. plc-process-lib 1.0 и рабочие копии
+
+`python tools/codesys/cds.py deps --check` — библиотека `plc-process-lib, 1.0.0.0 (plc-portfolio)`, CAA File
+и SysTimeRtc есть в репозитории библиотек. Если нет — `cds.py deps` соберёт и установит её из соседнего
+репозитория `../plc-process-lib`; в рабочей копии `git worktree` (каталог `_wt/…`) задайте путь явно:
+`set PL_REPO=<путь>\plc-process-lib` (нужно, только если библиотеки нет в репозитории библиотек).
+Сверка документов (`check_docs_consistency.py`) находит соседние репозитории и из `_wt/…` сама.
+
+### 9.2. Генерация слоя устройств
+
+После любой правки `docs/03_io_list.csv`:
+
+```bat
+python tools_project\generate.py           & rem iolistgen + GVL_DeviceList, PRG_DeviceList
+python tools_project\generate.py --check   & rem без записи, с --strict: дрейф — код 1 (как в CI)
+```
+
+iolistgen — модуль в окружении, каталог из `IOLISTGEN_REPO` или соседний репозиторий `../iolistgen`.
+Блок станции `GVL_Persist` — в `tools_project\persist_station.txt`: новые объявления — только в конец.
+Сгенерированные файлы руками не правятся; их коммитят вместе с перечнем.
+
+### 9.3. Persistent Variables
+
+Скрипт CODESYS 3.5.17 не создаёт объект Persistent Variables: первый `cds.py import` предупреждает
+«Persistent Variables скриптом SP17 не создаются», а сборка без объекта даёт C0046 «GVL_Persist не
+задан». Один раз на проект:
+
+```bat
+python tools\codesys\cds.py import
+python tools_project\codesys\codesys_pvl.py
+python tools\codesys\cds.py import --tests
+python tools_project\codesys\codesys_pvl.py --tests
+```
+
+Дальше `cds.py build`, `build --tests`, `test` обновляют текст объекта сами. После `import --clean`
+(новый проект) повторите скрипт. «Reorder List and Clear Gaps» не выполнять.
+
+### 9.4. Символьная конфигурация OPC UA
+
+```bat
+python tools_project\codesys\symbol_config.py            & rem сборка sim (Control Win, имитация)
+python tools_project\codesys\symbol_config.py --build site
+```
+
+Скрипт создаёт объект Symbol Configuration с «Support OPC UA features» (если его нет), выставляет доступ по
+`tools_project\codesys\symbol_rules.json`, собирает приложение и сверяет файл символов
+`build\<имя>.Device.Application.xml` с правилами (расхождение — код 1): доступ переменных и полей типов
+из раздела `types` (у страницы журнала и курсора клиент пишет только `uiPage` и `udiFromSeq`; в выводе —
+«тип ST_EventFeed: запись — udiFromSeq»). Повторный запуск — «изменено переменных: 0». После нового `.project` — запустить снова. Запасной путь — IDE по таблице DESIGN, раздел 13.
+
+### 9.5. Сценарии ПМИ (`scenarios/`)
+
+Без ПЛК: `python -m pytest scenarios` — офлайн-проверка файлов сценариев и тесты обвязки на имитаторе
+OPC UA-сервера. На рантайме (после сборки контура, загрузки приложения имитации, символьной конфигурации
+и сертификатов OPC UA — DESIGN, раздел 16, шаг 5):
+
+```bat
+set PMI_LIVE=1
+python -m pytest scenarios -m plc
+```
+
+Учётные данные — `%USERPROFILE%\.local\plc-tools\cds-runtime\credentials.json` (или
+`CODESYS_RUNTIME_CREDENTIALS`), сертификат клиента создаётся в `%USERPROFILE%\.local\plc-tools\opcua-client\`
+и при первом входе попадает в отклонённые: перенесите его в доверенные на «Экране безопасности» рантайма.
+Отчёт — `build\pmi-results.json` и `.md` (заготовка протокола 07). Таблица перечислений сценариев
+обновляется командой `python tools_project\gen_enums.py` после правки DUT.
+
+### 9.6. Журнал в CSV на Control Win
+
+Команда HMI «Выгрузить журнал» пишет `kns_events.csv` в рабочий каталог рантайма; у пользовательского
+процесса это `%LOCALAPPDATA%\VirtualStore\Program Files (x86)\CODESYS 3.5.17.30\GatewayPLC\` (зонд Z1).
+Отсутствующие каталоги пути CAA File создаёт сам. Русские тексты подставляет
+`tools_project\eventlog_decode.py` (этап 2).

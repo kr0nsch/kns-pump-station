@@ -340,6 +340,22 @@ def test_markdown_table_and_sections() -> None:
 # --------------------------------------------------------------------------------------------------
 
 
+def test_find_repo_sibling_or_worktree_grandparent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # рабочая копия git worktree лежит в <портфолио>/_wt/<имя>: соседние репозитории — на уровень выше
+    monkeypatch.delenv("PL_REPO", raising=False)
+    lib = tmp_path / "plc-process-lib"
+    (lib / "src" / "POUs" / "Devices" / "FB_MotorVfd").mkdir(parents=True)
+    main = tmp_path / "kns-pump-station"
+    worktree = tmp_path / "_wt" / "kns-io"
+    main.mkdir()
+    worktree.mkdir(parents=True)
+    marker = "src/POUs/Devices/FB_MotorVfd"
+    assert C.find_repo("PL_REPO", "plc-process-lib", main, marker) == lib
+    assert C.find_repo("PL_REPO", "plc-process-lib", worktree, marker) == lib
+    monkeypatch.setenv("PL_REPO", str(tmp_path / "nowhere"))
+    assert C.find_repo("PL_REPO", "plc-process-lib", worktree, marker) is None  # явный путь — без поиска
+
+
 @pytest.fixture(scope="module")
 def iolistgen_out(tmp_path_factory: pytest.TempPathFactory) -> Path:
     repo = C.find_repo("IOLISTGEN_REPO", "iolistgen", ROOT, "iolistgen/__init__.py")

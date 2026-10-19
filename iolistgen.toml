@@ -1,0 +1,18 @@
+# Настройки iolistgen для КНС-1 (docs/DESIGN.md, раздел 4.6; iolistgen 0.2.0, docs/GENERATORS.md генератора).
+# Генерацию запускает tools_project/generate.py: iolistgen по docs/03_io_list.csv с этими настройками,
+# затем список устройств GVL_DeviceList и PRG_DeviceList. Относительные пути — от каталога этого файла.
+
+[generators.st-codesys]
+time_source = "GVL_Time.fbClockMain"     # I_TimeSource всех устройств: часы контура (DESIGN, раздел 10)
+alarm_sink = "GVL_Log.fbEventLog"        # PL.GVL_Lib.itfAlarmSink каждый цикл в PRG_Devices
+# блок станции в GVL_Persist после устройств (DESIGN, раздел 4.7); persist_check его учитывает
+persist_extra = "tools_project/persist_station.txt"
+doc = "docs/03_io_list.md"               # документ в заголовках POU (правило STL001)
+
+[generators.docs-table]
+filename = "docs/03_io_list.md"
+title = "КНС-1. Перечень сигналов"
+
+# Тексты тревог устройств — «смысл слота», как в 05_alarm_list.csv (alarm-list.templates = none и
+# scada-csv.templates = none). В iolistgen 0.2.0 значение none из этого файла читается как путь от
+# каталога настроек, поэтому generate.py передаёт обе опции через --set (docs/ASSUMPTIONS.md, К3-04).

@@ -13,7 +13,7 @@ line-length = 120
 target-version = "py311"
 extend-exclude = ["build"]
 # Каталоги модулей проекта (для сортировки импортов: first-party)
-src = ["tools", "tools/codesys", "tools/check", "tools/tests", "tools_project"]
+src = ["tools", "tools/codesys", "tools/check", "tools/tests", "tools_project", "tools_project/codesys", "scenarios"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "RUF"]
@@ -26,18 +26,22 @@ ignore = [
 [tool.ruff.format]
 # Скрипты CODESYS форматируются вручную: форматтер ruff рассчитан на Python 3 и может
 # добавить запятую после *args/**kwargs, а это SyntaxError в IronPython 2.7.
-exclude = ["tools/codesys/*.py"]
+exclude = ["tools/codesys/*.py", "tools_project/codesys/*_cds.py"]
 
 [tool.ruff.lint.per-file-ignores]
 # Общее подмножество Python 2.7 и 3.x: __future__, "%"-форматирование, class X(object),
 # без f-строк, распаковки [*a], raise ... from, contextlib.suppress
 "tools/codesys/*.py" = ["UP", "SIM", "C4", "B904", "RUF005", "RUF012"]
+# Скрипты проекта, которые выполняет CODESYS (IronPython 2.7): то же подмножество Python 2.7 и 3.x
+"tools_project/codesys/*_cds.py" = ["UP", "SIM", "C4", "B904", "RUF005", "RUF012", "E501"]
+# Фикстуры pytest импортируются в модуль тестов явно (scenarios/plc_fixtures.py) и затеняются параметрами
+"scenarios/test_*.py" = ["F401", "F811"]
 
 [tool.mypy]
 python_version = "3.11"
 # tools_project — инструменты проекта КНС-1 (сверка документов docs/01–08 и др.)
-files = ["tools", "tools_project"]
-mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project"]
+files = ["tools", "tools_project", "scenarios"]
+mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys", "scenarios"]
 strict = true
 warn_unreachable = true
 # Скрипты CODESYS (IronPython 2.7) используют глобальные объекты среды CODESYS (projects,
@@ -45,12 +49,14 @@ warn_unreachable = true
 exclude = [
     '^tools/codesys/(?!stlayout\.py$)[^/]*\.py$',
     '^tools/tests/fixtures/',
+    '^tools_project/codesys/[^/]*_cds\.py$',
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tools/tests", "tools_project"]
-pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project"]
+testpaths = ["tools/tests", "tools_project", "scenarios"]
+pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys", "scenarios"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: проверки с настоящими plc (RuSTy) и iec_checker; пропускаются, если инструмента нет",
+    "plc: сценарий ПМИ на рантайме CODESYS (scenarios/test_pmi.py, запуск с PMI_LIVE=1)",
 ]
