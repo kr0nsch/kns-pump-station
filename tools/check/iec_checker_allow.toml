@@ -63,3 +63,58 @@ id = "UnusedVariable"
 file = "tests/POUs/PRG_Tests/PRG_Tests.decl.st"
 match = "FBF_CLAMPTEST|FBEXAMPLETEST"
 reason = "Экземпляры наборов регистрируются в coUnit самим объявлением и используются вызовом AreAllTestsFinished()"
+
+# =====================================================================================================
+# Логика станции (src/POUs/Station/) и её тесты (tests/POUs/Station/, tests/POUs/Fakes/) — раздел
+# команды «логика станции» (DESIGN.md, 15.1). Разбор — docs/STATIC_ANALYSIS.md, раздел «Логика станции».
+# =====================================================================================================
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/Station/*"
+reason = "IF без ELSE — у условия нет действия «иначе»: бит слова состояния, событие по смене, фиксация, переход автомата только при выполнении условия; пустая ветвь ELSE добавила бы шум (как в plc-process-lib)"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "tests/POUs/Station/*"
+reason = "Тесты и их помощники: IF без ELSE — накопление признака (первое неверное сочетание, подменный насос следует запросу только в Auto); действия «иначе» нет"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "tests/POUs/Fakes/*"
+reason = "Подменные объекты: кольцо журнала и запрос режима — действия «иначе» нет"
+
+[[allow]]
+id = "PLCOPEN-CP9"
+file = "src/POUs/Station/*"
+match = "Code is too complex"
+reason = "Тела ФБ станции — нормативные последовательности шагов DESIGN.md 6.x и 7 с пронумерованными шагами (ядро FB_StationCore — порядок цикла PRG_Station, FB_PumpRotation — снимок, подхват, передача роли, снятие и выдача запросов); деление на методы спрятало бы порядок. iec_checker 0.4 считает каждое логическое выражение и каждую ветвь вложенных циклов, метрика завышена; каждая ветвь покрыта юнит-тестами tests/POUs/Station (docs/STATIC_ANALYSIS.md)"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Station/*"
+match = "variable: (AFB|FB|ST)[A-Z0-9]*$"
+reason = "Ложное срабатывание iec_checker 0.4: экземпляры ФБ используются вызовом (fbStartLead(...), afbPumpProt[i](...)), методами (fbSysTime.Now(), afbAlarm[i].Ack()) и чтением выходов, структуры (stCfg, stRetain, stOld, stSts) — обращением к полям; это он не считает использованием"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Station/FB_StationCore/FB_StationCore.decl.st"
+match = "variable: (UIEXPORTLINES|UDIEXPORTERROR)$"
+reason = "Ложное срабатывание iec_checker 0.4: входы — аргументы вложенного вызова (rValue := UINT_TO_REAL(uiExportLines) в вызове LogEvent), такой аргумент он не считает использованием"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Station/*"
+match = "variable: (AFB|FB|ST|U)[A-Z0-9]*$"
+reason = "Ложное срабатывание iec_checker 0.4: ФБ под тестом и подменные насосы используются вызовом, чтением выходов и параметрами помощников, структуры и объединения (stSts в SIZEOF, uBits) — обращением к полям"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Station/*"
+match = "variable: UISTEPS$"
+reason = "Ложное срабатывание iec_checker 0.4: вход помощника — верхняя граница цикла FOR uiStep := 1 TO uiSteps, такое использование он не учитывает"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Fakes/*"
+reason = "Подменные объекты: поля читают аксессоры свойств и методы, которые понижение iec-checker выносит в отдельные функции (тело ФБ пустое); параметр uiIndex метода GetAlarm подменного насоса намеренно не используется — тревог у него нет"
