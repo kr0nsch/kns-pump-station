@@ -2,11 +2,12 @@
 //             H_i = H0·s_i² − k_i·q_i², s = f / 50 Гц; сеть: H = (Hgeo − h) + R·Q², Q = Σ q_i; обратные
 //             клапаны — q_i = 0 при H0·s_i² ≤ H. Напор — бисекцией на [Hgeo − h, max(H0·s_i²)]
 //             (SIM_SOLVER_ITERATIONS шагов): так решаются и разные частоты. Сухой ход насоса и
-//             осушенный приёмок — подача 0; засор — k_i·SIM_CLOG_K_FACTOR, ток ×SIM_CLOG_I_FACTOR к току
-//             того же насоса в сети без засора (второе решение). Давление PT201 (у дна, условно):
+//             осушенный приёмок — подача 0 и ток холостого хода; засор — k_i·SIM_CLOG_K_FACTOR, ток
+//             ×SIM_CLOG_I_FACTOR к току того же насоса в сети без засора (второе решение; только у насоса,
+//             который может подавать). Давление PT201 (у дна, условно):
 //             ρ·g·(H + h)/10⁵ бар; насосы стоят — столб за обратными клапанами ρ·g·Hgeo/10⁵.
 // Автор:      <ИМЯ ФАМИЛИЯ>
-// Версия:     0.1.0
+// Версия:     0.1.1
 // Документ:   docs/DESIGN.md, разделы 11.2, 11.3; эталон tools_project/plant_reference.py
 FUNCTION_BLOCK FB_HydraulicSolver
 VAR_INPUT
@@ -30,7 +31,7 @@ VAR
     arK        : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF REAL;   // действующая крутизна
     axActive   : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // насос может подавать
     arS        : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF REAL;   // скорость после проверки
-    xAnyClog   : BOOL;              // есть насос с засором (нужно второе решение)
+    xAnyClog   : BOOL;              // есть подающий насос с засором (нужно второе решение)
     rHeadClean : REAL;              // напор сети без засоров
     uiPump     : UINT;              // индекс насоса
 END_VAR

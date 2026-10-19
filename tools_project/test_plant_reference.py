@@ -98,6 +98,15 @@ def test_no_flow_below_static_head_and_dry_intake() -> None:
     assert dry.currents_a[0] < 12.0  # насос «подсасывает воздух» — недогрузка
 
 
+def test_clog_without_flow_keeps_dry_current() -> None:
+    # засор при осушенном приёмке или сухом ходе: воды в колесе нет — ток холостого хода (< 12 А), без ×1,3
+    dry = P.hydraulic_point([1.0, 0.0, 0.0], P.PUMP_INTAKE_M - 0.05, clog=[True, False, False])
+    assert dry.currents_a[0] == pytest.approx(10.75, abs=0.01)
+    assert dry.currents_a[0] < 12.0
+    air = P.hydraulic_point([1.0, 0.0, 0.0], 1.4, air_lock=[True, False, False], clog=[True, False, False])
+    assert air.currents_a[0] == pytest.approx(10.75, abs=0.01)
+
+
 def test_pump_current_continuous_at_zero_flow() -> None:
     # потребляемая мощность не меньше потерь холостого хода: нет скачка тока при закрытии обратного клапана
     near = P.pump_current(0.01, PUMP.h0_m * 0.36, 0.6, PUMP)

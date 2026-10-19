@@ -6,6 +6,7 @@ UnequalSpeedsCheckValveClosed();
 NoFlowBelowStaticHead();
 AirLockZeroFlowLowCurrent();
 ClogReducesFlowRaisesCurrent();
+ClogWithDryIntakeKeepsDryCurrent();
 IntakeDryNoFlow();
 PumpCurrentEdgeCases();
 NonFiniteSpeedTreatedAsStopped();

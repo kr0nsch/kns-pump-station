@@ -162,9 +162,9 @@ def hydraulic_point(
 ) -> HydraulicPoint:
     """FB_HydraulicSolver: насосы со скоростями s = f/50 Гц на общую сеть при уровне h.
 
-    Сухой ход насоса — подача 0; засор — крутизна ×6,25, ток ×1,3 к току той же сети без засора;
-    уровень ниже SIM_PUMP_INTAKE_M — все подачи 0. ``iterations`` = 30 повторяет ПЛК; эталон по
-    умолчанию считает точнее (100), разница — меньше допусков тестов.
+    Сухой ход насоса — подача 0; засор — крутизна ×6,25, ток ×1,3 к току той же сети без засора (только
+    у насоса, который может подавать); уровень ниже SIM_PUMP_INTAKE_M — все подачи 0. ``iterations`` = 30
+    повторяет ПЛК; эталон по умолчанию считает точнее (100), разница — меньше допусков тестов.
     """
     cfg = cfg or PumpCfg()
     n = len(speeds)
@@ -175,10 +175,11 @@ def hydraulic_point(
     k_clog = [cfg.k_mh2 * (CLOG_K_FACTOR if c else 1.0) for c in clg]
     head, flows = _solve_head(speeds, active, k_clog, level_m, cfg, iterations)
     currents = [pump_current(q, head, s, cfg) for q, s in zip(flows, speeds, strict=True)]
-    if any(c and not a for c, a in zip(clg, air, strict=True)):
+    # засор — только у насоса, который может подавать: при сухом ходе и осушенном приёмке — ток холостого хода
+    if any(c and a for c, a in zip(clg, active, strict=True)):
         head_u, flows_u = _solve_head(speeds, active, [cfg.k_mh2] * n, level_m, cfg, iterations)
         for i in range(n):
-            if clg[i] and not air[i]:
+            if clg[i] and active[i]:
                 currents[i] = CLOG_I_FACTOR * pump_current(flows_u[i], head_u, speeds[i], cfg)
     pressure = RHO_KGM3 * G_MPS2 * (head + level_m) / PA_PER_BAR
     return HydraulicPoint(head, tuple(flows), tuple(currents), pressure)
