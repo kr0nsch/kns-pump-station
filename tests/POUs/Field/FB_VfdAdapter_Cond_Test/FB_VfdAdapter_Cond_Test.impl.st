@@ -5,4 +5,5 @@ DecodeScale5000Is100Pct();
 NoCommForcesStatusFalseHoldsSpeed();
 EncodeResetBitWhileQReset();
 EncodeScaleAndClamp();
+EncodeRoundsToNearest();
 EncodeNanIsZero();

@@ -11,3 +11,4 @@ FeedReportsOverwrittenGap();
 MonoTimeIsProcessTime();
 TimeBackwardsRecordedAsIs();
 SnapshotIndependentOfLaterEvents();
+SnapshotAfterWrapOldestFirst();
