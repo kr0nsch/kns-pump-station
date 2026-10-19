@@ -1,6 +1,6 @@
 // Назначение: журнал событий, сводка тревог и обмен MainTask ↔ SlowTask при выгрузке журнала в CSV.
 // Автор:      <ИМЯ ФАМИЛИЯ>
-// Версия:     0.1.0
+// Версия:     0.1.1
 // Документ:   docs/DESIGN.md, раздел 4.3
 {attribute 'qualified_only'}
 VAR_GLOBAL
@@ -10,7 +10,7 @@ VAR_GLOBAL
     stEventView     : ST_EventView;      // страница журнала HMI (uiPage — ReadWrite)
     stEventFeed     : ST_EventFeed;      // курсор журнала внешнего клиента (udiFromSeq — ReadWrite)
     stAlarmView     : ST_AlarmView;      // тревоги не в Normal: баннер, таблица, сценарии (Read)
-    xExportReq      : BOOL;              // MainTask → SlowTask: снимок готов, писать файл
+    xExportReq      : BOOL;              // MainTask → SlowTask: снимок готов (снимает PRG_Slow при старте)
     eExportState    : E_LogExportState;  // SlowTask → MainTask
     udiExportError  : UDINT;             // код ошибки FILE.* последней выгрузки
     uiExportLines   : UINT;

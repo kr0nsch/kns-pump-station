@@ -4,3 +4,4 @@ WritesHeaderAndAllLines();
 EmptySnapshotHeaderOnly();
 ReadBackMatchesSnapshot();
 ErrorOnBadPathReported();
+SlowTaskRequestHandshake();
