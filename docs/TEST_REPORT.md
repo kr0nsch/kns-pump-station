@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 18:01:06. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 22:01:25. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 18:01:06 |
-| Коммит | d44f9c7 |
+| Дата прогона | 2026-10-19 22:01:25 |
+| Коммит | e2b8239 |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -28,7 +28,7 @@
 | `GVL_TestsInfra.fbEventLogCsvTest` | 6 | 6 | 0 | 0 | пройдено |
 | `GVL_TestsInfra.fbUtcToIsoTest` | 4 | 4 | 0 | 0 | пройдено |
 | `GVL_TestsInfra.fbAlarmCodeTest` | 5 | 5 | 0 | 0 | пройдено |
-| `GVL_TestsInfra.fbAlarmSummaryTest` | 15 | 15 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | 16 | 16 | 0 | 0 | пройдено |
 | `GVL_TestsInfra.fbDeviceAuditTest` | 4 | 4 | 0 | 0 | пройдено |
 | `GVL_TestsInfra.fbPlcStartAdoptionTest` | 2 | 2 | 0 | 0 | пройдено |
 | `GVL_TestsModel.fbScaledClockTest` | 8 | 8 | 0 | 0 | пройдено |
@@ -46,13 +46,13 @@
 | `GVL_TestsStation.fbAtsTest` | 13 | 13 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbProtectionsTest` | 21 | 21 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbPumpProtectionTest` | 9 | 9 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbPowerRestoreTest` | 10 | 10 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbPowerRestoreTest` | 12 | 12 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbVentilationTest` | 4 | 4 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbStationAlarmsTest` | 9 | 9 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbStationAlarmsTest` | 10 | 10 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbAnnunciatorTest` | 7 | 7 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationCfgCheckTest` | 13 | 13 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationCoreTest` | 29 | 29 | 0 | 0 | пройдено |
-| **Всего** | 324 | 324 | 0 | 0 | **пройдено** |
+| **Всего** | 328 | 328 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
@@ -110,6 +110,7 @@
 | `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdRespectsTShelveMax` | пройден |
 | `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdUsesFullTShelveMax` | пройден |
 | `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_UnshelveById` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_StationSlotsBeyondDeviceLimit_PMI01_PMI30` | пройден |
 | `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoEventOnFirstCall` | пройден |
 | `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_AuditLogsModeChange` | пройден |
 | `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoSinkIsSafe` | пройден |
@@ -320,6 +321,8 @@
 | `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_SeqRemainCountsDown_A13_PMI34` | пройден |
 | `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_FirstCallIgnoresPowerInput_A13_PMI01` | пройден |
 | `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_TimeBackwardsRestartsDelay_A13` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_DemandRisingAfterDelayKeepsSequence_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_LastStepUnconfirmedFinishesOnTimeout_A13` | пройден |
 | `GVL_TestsStation.fbVentilationTest` | `Ventilation_RunsOnGasDoorTemp_A17_PMI38` | пройден |
 | `GVL_TestsStation.fbVentilationTest` | `Ventilation_OverrunAfterConditionsClear_A17_PMI38` | пройден |
 | `GVL_TestsStation.fbVentilationTest` | `Ventilation_FireInterlocksAndStops_A17_PMI38` | пройден |
@@ -333,6 +336,7 @@
 | `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_ShelveRejectedForEhl_A15_PMI36` | пройден |
 | `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_OnDelayFromCfg_A15_PMI17` | пройден |
 | `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_TimeBackwardsOnDelayRestarts_A15` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_SuppressionReleaseRestartsOnDelay_A15_PMI22_PMI34` | пройден |
 | `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_HornOnNewHighUnack_A14_PMI36` | пройден |
 | `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_SilenceStopsHornUntilNextNew_A14_PMI36` | пройден |
 | `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_HornOffWhenAllAcked_A14_PMI36` | пройден |
@@ -389,6 +393,37 @@ _Нет._
 
 Машиночитаемые результаты: `build/test-results.json`, `build/junit.xml` (не в git).
 <!-- cds:test-report:end -->
+
+## Приёмка ПМИ на Control Win (19.10.2026)
+
+Прогон 39 сценариев ПМИ (`scenarios/pmi/`, программа [06_PMI.md](06_PMI.md) v0.4) на CODESYS Control Win V3
+3.5.17.30 через OPC UA: все проверки соответствуют по автоматической части, ручные части не выполнялись —
+протокол № 1 [07_test_protocol.md](07_test_protocol.md), проверки по шагам — [07_pmi_report.md](07_pmi_report.md).
+Приложение имитации, сертификаты OPC UA и сброс — `tools_project/codesys/sim.py` (ASSUMPTIONS П1, П2).
+
+Испытания нашли три дефекта логики; тесты на них написаны до исправления и падали (первый прогон с ними —
+327 тестов, 3 упали; затем 328, 1 упал — тест выдержки после подавления), после исправления — 328 из 328:
+
+| Тест | Дефект | Проверка ПМИ |
+|---|---|---|
+| `AlarmSummary_StationSlotsBeyondDeviceLimit_PMI01_PMI30` | сводка тревог не видела слоты станции 9–13 (`KNS1.NOAUTO`, `UL1…UL3`, `SIM`) | PMI-01 |
+| `PowerRestore_DemandRisingAfterDelayKeepsSequence_A13_PMI34`, `PowerRestore_LastStepUnconfirmedFinishesOnTimeout_A13` | последовательный пуск завершался по потребности конца задержки | PMI-34 |
+| `StationAlarms_SuppressionReleaseRestartsOnDelay_A15_PMI22_PMI34` | выдержка тревоги станции копилась при подавлении: мелькание `KNS1.NORES` (High) | PMI-22, PMI-34 |
+
+Проверки в конце приёмки (коммит `e2b8239`):
+
+| Команда | Итог |
+|---|---|
+| `ruff check .` / `ruff format --check .` / `mypy` | без замечаний; 73 файла отформатированы; 53 файла без ошибок |
+| `pytest -q` (с `PL_REPO`, `IOLISTGEN_REPO`) | 779 пройдено, 39 пропущено (сценарии ПМИ на рантайме — `PMI_LIVE=1`) |
+| `assemble.py --tests`, `st_lint.py --strict` | 121 объект; файлов 1011, ошибок 0, предупреждений 0 |
+| `run_iec_checker.py --tests`, `run_rusty.py` | необоснованных 0 (обоснованных 4326); 35 файлов без ошибок |
+| `generate.py --check`, `check_docs_consistency.py` | дрейфа нет (20 файлов); проверок 20, расхождений 0 |
+| `cds.py deps --check` | plc-process-lib 1.0.0.0, CAA File 3.5.17.0, SysTimeRtc 3.5.17.0, coUnit 1.2.0.0, Standard 3.5.17.0 |
+| `cds.py check` / `check --tests` | 85 / 121 объект, 0 ошибок, 0 предупреждений |
+| `cds.py build` / `build --tests` | 0 ошибок, 0 предупреждений |
+| `cds.py test` | 29 наборов, 328 из 328 |
+| `cds.py roundtrip` | экспорт совпал побайтно (1011 файлов), повторный импорт — 0 изменений |
 
 ## Сборка контура в CODESYS (объединённый проект)
 
