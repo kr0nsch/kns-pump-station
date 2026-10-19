@@ -75,9 +75,10 @@ class EventFeed:
         self.records: list[EventRecord] = []
         self.restarts = 0  # замечено перезапусков журнала (сброс ПЛК)
 
-    def _paths(self) -> list[str]:
+    def _paths(self, rows: int | None = None) -> list[str]:
+        """Пути заголовка и строк 1…``rows`` (без аргумента — все строки курсора)."""
         paths = [f"{FEED}.{name}" for name in HEADER_FIELDS]
-        for row in range(1, self.rows + 1):
+        for row in range(1, (self.rows if rows is None else rows) + 1):
             paths += [f"{FEED}.astRow[{row}].{name}" for name in RECORD_FIELDS]
         return paths
 
@@ -99,8 +100,12 @@ class EventFeed:
 
     def poll(self) -> list[EventRecord]:
         """Новые записи с номера ``next_seq``; курсор сдвигается за последнюю прочитанную."""
-        values = self.client.read(self._paths())
-        _from, first, last, count = (int(v) for v in values[: len(HEADER_FIELDS)])
+        # заголовок, затем только заполненные строки: у OPC UA-сервера CODESYS предел 100 узлов в запросе, все
+        # 32 строки — это 320 узлов; номер записи в строке от udiFromSeq не меняется, пока запись не затёрта
+        header = self.client.read(self._paths(0))
+        _from, first, last, count = (int(v) for v in header)
+        filled = min(count, self.rows)
+        values = header + (self.client.read(self._paths(filled)[len(HEADER_FIELDS) :]) if filled else [])
         if last + 1 < self.next_seq:
             # номера ПЛК пошли назад: журнал начат заново (сброс, перезапуск) — читать с его первой записи
             self.restarts += 1

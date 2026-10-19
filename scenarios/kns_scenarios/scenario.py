@@ -10,8 +10,9 @@
 1. ``time_scale`` — ускорение контура с этого шага (короткие участки при k = 1: импульс 1 с, отсчёт 10 с, первые
    2 с отказа — опрос 0,25 с различает их только без ускорения); ``init`` — И0 06 §5.2 посреди сценария
    (таблица — как ``[setup]``); ``reset`` — сброс ПЛК (только исполнитель ``cds``);
-2. действия: ``write``, ``pulse``, ``mark`` (время контура после записи, оно же значение ``{имя}``), ``capture``;
-3. ожидания: ``hold_s``, ``wait``, ``wait_alarm`` (таблица или список);
+2. действия: ``write``, ``pulse``, ``mark`` (время контура после записи, оно же значение ``{имя}``);
+3. ожидания: ``hold_s``, ``wait``, ``wait_alarm`` (таблица или список), затем ``capture`` — значения в момент, когда
+   условия шага выполнены (до прогона ПМИ 19.10.2026 ``capture`` шёл до ожиданий и брал значение начала шага);
 4. проверки «здесь и сейчас»: ``expect``, ``expect_alarm``; по журналу: ``expect_delay`` (таблица или список),
    ``expect_event``, ``expect_absent``, ``expect_log_order``;
 5. ``manual`` (часть проверки, которую отмечает инженер) и ``not_checked`` (не проверяется — с причиной) — в отчёт
@@ -43,6 +44,7 @@ MainTask, в начале которого ``lrMainNow_s`` обновляетс�
 
 from __future__ import annotations
 
+import datetime as dt
 import itertools
 import tomllib
 from collections.abc import Callable, Mapping, Sequence
@@ -53,7 +55,9 @@ from typing import Any
 from kns_scenarios.alarms import AlarmView
 from kns_scenarios.client import NotSupportedError
 from kns_scenarios.context import (
+    FAN_CMD,
     FAULT_INJ,
+    PID_CMD,
     SIM_CMD,
     STATION_CMD,
     STATION_STS,
@@ -106,6 +110,7 @@ PUMPS = 3  # GVL_Const.STN_PUMP_COUNT
 DEFAULT_INFLOW_M3H = 100.0  # 06 §5.2, п. 3
 DEFAULT_RUN_HOURS_S = (360_000, 720_000, 1_080_000)  # 06 §5.2, п. 8: Н1 100 ч, Н2 200 ч, Н3 300 ч — ведущий Н1
 MAIN_CYCLE_S = 0.02  # период MainTask (DESIGN, раздел 12): шаг метки lrMainNow_s
+SAME_CYCLE_FRACTION = 0.5  # записи журнала ближе полцикла — один цикл MainTask
 TIME_SCALE_RANGE = (1.0, 50.0)  # SIM_TIME_SCALE_MAX
 STOP_TIMEOUT_S = 120.0  # И0: насосы остановлены (выбег ПЧ 10 с), секунды контура
 CONTROL_TIMEOUT_S = 180.0  # И0: действует ступенчатое или ПИД (выход из Float — tLtRecover, из Restart — 13 с)
@@ -242,6 +247,9 @@ class ScenarioResult:
     manual: list[str] = field(default_factory=list)
     error: str | None = None
     mode: str = "auto"
+    started: str = ""  # начало прогона, местное время ISO
+    real_s: float | None = None  # длительность прогона (с И0 и завершением), реальные секунды
+    process_s: float | None = None  # время контура за прогон (GVL_Time.lrMainNow_s; None — был сброс ПЛК)
 
     @property
     def verdict(self) -> str:
@@ -385,6 +393,7 @@ class Runner:
         self.feed = feed
         self.mark_index: dict[str, int] = {}  # метка → число записей курсора до действий шага
         self._feed_polled_at = float("-inf")
+        self._feed_pending = False  # курсор журнала ещё не поставлен в этом прогоне
 
     # --- И0 и завершение ------------------------------------------------------------------------
 
@@ -392,10 +401,15 @@ class Runner:
         """Исходное состояние И0 (06 §5.2) и отличия проверки из ``[setup]`` (или ключа шага ``init``).
 
         Наработка — ``run_hours_s`` или И0 (Н1 100 ч, Н2 200 ч, Н3 300 ч). Её пишут, пока насосы стоят (06 §5.2,
-        п. 8): станция переводится в «Ручной», насосы — «Стоп» с фейсплейта, затем «Автомат» (ступенчатый
+        п. 8): станция переводится в «Ручной», насосы — «Стоп» с фейсплейта, затем «Автомат», насосы и LIC101 —
+        «Автомат» (06 §5.2, п. 7; ступенчатый
         автомат и ПИД начинают с нуля работающих) и ожидание действующего ступенчатого или ПИД (выход из Float
         и Restart прошлого сценария). После остановки модель снова приводится к уровню ``SimCfg.rLevelInit_m``;
         переходные тревоги И0 квитируются.
+
+        В начале сценария курсор журнала ставится после общей части И0 и до отличий проверки (приток, наработка,
+        уровень, способ): события, которые вызывают сами отличия (пуск ведущего при уровне ``level_m``, смена
+        способа), попадают в записи сценария. ``init`` посреди сценария курсор не трогает.
         """
         ctx = self.ctx
         skip = bool(setup.get("skip_initial_state", False))
@@ -413,8 +427,14 @@ class Runner:
             ctx.write({f"{FAULT_INJ}.axLocal[{n}]": False for n in range(1, PUMPS + 1)})
             for n in range(1, PUMPS + 1):
                 ctx.pulse(f"GVL_Hmi.stP10{n}Cmd.stCommon.xSetAuto")
+            # LIC101 и вентилятор В1 в Auto (06 §5.2, п. 7): без этого ПИД не готов (04 §7.4) и «ПИД» работает как
+            # ступенчатое, а В1 не пускается по двери, газам и температуре (04 §17); режимы энергонезависимы, после
+            # первой загрузки — Manual
+            ctx.pulse(f"{PID_CMD}.stCommon.xSetAuto")
+            ctx.pulse(f"{FAN_CMD}.stCommon.xSetAuto")
             ctx.wait(f"{STATION_STS}.eControlAct <= E_ControlAct.LevelPid", CONTROL_TIMEOUT_S)
             ctx.pulse(f"{SIM_CMD}.xResetPlant")
+        self._start_feed(setup)
         inflow = float(setup.get("inflow_m3h", DEFAULT_INFLOW_M3H))
         ctx.write({f"{SIM_CMD}.xInflowOverride": True, f"{SIM_CMD}.rInflowOverride_m3h": inflow})
         hours = setup.get("run_hours_s", None if skip else DEFAULT_RUN_HOURS_S)
@@ -432,6 +452,17 @@ class Runner:
             raise ScenarioError(f"[setup] method = {method!r}: ожидается Stepped или LevelPid")
         if not skip:
             ctx.pulse(f"{STATION_CMD}.xAckAll")
+
+    def _start_feed(self, setup: Mapping[str, Any]) -> None:
+        """Курсор журнала сценария — один раз за прогон (с самой старой записи при ``journal_from_start``)."""
+        if not self._feed_pending or self.feed is None:
+            return
+        self._feed_pending = False
+        if setup.get("journal_from_start"):
+            self.feed.start_at_first()
+        else:
+            self.feed.start_at_end()
+        self._feed_polled_at = self.ctx.clock()
 
     def teardown(self, teardown: Mapping[str, Any]) -> None:
         if teardown.get("clear_faults", True):
@@ -553,7 +584,12 @@ class Runner:
             if rec_from is None:
                 result.checks.append(Check(label, "начальная запись журнала", False, note="не найдена"))
                 return
-            start = after_mono = rec_from.mono_s
+            # записи одного цикла: метка lrMono_s берётся при записи (FB_ScaledClock.Now по системному времени),
+            # поэтому запись, сделанная в том же цикле раньше, может быть на доли миллисекунды · k раньше
+            # начальной (KNS1.ATS и KNS1.UL1 — PMI-15); полцикла отделяют их от записей прошлого цикла
+            start = rec_from.mono_s
+            late = SAME_CYCLE_FRACTION * MAIN_CYCLE_S * self.ctx.time_scale
+            after_mono = start - late
         rec = self._poll_until(
             timeout_s, lambda: find(self._records(since), id=target[0], new_state=target[1], after_mono_s=after_mono)
         )
@@ -671,8 +707,6 @@ class Runner:
             ctx.pulse(path, timeout)
         if "mark" in step:
             ctx.mark(str(step["mark"]))
-        if "capture" in step:
-            ctx.capture(step["capture"])
         monitored = any(k in step for k in ("during", "during_if", "during_span", "during_rate"))
         monitor = Monitor(ctx, step) if monitored else None
         tick = self._tick(monitor)
@@ -689,6 +723,8 @@ class Runner:
         finally:
             if monitor is not None:
                 monitor.finish(label, result)
+        if "capture" in step:  # после выдержек и ожиданий: значение «когда условие шага выполнено»
+            ctx.capture(step["capture"])
         for expr in as_list(step.get("expect")):
             ok, actual = ctx.check(str(expr))
             result.checks.append(Check(label, str(expr), ok, actual))
@@ -723,15 +759,14 @@ class Runner:
         if self.backend not in scenario.backends:
             result.checks.append(Check("—", "исполнитель", None, note=f"сценарий не для исполнителя {self.backend}"))
             return result
+        result.started = dt.datetime.now().isoformat(timespec="seconds")
+        clock0 = self.ctx.clock()
+        process0 = self._process_time()
         try:
             self.ctx.set_time_scale(scenario.time_scale)
+            self._feed_pending = True
             self.initial_state(scenario.setup)
-            if self.feed is not None:
-                if scenario.setup.get("journal_from_start"):
-                    self.feed.start_at_first()
-                else:
-                    self.feed.start_at_end()
-                self._feed_polled_at = self.ctx.clock()
+            self._start_feed(scenario.setup)  # если И0 подменён (тесты) или курсора ещё нет
             self.run_steps(scenario.steps, scenario.timeout_s, result)
         except (ScenarioTimeout, ScenarioError, KeyError) as exc:
             result.error = str(exc)
@@ -743,4 +778,15 @@ class Runner:
                 self.teardown(scenario.teardown)
             except Exception as exc:  # завершение не должно прятать итог шагов
                 result.error = result.error or f"завершение: {exc}"
+            result.real_s = round(self.ctx.clock() - clock0, 1)
+            process1 = self._process_time()
+            if process0 is not None and process1 is not None and process1 >= process0:
+                result.process_s = round(process1 - process0, 1)
         return result
+
+    def _process_time(self) -> float | None:
+        """Время контура ``lrMainNow_s`` (для длительности прогона); ошибка чтения — None."""
+        try:
+            return float(self.ctx.client.read([TIME_NOW])[0])
+        except Exception:
+            return None

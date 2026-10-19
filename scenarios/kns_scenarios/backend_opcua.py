@@ -8,15 +8,19 @@
 (зонд Z5 архитектуры): нужен ручной шаг 5 DESIGN, раздел 16. Режим ``security="none"`` — для тестов на
 сервере asyncua в процессе.
 
-Запись — ``DataValue(Variant(значение, тип))`` без меток времени, тип — из ``DataType`` узла (кэш):
-CODESYS не принимает значение не того типа и метки времени источника.
+Сброс приложения (шаг ``reset``) OPC UA не умеет: его выполняет ``resetter`` — скрипт CODESYS
+(``tools_project/codesys/sim.py reset warm|cold``), после чего клиент открывает новый сеанс.
+
+Запись — ``DataValue(Variant(значение, тип))`` без меток времени, тип — по текущему значению узла (кэш; у
+перечислений ``DataType`` — тип перечисления, а значение — базового типа): CODESYS не принимает значение не того
+типа и метки времени источника.
 """
 
 from __future__ import annotations
 
 import ipaddress
 import socket
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Literal
@@ -40,6 +44,9 @@ CLIENT_CERT_DIR = Path("~/.local/plc-tools/opcua-client")
 CLIENT_APP_URI = "urn:kns-pump-station:scenarios"
 CLIENT_NAME = "kns-pump-station scenarios"
 CERT_DAYS = 365
+# Предел узлов в одном запросе Read/Write: OPC UA-сервер CODESYS 3.5.17 — 100 (ServerCapabilities/OperationLimits
+# MaxNodesPerRead, MaxNodesPerWrite), больший запрос отклоняется с BadTooManyOperations
+DEFAULT_MAX_NODES = 100
 # Узлы DeviceSet, которые не являются устройством ПЛК
 _NOT_DEVICES = frozenset({"DeviceFeatures"})
 _INT_TYPES = frozenset(
@@ -101,6 +108,36 @@ def ensure_client_certificate(cert_dir: Path, app_uri: str = CLIENT_APP_URI) -> 
     return cert, key
 
 
+def read_operation_limits(client: Client) -> tuple[int, int]:
+    """Пределы узлов в запросе Read и Write сервера (0 или нет узла — ``DEFAULT_MAX_NODES``)."""
+    limits = []
+    for name in ("MaxNodesPerRead", "MaxNodesPerWrite"):
+        try:
+            node = client.nodes.server.get_child(["0:ServerCapabilities", "0:OperationLimits", f"0:{name}"])
+            value = int(node.read_value())
+        except Exception:  # сервер без OperationLimits (имитатор в тестах)
+            value = 0
+        limits.append(value if value > 0 else DEFAULT_MAX_NODES)
+    return limits[0], limits[1]
+
+
+def variant_type_of(node: SyncNode) -> ua.VariantType:
+    """Тип значения для записи — по текущему значению узла: у перечисления CODESYS ``DataType`` — свой тип
+    перечисления (``read_data_type_as_variant_type`` даёт Int32), а значение передаётся базовым типом
+    (``E_RotationMode`` … ``INT`` — Int16); запись не того типа сервер отклоняет с ``BadTypeMismatch``."""
+    value = node.read_data_value().Value
+    if value is not None and value.VariantType not in (ua.VariantType.Null, ua.VariantType.Variant):
+        current: ua.VariantType = value.VariantType
+        return current
+    declared: ua.VariantType = node.read_data_type_as_variant_type()
+    return declared
+
+
+def chunks(items: Sequence[Any], size: int) -> list[Sequence[Any]]:
+    """Части списка не длиннее ``size`` (пакет больше предела сервера — несколько запросов по порядку)."""
+    return [items[i : i + size] for i in range(0, len(items), max(size, 1))]
+
+
 def discover_device(objects: SyncNode) -> str:
     """Имя устройства ПЛК — первый узел ``Objects/DeviceSet``, кроме служебных."""
     for child in objects.get_children():
@@ -147,6 +184,7 @@ class OpcUaClient:
         cert_dir: Path | None = None,
         device: str | None = None,
         timeout_s: float = 4.0,
+        resetter: Callable[[ResetKind], None] | None = None,
     ) -> None:
         self.url = url
         self.credentials = credentials
@@ -154,9 +192,12 @@ class OpcUaClient:
         self.cert_dir = (cert_dir or CLIENT_CERT_DIR).expanduser()
         self.device = device
         self.timeout_s = timeout_s
+        self.resetter = resetter
         self.namespace = -1
         self._client: Client | None = None
         self._types: dict[str, ua.VariantType] = {}
+        self.max_read = DEFAULT_MAX_NODES
+        self.max_write = DEFAULT_MAX_NODES
 
     # --- соединение ---------------------------------------------------------------------------
 
@@ -175,6 +216,7 @@ class OpcUaClient:
             self.namespace = find_iec_namespace(client.get_namespace_array())
             if self.device is None:
                 self.device = discover_device(client.nodes.objects)
+            self.max_read, self.max_write = read_operation_limits(client)
         except Exception:
             self.close()
             raise
@@ -211,7 +253,9 @@ class OpcUaClient:
     def read(self, paths: Sequence[str]) -> list[PlcValue]:
         if not paths:
             return []
-        values = self.client.read_values([self.node(p) for p in paths])
+        values: list[Any] = []
+        for part in chunks(list(paths), self.max_read):
+            values += self.client.read_values([self.node(p) for p in part])
         return [_from_ua(p, v) for p, v in zip(paths, values, strict=True)]
 
     def write(self, values: Mapping[str, PlcValue]) -> None:
@@ -220,9 +264,23 @@ class OpcUaClient:
         nodes = [self.node(p) for p in values]
         for path, node in zip(values, nodes, strict=True):
             if path not in self._types:
-                self._types[path] = node.read_data_type_as_variant_type()
+                self._types[path] = variant_type_of(node)
         data = [ua.DataValue(_to_variant(p, v, self._types[p])) for p, v in values.items()]
-        self.client.write_values(nodes, data)
+        for start in range(0, len(nodes), max(self.max_write, 1)):
+            self.client.write_values(nodes[start : start + self.max_write], data[start : start + self.max_write])
+
+    def reconnect(self) -> None:
+        """Новый сеанс (после сброса приложения узлы и типы перечитываются)."""
+        self.close()
+        self._types.clear()
+        self.connect()
 
     def reset(self, kind: ResetKind) -> None:
-        raise NotSupportedError(f"сброс «{kind}» — только исполнитель cds (онлайн-мост CODESYS)")
+        """Сброс приложения через ``resetter`` (скрипт CODESYS ``tools_project/codesys/sim.py reset``) и новый
+        сеанс; без него OPC UA сбросить приложение не может — ``NotSupportedError``."""
+        if self.resetter is None:
+            raise NotSupportedError(
+                f"сброс «{kind}»: у исполнителя opcua нет средства сброса (sim.py reset) — только исполнитель cds"
+            )
+        self.resetter(kind)
+        self.reconnect()

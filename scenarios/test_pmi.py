@@ -1,16 +1,19 @@
 """Сценарии ПМИ на рантайме CODESYS Control Win через OPC UA (маркер plc; запуск — ``PMI_LIVE=1``, адрес
 сервера — ``PMI_OPCUA_URL``, по умолчанию ``opc.tcp://localhost:4840``).
 
-Нужны: приложение имитации собрано и загружено (``cds.py import``, ``codesys_pvl.py``, символьная
-конфигурация ``tools_project/codesys/symbol_config.py``, загрузка и «Старт»), сертификат OPC UA-сервера и
-доверие клиенту (ручной шаг 5 DESIGN, раздел 16), учётные данные ``credentials.json``. Итог — отчёт
+Нужны: приложение имитации собрано, загружено и запущено, сертификат OPC UA-сервера и доверие клиенту — всё это
+делает ``python tools_project/codesys/sim.py start`` (DESIGN, раздел 16, шаг 5); учётные данные
+``credentials.json``. Шаги ``reset`` (PMI-10, PMI-35) выполняет ``sim.py reset`` (переменная ``PMI_RESET``: ``sim``
+по умолчанию при заданном ``CODESYS_EXE``, ``none`` — шаг «не проверялось»). Итог — отчёт
 ``build/pmi-results.json`` и ``.md`` (заготовка протокола 07).
 """
 
 from __future__ import annotations
 
 import os
-from collections.abc import Iterator
+import subprocess
+import sys
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -18,7 +21,8 @@ import pytest
 from kns_scenarios import report
 from kns_scenarios.alarms import AlarmView, load_alarm_list
 from kns_scenarios.backend_opcua import OpcUaClient
-from kns_scenarios.context import ScenarioContext
+from kns_scenarios.client import ResetKind
+from kns_scenarios.context import TIME_SCALE, ScenarioContext
 from kns_scenarios.credentials import load_credentials
 from kns_scenarios.enums import ENUMS
 from kns_scenarios.journal import EventFeed
@@ -30,11 +34,27 @@ FILES = sorted((HERE / "pmi").glob("PMI-*.toml")) or sorted((HERE / "examples").
 RESULTS: list[ScenarioResult] = []
 LIVE = os.environ.get("PMI_LIVE") == "1"
 URL = os.environ.get("PMI_OPCUA_URL", "opc.tcp://localhost:4840")
+SIM_TOOL = HERE.parent / "tools_project" / "codesys" / "sim.py"
+# сброс приложения для шагов reset (PMI-10, PMI-35): sim — скрипт CODESYS (нужен CODESYS_EXE), none — без сброса
+RESET = os.environ.get("PMI_RESET", "sim" if os.environ.get("CODESYS_EXE") else "none")
+
+
+def sim_resetter(client: list[OpcUaClient]) -> Callable[[ResetKind], None]:
+    """Сброс через ``sim.py reset``: на время запуска CODESYS (десятки секунд) контур переводится на k = 1, чтобы
+    процесс не ушёл вперёд; после сброса ускорение и параметры модели задаёт сценарий."""
+
+    def reset(kind: ResetKind) -> None:
+        client[0].write({TIME_SCALE: 1.0})
+        subprocess.run([sys.executable, str(SIM_TOOL), "reset", kind], check=True, timeout=600)
+
+    return reset
 
 
 @pytest.fixture(scope="module")
 def plc() -> Iterator[OpcUaClient]:
-    client = OpcUaClient(URL, credentials=load_credentials())
+    holder: list[OpcUaClient] = []
+    client = OpcUaClient(URL, credentials=load_credentials(), resetter=sim_resetter(holder) if RESET == "sim" else None)
+    holder.append(client)
     client.connect()
     try:
         yield client

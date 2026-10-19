@@ -237,3 +237,31 @@ def test_runner_reports_failure_and_not_checked(client: OpcUaClient) -> None:
         parse_scenario({"id": "PMI-97", "title": "x", "time_scale": 1, "backends": ["opcua"]})
     )
     assert other.verdict == "не проверялось"
+
+
+def test_opcua_reset_through_resetter(mock_plc: MockPlc) -> None:
+    """Шаг reset у исполнителя opcua: средство сброса (sim.py reset) вызывается, затем новый сеанс."""
+    calls: list[str] = []
+    c = OpcUaClient(mock_plc.url, security="none", resetter=calls.append)
+    c.connect()
+    try:
+        first = c.client
+        c.reset("cold")
+        assert calls == ["cold"] and c.client is not first
+        assert isinstance(c.read(["GVL_Station.stStationSts.uiPumpsAvailable"])[0], int)
+        result = Runner(context(c), "opcua").run(
+            parse_scenario(
+                {
+                    "id": "PMI-96",
+                    "title": "сброс",
+                    "time_scale": K_FAST,
+                    "setup": {"skip_initial_state": True},
+                    "step": [{"reset": "warm"}],
+                    "teardown": {"clear_faults": False},
+                }
+            )
+        )
+        assert calls == ["cold", "warm"] and result.error is None
+        assert result.real_s is not None and result.started
+    finally:
+        c.close()

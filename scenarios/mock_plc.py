@@ -59,6 +59,7 @@ CLIENT_PATHS = frozenset(
     + [f"GVL_Hmi.stP10{i}Cmd.stCommon.{n}" for i in range(1, PUMPS + 1) for n in ("xSetAuto", "xReset")]
     + [f"GVL_Hmi.stP10{i}Cmd.xStop" for i in range(1, PUMPS + 1)]
     + ["GVL_Hmi.xApplyProjectCfg", "GVL_Log.stEventFeed.udiFromSeq", "GVL_Sim.stSimCfg.rTimeScale"]
+    + ["GVL_Station.stLIC101Cmd.stCommon.xSetAuto", "GVL_Hmi.stV1Cmd.stCommon.xSetAuto"]
     + [f"GVL_Sim.stFaultInj.{a}[{i}]" for a in FAULT_ARRAYS for i in range(1, PUMPS + 1)]
 )
 
@@ -78,6 +79,8 @@ def variables() -> dict[str, tuple[Any, ua.VariantType]]:
         "GVL_Sim.stSimCmd.xInflowOverride": (False, V.Boolean),
         "GVL_Sim.stSimCmd.rInflowOverride_m3h": (0.0, V.Float),
         "GVL_Hmi.xApplyProjectCfg": (False, V.Boolean),
+        "GVL_Station.stLIC101Cmd.stCommon.xSetAuto": (False, V.Boolean),
+        "GVL_Hmi.stV1Cmd.stCommon.xSetAuto": (False, V.Boolean),
         "GVL_Station.stStationSts.uiCmdSeq": (0, V.UInt16),
         "GVL_Station.stStationSts.eMode": (2, V.Int16),
         "GVL_Station.stStationSts.eMethod": (1, V.Int16),
@@ -209,6 +212,9 @@ class MockPlc:
                 self.set(path, False)
         if self.get("GVL_Hmi.xApplyProjectCfg"):
             self.set("GVL_Hmi.xApplyProjectCfg", False)
+        for auto in ("GVL_Station.stLIC101Cmd.stCommon.xSetAuto", "GVL_Hmi.stV1Cmd.stCommon.xSetAuto"):
+            if self.get(auto):  # LIC101, В1 → Auto
+                self.set(auto, False)
         for n in range(1, PUMPS + 1):
             self.pump(n)
         self.fill_view()

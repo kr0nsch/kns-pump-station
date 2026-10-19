@@ -296,20 +296,23 @@ class Checker:
         if "mark" in step:
             self.marks.add(str(step["mark"]))
             self.defined.add(str(step["mark"]))
+        # ожидания и проверки «всё время» идут до capture шага (порядок исполнителя): им доступны только значения,
+        # захваченные раньше, и метки
+        waiting = set(self.defined)
         for name, path in dict(step.get("capture", {})).items():
-            self.names(where, path, before)
+            self.names(where, path, waiting)
             self.path(where, path)
             self.defined.add(str(name))
         now = set(self.defined)
-        for key in ("wait", "expect", "during"):
+        for key, known in (("wait", waiting), ("during", waiting), ("expect", now)):
             for expr in as_list(step.get(key)):
-                self.expr(where, str(expr), now)
+                self.expr(where, str(expr), known)
         for group in as_list(step.get("during_if")):
             for expr in as_list(group.get("when")) + as_list(group.get("then")):
-                self.expr(where, str(expr), now)
+                self.expr(where, str(expr), waiting)
         for key in ("during_span", "during_rate"):
             for path, spec in dict(step.get(key, {})).items():
-                self.names(where, path, now)
+                self.names(where, path, waiting)
                 self.path(where, path)
                 for p in expand(path):
                     typ = declared_type(p)
@@ -319,7 +322,7 @@ class Checker:
                     self.defined |= {f"{spec['capture']}_min", f"{spec['capture']}_max"}
         for key in ("wait_alarm", "expect_alarm"):
             for spec in as_list(step.get(key)):
-                self.names(where, str(spec.get("code", "")), now)
+                self.names(where, str(spec.get("code", "")), waiting if key == "wait_alarm" else now)
                 self.err(where, code_error(str(spec.get("code", ""))))
                 state = spec.get("state", "ActiveUnack")
                 self.err(where, None if state in ALARM_STATES else f"состояние {state!r}")

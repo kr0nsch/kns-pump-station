@@ -369,6 +369,52 @@ def test_expect_delay_since_takes_source_after_mark() -> None:
     assert checks(result, "задержка") == [True, False]
 
 
+def test_expect_delay_target_logged_earlier_in_same_cycle() -> None:
+    """KNS1.ATS и KNS1.UL1 в одном цикле: ATS записана раньше (номер меньше, метка lrMono_s на доли мс меньше)."""
+    plc = FakeJournalPlc()
+    runner, _ = make_runner(plc)
+    ats = load_alarm_list()["KNS1.ATS"].id
+    ul1 = load_alarm_list()["KNS1.UL1"].id
+    plc.add(ats, mono_s=100.0)
+    plc.add(ul1, mono_s=100.00002)
+    plc.add(ats, STATE["ActiveAck"], mono_s=99.0)  # другое состояние не мешает
+    result = run_steps(
+        runner,
+        [
+            {
+                "timeout_s": 5,
+                "expect_delay": {"from_alarm": "KNS1.UL1", "alarm": "KNS1.ATS", "min_s": 0.0, "max_s": 0.8},
+            }
+        ],
+    )
+    assert checks(result, "задержка") == [True]
+    assert list(result.measured.values()) == [pytest.approx(0.0, abs=1e-3)]
+
+
+def test_capture_after_wait_in_same_step() -> None:
+    """``capture`` берёт значение, когда условие шага выполнено (после ``hold_s``/``wait``), а не в начале шага."""
+    plc = FakeJournalPlc({"GVL_T.rSpeed": 60.0, "GVL_T.xReady": False})
+    clk = FakeClock()
+    runner, _ = make_runner(plc, clk)
+    reads = {"n": 0}
+    base_read = plc.read
+
+    def read(paths: Sequence[str]) -> list[PlcValue]:
+        if "GVL_T.xReady" in paths:
+            reads["n"] += 1
+            if reads["n"] >= 3:  # ПЛК «досчитал»: готовность и новая частота
+                plc.values.update({"GVL_T.xReady": True, "GVL_T.rSpeed": 88.0})
+        return base_read(paths)
+
+    plc.read = read  # type: ignore[method-assign]
+    result = run_steps(
+        runner,
+        [{"wait": "GVL_T.xReady = TRUE", "timeout_s": 60, "capture": {"sp": "GVL_T.rSpeed"}, "expect": ["{sp} = 88"]}],
+    )
+    assert runner.ctx.captures["sp"] == 88.0
+    assert checks(result, "{sp} = 88") == [True]
+
+
 # --- шаги и И0 -----------------------------------------------------------------------------------
 
 
@@ -414,6 +460,9 @@ def test_initial_state_stops_pumps_before_run_hours() -> None:
     first_hours = order.index("GVL_Persist.stP101Retain.udiOpTime_s")
     assert order.index("GVL_Hmi.stP101Cmd.xStop") < first_hours
     assert order.index(f"{STATION_CMD}.xSetAuto") < first_hours
+    # LIC101 в Auto (06 §5.2, п. 7): иначе ПИД не готов и «ПИД» действует как ступенчатое (04 §7.4)
+    assert order.index("GVL_Station.stLIC101Cmd.stCommon.xSetAuto") < first_hours
+    assert order.index("GVL_Hmi.stV1Cmd.stCommon.xSetAuto") < first_hours
     assert order.count("GVL_Sim.stSimCmd.xResetPlant") == 2
     assert order.index("GVL_Sim.stSimCmd.xSetLevel") > first_hours
     assert order[-1] == f"{STATION_CMD}.xAckAll"
