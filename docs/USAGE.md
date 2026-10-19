@@ -303,13 +303,13 @@ LT101;Уровень в приёмном резервуаре;AI;;AnalogInput;10
 `scada/scada_tags.csv`, `docs/03_io_list.md`. Сверка документов выдаёт 8 расхождений — что править руками:
 
 ```text
-06_PMI.md:104: [C03] SHA-256 перечня 06336d13c4b2, в docs/alarms.csv — 07afb9af7961
+06_PMI.md:110: [C03] SHA-256 перечня 06336d13c4b2, в docs/alarms.csv — 07afb9af7961
 ARCHITECTURE.md:296: [C03] SHA-256 перечня 06336d13c4b2, в docs/alarms.csv — 07afb9af7961
 05_alarm_list.csv:3: [C03] SHA-256 перечня 06336d13c4b2, в docs/alarms.csv — 07afb9af7961
 05_alarm_list.csv: [C03] LT101.HH.setpoint: 4, генератор — 3.9
 04_algorithms.md:32: [C06] отметка 4,00: ожидается одно из [3.9]
 04_algorithms.md:43: [C06] порядок отметок 0,4 < 0,5 < 0,8 < 1,0 < 1,4 < 1,6 < 2,4 < 3,5 < 4,0 < 4,2 ≠ [0.4, 0.5, 0.8, 1.0, 1.4, 1.6, 2.4, 3.5, 3.9, 4.2]
-04_algorithms.md:792: [C06] LT101: HH = 4,0, в перечне 3,9
+04_algorithms.md:805: [C06] LT101: HH = 4,0, в перечне 3,9
 05_alarm_list.csv: [C07] KNS1.EHL: уставка «LS102 (4.2) или LT101 ≥ 4.0», ожидаются числа [4.2, 3.9]
 проверок: 20, расхождений: 8
 ```

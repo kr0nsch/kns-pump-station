@@ -97,9 +97,9 @@ CODESYS Control Win V3. КИП: уровнемер LT101 4–20 мА, попла
 перечнем сигналов и сверка документов между собой:
 
 <p align="center">
-  <img alt="Терминал PowerShell: pytest — 778 пройдено, 39 пропущено (сценарии ПМИ на рантайме), generate.py --check — дрейфа нет в 20 файлах, check_docs_consistency.py — 20 проверок, 0 расхождений" src="docs/media/demo-checks.gif" width="900">
+  <img alt="Терминал PowerShell: pytest — 798 пройдено, 39 пропущено (сценарии ПМИ на рантайме), generate.py --check — дрейфа нет в 20 файлах, check_docs_consistency.py — 20 проверок, 0 расхождений" src="docs/media/demo-checks.gif" width="900">
 </p>
-<p align="center"><sub>Реальный прогон в чистом клоне, Windows 11, PowerShell, коммит 505ce14; снято term2gif.py, ожидание pytest (68 с) сокращено</sub></p>
+<p align="center"><sub>Реальный прогон в чистом клоне, Windows 11, PowerShell, коммит 9479c06; снято term2gif.py, ожидание pytest (75 с) сокращено</sub></p>
 
 **Приток в модели объекта** — суточный профиль и ливни генератора; сутки 0 с seed по умолчанию —
 те же, что в проверке PMI-39 «Суточный режим с ливнями». Подача насосов показывает, когда одному
@@ -210,7 +210,7 @@ expect_event = { event = "KNS1.E6", value = 1, since = "t_fault" }
    python -m pytest
    ```
 
-   Увидите: `798 passed, 39 skipped` примерно за 70 с. Пропущены 39 сценариев ПМИ: им нужен рантайм
+   Увидите: `798 passed, 39 skipped` примерно за 75 с. Пропущены 39 сценариев ПМИ: им нужен рантайм
    CODESYS (`PMI_LIVE=1`, ниже).
 
 4. Сверить сгенерированный слой устройств с перечнем сигналов и документы между собой (то же
@@ -349,7 +349,7 @@ expect_event = { event = "KNS1.E6", value = 1, since = "t_fault" }
 ```text
 05_alarm_list.csv: [C03] LT101.HH.setpoint: 4, генератор — 3.9
 04_algorithms.md:32: [C06] отметка 4,00: ожидается одно из [3.9]
-04_algorithms.md:792: [C06] LT101: HH = 4,0, в перечне 3,9
+04_algorithms.md:805: [C06] LT101: HH = 4,0, в перечне 3,9
 05_alarm_list.csv: [C07] KNS1.EHL: уставка «LS102 (4.2) или LT101 ≥ 4.0», ожидаются числа [4.2, 3.9]
 …
 проверок: 20, расхождений: 8
@@ -443,8 +443,8 @@ flowchart TB
   них до исправления падали; после правок по ревью кода девять затронутых проверок прогнаны повторно.
   Протокол № 1 — [07_test_protocol.md](docs/07_test_protocol.md), проверки сценариев по шагам и измеренные
   значения — [07_pmi_report.md](docs/07_pmi_report.md).
-- **pytest**: 798 пройдено, 39 пропущено — Windows 11, 19.10.2026, рабочая копия с соседними
-  plc-process-lib и iolistgen.
+- **pytest**: 798 пройдено, 39 пропущено — чистый клон с соседними iolistgen v0.2.0 и plc-process-lib
+  v1.0.0, коммит 9479c06, Windows 11, 19.10.2026 (GIF выше).
 - **ПЛК210, ПЧ и модули ввода-вывода** — не проверялось.
 - **CI GitHub Actions** (Linux) — всё, что не требует CODESYS: ruff, mypy, pytest, сборка ST, линтер,
   iec_checker; необязательное задание — iec_checker nightly.
