@@ -13,7 +13,7 @@ line-length = 120
 target-version = "py311"
 extend-exclude = ["build"]
 # Каталоги модулей проекта (для сортировки импортов: first-party)
-src = ["tools", "tools/codesys", "tools/check", "tools/tests", "tools_project"]
+src = ["tools", "tools/codesys", "tools/check", "tools/tests", "tools_project", "tools_project/codesys"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "RUF"]
@@ -39,7 +39,7 @@ exclude = ["tools/codesys/*.py", "tools_project/codesys/*_cds.py"]
 python_version = "3.11"
 # tools_project — инструменты проекта КНС-1 (сверка документов docs/01–08 и др.)
 files = ["tools", "tools_project"]
-mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project"]
+mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys"]
 strict = true
 warn_unreachable = true
 # Скрипты CODESYS (IronPython 2.7) используют глобальные объекты среды CODESYS (projects,
@@ -52,7 +52,7 @@ exclude = [
 
 [tool.pytest.ini_options]
 testpaths = ["tools/tests", "tools_project"]
-pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project"]
+pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: проверки с настоящими plc (RuSTy) и iec_checker; пропускаются, если инструмента нет",
