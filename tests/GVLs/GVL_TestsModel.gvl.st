@@ -12,4 +12,6 @@ VAR_GLOBAL
     fbInflowProfileTest   : FB_InflowProfile_Test;
     fbStormGeneratorTest  : FB_StormGenerator_Test;
     fbTankModelTest       : FB_TankModel_Test;
+    fbHydraulicSolverTest : FB_HydraulicSolver_Test;
+    fbVfdSimTest          : FB_VfdSim_Test;
 END_VAR
