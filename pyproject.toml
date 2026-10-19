@@ -13,7 +13,7 @@ line-length = 120
 target-version = "py311"
 extend-exclude = ["build"]
 # Каталоги модулей проекта (для сортировки импортов: first-party)
-src = ["tools", "tools/codesys", "tools/check", "tools/tests", "tools_project", "tools_project/codesys"]
+src = ["tools", "tools/codesys", "tools/check", "tools/tests", "tools_project", "tools_project/codesys", "scenarios"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "RUF"]
@@ -34,12 +34,14 @@ exclude = ["tools/codesys/*.py", "tools_project/codesys/*_cds.py"]
 "tools/codesys/*.py" = ["UP", "SIM", "C4", "B904", "RUF005", "RUF012"]
 # Скрипты проекта, которые выполняет CODESYS (IronPython 2.7): то же подмножество Python 2.7 и 3.x
 "tools_project/codesys/*_cds.py" = ["UP", "SIM", "C4", "B904", "RUF005", "RUF012", "E501"]
+# Фикстуры pytest импортируются в модуль тестов явно (scenarios/plc_fixtures.py) и затеняются параметрами
+"scenarios/test_*.py" = ["F401", "F811"]
 
 [tool.mypy]
 python_version = "3.11"
 # tools_project — инструменты проекта КНС-1 (сверка документов docs/01–08 и др.)
-files = ["tools", "tools_project"]
-mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys"]
+files = ["tools", "tools_project", "scenarios"]
+mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys", "scenarios"]
 strict = true
 warn_unreachable = true
 # Скрипты CODESYS (IronPython 2.7) используют глобальные объекты среды CODESYS (projects,
@@ -51,9 +53,10 @@ exclude = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tools/tests", "tools_project"]
-pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys"]
+testpaths = ["tools/tests", "tools_project", "scenarios"]
+pythonpath = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys", "scenarios"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: проверки с настоящими plc (RuSTy) и iec_checker; пропускаются, если инструмента нет",
+    "plc: сценарий ПМИ на рантайме CODESYS (scenarios/test_pmi.py, запуск с KNS_PLC=1)",
 ]

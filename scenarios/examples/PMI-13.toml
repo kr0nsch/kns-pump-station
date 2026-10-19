@@ -1,0 +1,51 @@
+# Пример сценария ПМИ для обвязки (DESIGN, раздел 14.3; 06_PMI, раздел 5.6, PMI-13). Сценарии ПМИ
+# команды модели — scenarios/pmi/PMI-NN.toml; этот файл показывает схему и проверяется офлайн.
+id = "PMI-13"
+title = "АВР: авария ПЧ работающего насоса, сброс"
+time_scale = 20.0                 # SimCfg.rTimeScale (06, приложение А)
+timeout_s = 300                   # таймаут шага по умолчанию, секунды контура
+backends = ["opcua", "cds"]
+manual = []
+
+[setup]                           # И0 (06 §5.2) и отличия проверки
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+run_hours_s = [360000, 180000, 1080000]   # Н2 — 50 ч: ведущий Н2
+
+[[step]]
+note = "ведущий в работе"
+wait = "GVL_Station.stStationSts.uiPumpsRunning >= 1"
+capture = { lead = "GVL_Station.stStationSts.uiLeadPump" }
+
+[[step]]
+note = "авария ПЧ ведущего"
+write = { "GVL_Sim.stFaultInj.axVfdFault[{lead}]" = true }
+mark = "t_fault"                  # GVL_Time.lrMainNow_s сразу после записи
+
+[[step]]
+note = "АВР: резервный в работе, тревоги"
+wait_alarm = { code = "KNS1.ATS", state = "ActiveUnack" }
+timeout_s = 5
+expect = [
+  "GVL_Station.stStationSts.uiLeadPump <> {lead}",
+  "GVL_Devices.fbP10{lead}.stSts.eState = E_MotorState.Fault",
+  "GVL_IO.uiP10{lead}_FCODE = 11",
+]
+expect_delay = { from = "t_fault", alarm = "P10{lead}.EXT", state = "ActiveUnack", max_s = 0.2 }
+
+[[step]]
+note = "сброс при действующей аварии"
+pulse = "GVL_Hmi.stP10{lead}Cmd.stCommon.xReset"
+hold_s = 3
+expect = ["GVL_Devices.fbP10{lead}.stSts.stCommon.eCmdResult = E_CmdResult.RejectedFault"]
+
+[[step]]
+note = "инъекция снята, сброс"
+write = { "GVL_Sim.stFaultInj.axVfdFault[{lead}]" = false }
+pulse = "GVL_Hmi.stP10{lead}Cmd.stCommon.xReset"
+hold_s = 3
+expect = ["GVL_Devices.fbP10{lead}.stSts.eState <> E_MotorState.Fault"]
+
+[teardown]
+clear_faults = true
