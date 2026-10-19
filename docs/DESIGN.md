@@ -1655,8 +1655,15 @@ flowchart LR
 ливней, нулевое состояние генератора, приток не зависит от шага вызова; сухой ход, засор и осушенный
 приёмок; ток ПЧ в регистре, сброс ПЧ командой модели; установившийся режим против эталона
 (`SteadyStateOnePump87`), баланс массы, согласованность при разном шаге (`TimeAccelerationConsistency`:
-шаг 100 мс и 1 с), инъекции насосов и станции, кнопки, время суток, предел шага `SIM_DT_MAX`. Наборы
-регистрирует `tests/GVLs/GVL_TestsModel.gvl.st` (`linkalways`).
+шаг 100 мс и 1 с), инъекции насосов и станции, кнопки, время суток, предел шага `SIM_DT_MAX`. По итогам
+проверки модели (ASSUMPTIONS M14–M19) и мутационного тестирования: пуск по месту на частоте местного поста
+(`LocalRunAtLocalPreset`), время перелива — обнуление в И0, короткий перелив, нет перелива при равных
+притоке и откачке, разрешение подшагами (`ResetPlantClearsOverflowTime`, `ShortOverflowCounted`,
+`NoOverflowWhenBalanced`, `OverflowTimeResolvedBySubsteps`), засор без подачи
+(`ClogWithDryIntakeKeepsDryCurrent`), NaN в инъекциях (`NanInjectionCountedOnce`), одна граница приёмка
+(`IntakeEdgeOutflowMatchesTank`), баланс массы двух насосов и FT202 (`MassBalanceTwoPumps`), входы ПЛК
+каждого насоса только от своих инъекций и своего ПЧ (`PerPumpSignalsIsolated`). Наборы регистрирует
+`tests/GVLs/GVL_TestsModel.gvl.st` (`linkalways`).
 
 ## 12. Задачи и библиотеки (`tools/codesys/config.json`, К3)
 

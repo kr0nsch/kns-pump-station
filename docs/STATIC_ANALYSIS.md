@@ -86,6 +86,10 @@
 | 2026-10-19 | `run_iec_checker.py --tests` (iec_checker 0.4, Windows) | 44 объекта `src/` и `tests/` | ошибок разбора нет; необоснованных 0; по объектам модели: `src/` — CP3 244, L17 68, UnusedVariable 28, CP9 17 обоснованы, артефактов 61; `tests/` — CP3 265, UnusedVariable 153, CP9 128, L17 1 обоснованы, артефактов 18 |
 | 2026-10-19 | `run_rusty.py` (RuSTy 1.0.6) | 26 файлов `build/assembled/rusty/`, исключено 19 (`rusty_exclude.txt`) | 0 ошибок |
 | 2026-10-19 | `run_rusty.py --strip-namespace coUnit --strip-namespace CfUnit --strip-namespace PL` с прокладками шаблона и сборкой `assembled/rusty` plc-process-lib 1.0.0 (`I_TimeSource`, `FB_SystemTime`, `FB_FakeTime`, `FB_Delay`, `F_IsFinite`, `F_LTimeToSec`, `F_TimeToSec`, `F_RateLimit`, `U_RealBits`, `GVL_Const`), без исключений | все 45 файлов | 0 ошибок; 2 предупреждения E067 в `FB_InflowProfile` (`TRUNC` в RuSTy возвращает `LINT`, в CODESYS — `DINT`) |
+| 2026-10-19 | повтор после проверки модели (исправления M14–M18, тесты мутационной проверки): `st_lint --strict` | `src/`, `tests/` (315 файлов) | 0 ошибок, 0 предупреждений |
+| 2026-10-19 | то же: `run_iec_checker.py --tests` | 44 объекта `src/` и `tests/` | ошибок разбора нет; необоснованных 0, обоснованных 1190, артефактов сборки 93 (новые `UnusedVariable` для `uBitsA`/`uBitsB` в `F_FaultInjEqual` — обоснование дополнено) |
+| 2026-10-19 | то же: `run_rusty.py` | 25 файлов, исключено 20 (`F_FaultInjEqual` теперь обращается к `PL.U_RealBits`) | 0 ошибок |
+| 2026-10-19 | то же: `run_rusty.py` с объявлениями plc-process-lib в прокладках, без исключений | все 45 файлов | 0 ошибок; те же 2 предупреждения E067 в `FB_InflowProfile` |
 
 | Правило | Файл | Находка | Решение / обоснование |
 |---|---|---|---|
@@ -100,6 +104,6 @@
 RuSTy: объявлений plc-process-lib в репозитории нет (библиотека подключается в CODESYS по `config.json`),
 поэтому в обязательном варианте исключены файлы, которые обращаются к `PL.*` или объявляют экземпляры
 исключённых ФБ (как в проекте 10 портфолио; ASSUMPTIONS M12). Проверяются типы и GVL имитации, `GVL_Const`,
-`F_Xorshift32`, `F_FloatContact`, `F_FaultInjEqual`. Полная проверка с библиотекой в прокладках (строка 4
+`F_Xorshift32`, `F_FloatContact` (`F_FaultInjEqual` сравнивает поля `REAL` через `PL.U_RealBits` — исключён). Полная проверка с библиотекой в прокладках (строка 4
 таблицы) — ручной шаг: прокладки шаблона принадлежат шаблону (`tools/check/rusty_shims/*`), а библиотеку
 в них копировать нельзя.

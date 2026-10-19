@@ -20,3 +20,6 @@ StepCappedAtMax();
 ResetPlantClearsOverflowTime();
 NanInjectionCountedOnce();
 IntakeEdgeOutflowMatchesTank();
+MassBalanceTwoPumps();
+OverflowTimeResolvedBySubsteps();
+PerPumpSignalsIsolated();
