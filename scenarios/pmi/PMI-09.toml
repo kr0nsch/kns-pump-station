@@ -1,0 +1,123 @@
+# PMI-09. Чередование по моточасам при каждом пуске (06_PMI, раздел 5.6.2; приложение А: k = 20, 80 мин контура).
+#
+# Цикл «пуск — останов» при 100 м³/ч: наполнение 1,00 → 1,60 м ≈ 4,3 мин, откачка 1,60 → 1,00 м ≈ 8,8 мин
+# (наработка за цикл ≈ 520 с). Наработка Н1 36 000 с, Н2 36 018 с, Н3 36 036 с: ведущие Н1, Н2, Н3, Н1.
+id = "PMI-09"
+title = "Чередование по моточасам при каждом пуске"
+time_scale = 20.0
+timeout_s = 900
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 100.0
+run_hours_s = [36000, 36018, 36036]
+
+[[step]]
+note = "Cfg.eRotation = RunHours; пуски насосов до циклов"
+write = { "GVL_Persist.stStationCfg.eRotation" = "E_RotationMode.RunHours" }
+wait = "GVL_Station.stCfgLkg.eRotation = E_RotationMode.RunHours"
+timeout_s = 10
+capture = { s1 = "GVL_Devices.fbP101.stSts.udiStarts", s2 = "GVL_Devices.fbP102.stSts.udiStarts", s3 = "GVL_Devices.fbP103.stSts.udiStarts" }
+
+# --- цикл 1: Н1 -------------------------------------------------------------------------------
+
+[[step]]
+note = "цикл 1: ведущий — Н1"
+mark = "c1"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 1, since = "c1" }
+capture = { a1 = "GVL_Persist.stP101Retain.udiOpTime_s", a2 = "GVL_Persist.stP102Retain.udiOpTime_s", a3 = "GVL_Persist.stP103Retain.udiOpTime_s" }
+expect = ["{a1} < {a2}", "{a1} < {a3}"]                 # наименьшая наработка на момент пуска
+
+[[step]]
+note = "цикл 1: Н1 в работе, пусков Н1 +1"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+expect = ["GVL_Devices.fbP101.stSts.udiStarts = {s1 + 1}"]
+
+[[step]]
+note = "цикл 1: откачка до 1,00 м и останов; другие насосы стоят"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+during = [
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "цикл 1: наработка за цикл ≈ 520 с"
+capture = { b1 = "GVL_Persist.stP101Retain.udiOpTime_s" }
+expect = ["{b1 - a1} >= 400", "{b1 - a1} <= 700"]
+
+# --- цикл 2: Н2 -------------------------------------------------------------------------------
+
+[[step]]
+note = "цикл 2: ведущий — Н2"
+mark = "c2"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 2, since = "c2" }
+capture = { d1 = "GVL_Persist.stP101Retain.udiOpTime_s", d2 = "GVL_Persist.stP102Retain.udiOpTime_s", d3 = "GVL_Persist.stP103Retain.udiOpTime_s" }
+expect = ["{d2} < {d1}", "{d2} < {d3}"]
+
+[[step]]
+note = "цикл 2: Н2 в работе, пусков Н2 +1"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+expect = ["GVL_Devices.fbP102.stSts.udiStarts = {s2 + 1}"]
+
+[[step]]
+note = "цикл 2: откачка и останов; другие насосы стоят"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped"
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+# --- цикл 3: Н3 -------------------------------------------------------------------------------
+
+[[step]]
+note = "цикл 3: ведущий — Н3"
+mark = "c3"
+wait = "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 3, since = "c3" }
+capture = { e1 = "GVL_Persist.stP101Retain.udiOpTime_s", e2 = "GVL_Persist.stP102Retain.udiOpTime_s", e3 = "GVL_Persist.stP103Retain.udiOpTime_s" }
+expect = ["{e3} < {e1}", "{e3} < {e2}"]
+
+[[step]]
+note = "цикл 3: Н3 в работе, пусков Н3 +1"
+wait = "GVL_Devices.fbP103.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+expect = ["GVL_Devices.fbP103.stSts.udiStarts = {s3 + 1}"]
+
+[[step]]
+note = "цикл 3: откачка и останов; другие насосы стоят"
+wait = "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped"
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+]
+
+# --- цикл 4: снова Н1 -------------------------------------------------------------------------
+
+[[step]]
+note = "цикл 4: ведущий — снова Н1"
+mark = "c4"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 1, since = "c4" }
+capture = { g1 = "GVL_Persist.stP101Retain.udiOpTime_s", g2 = "GVL_Persist.stP102Retain.udiOpTime_s", g3 = "GVL_Persist.stP103Retain.udiOpTime_s" }
+expect = ["{g1} < {g2}", "{g1} < {g3}"]
+
+[[step]]
+note = "цикл 4: Н1 в работе; пуски за проверку: Н1 +2, Н2 +1, Н3 +1"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+expect = [
+  "GVL_Devices.fbP101.stSts.udiStarts = {s1 + 2}",
+  "GVL_Devices.fbP102.stSts.udiStarts = {s2 + 1}",
+  "GVL_Devices.fbP103.stSts.udiStarts = {s3 + 1}",
+]
+
+[teardown]
+clear_faults = true

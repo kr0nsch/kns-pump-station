@@ -1,0 +1,97 @@
+# PMI-07. Смена способа регулирования на ходу без рывка (06_PMI, раздел 5.6.1; приложение А: k = 20, 10 мин
+# контура).
+#
+# «Ведущий на ≈ 88 %» — приток 120 м³/ч (модель: один насос на 87 % подаёт 120 м³/ч при 1,4 м); ПИД сначала
+# устанавливается (20 мин контура). Переходы способа — при k = 1: рампа 88 → 100 % (2,4 с) и начало снижения
+# выхода ПИД видны опросом 0,25 с; скорость изменения — по lrMainNow_s того же чтения.
+id = "PMI-07"
+title = "Смена способа регулирования на ходу без рывка"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 120.0
+
+[[step]]
+note = "ведущий Н1 в работе под ПИД"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 1: ПИД устанавливается, ведущий на ≈ 88 %"
+hold_s = 1200
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 1"]
+
+[[step]]
+note = "шаг 1: работает только ведущий на ≈ 88 %"
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 83.0",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct <= 93.0",
+]
+capture = { starts = "GVL_Devices.fbP101.stSts.uiStartsLastHour" }
+
+[[step]]
+note = "шаг 2: Cmd.xSetStepped на ходу"
+time_scale = 1.0
+pulse = "GVL_Station.stStationCmd.xSetStepped"
+mark = "t_stepped"
+expect = ["GVL_Station.stStationSts.eMethod = E_ControlMethod.Stepped"]
+expect_event = { event = "KNS1.E3", since = "t_stepped" }
+
+[[step]]
+note = "шаг 2: задание растёт рампой не быстрее 5 %/с до 100 %, насос не останавливается, пусков не прибавилось"
+wait = "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 99.9"
+timeout_s = 30
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour = {starts}",
+]
+during_rate = { "GVL_Devices.fbP101.stSts.rSpeedRef_pct" = 5.5 }
+
+[[step]]
+note = "шаг 2: ступенчатое до 2 мин — насос работает"
+time_scale = 20.0
+hold_s = 110
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour = {starts}",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped",
+]
+
+[[step]]
+note = "шаг 3: Cmd.xSetLevelPid — выход ПИД начинается со 100 % (слежение за заданием ведущего)"
+time_scale = 1.0
+pulse = "GVL_Station.stStationCmd.xSetLevelPid"
+mark = "t_pid"
+expect_event = { event = "KNS1.E4", since = "t_pid" }
+expect = ["GVL_Station.fbLIC101.stSts.rOut_pct >= 95.0"]
+capture = { out0 = "GVL_Station.fbLIC101.stSts.rOut_pct" }
+
+[[step]]
+note = "шаг 3: без скачков задания больше 5 %/с, насос не останавливается"
+hold_s = 30
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour = {starts}",
+]
+during_rate = { "GVL_Station.rSpeedSp_pct" = 5.5, "GVL_Devices.fbP101.stSts.rSpeedRef_pct" = 5.5, "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
+
+[[step]]
+note = "шаг 3: выход ПИД плавно снижается"
+time_scale = 20.0
+hold_s = 120
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+]
+during_rate = { "GVL_Station.rSpeedSp_pct" = 5.5, "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
+expect = ["GVL_Station.fbLIC101.stSts.rOut_pct < {out0}"]
+
+[teardown]
+clear_faults = true

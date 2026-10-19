@@ -1,0 +1,73 @@
+# PMI-32. Вывод насоса из работы и возврат (06_PMI, раздел 5.6.7; приложение А: k = 20, 5 мин контура).
+#
+# Тревоги Н3 в OutOfService — все слоты с приоритетом (FTS, FBL, FTP, UCR, EXT, COM, SPD; ILK выключен приоритетом
+# None). KNS1.NORES — через 10 с после смены режима (событие 101018 со значением dev_no · 10 + режим = 134).
+id = "PMI-32"
+title = "Вывод насоса из работы и возврат"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+
+[[step]]
+note = "Н1 работает по запросу станции"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+expect = ["GVL_Station.axPumpRun[1] = TRUE"]
+
+[[step]]
+note = "шаг 1: работающему Н1 — «Вывести из работы»: отклонено"
+pulse = "GVL_Hmi.stP101Cmd.stCommon.xSetOos"
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eCmdResult = E_CmdResult.RejectedState",
+  "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Auto",
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+]
+
+[[step]]
+note = "шаг 2: стоящему Н3 — «Вывести из работы»"
+pulse = "GVL_Hmi.stP103Cmd.stCommon.xSetOos"
+mark = "t2"
+expect = [
+  "GVL_Devices.fbP103.stSts.stCommon.eCmdResult = E_CmdResult.Accepted",
+  "GVL_Devices.fbP103.stSts.stCommon.eMode = E_DeviceMode.OutOfService",
+]
+
+[[step]]
+note = "шаг 2: NE 107 — CheckFunction, роль None, тревоги Н3 — OutOfService"
+wait = "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.None"
+timeout_s = 10
+expect = ["GVL_Devices.fbP103.stSts.stCommon.eNe107 = E_Ne107Status.CheckFunction"]
+wait_alarm = [
+  { code = "P103.FTS", state = "OutOfService" },
+  { code = "P103.FBL", state = "OutOfService" },
+  { code = "P103.FTP", state = "OutOfService" },
+  { code = "P103.UCR", state = "OutOfService" },
+  { code = "P103.EXT", state = "OutOfService" },
+  { code = "P103.COM", state = "OutOfService" },
+  { code = "P103.SPD", state = "OutOfService" },
+]
+
+[[step]]
+note = "шаг 2: KNS1.NORES через 10 с, событие 101018"
+wait_alarm = { code = "KNS1.NORES", state = "ActiveUnack" }
+timeout_s = 30
+expect_event = { event = "KNS1.E18", value = 134, since = "t2" }   # dev_no 13 · 10 + OutOfService (4)
+expect_delay = { since = "t2", from_event = "KNS1.E18", alarm = "KNS1.NORES", state = "ActiveUnack", min_s = 9.6, max_s = 10.8 }
+
+[[step]]
+note = "шаг 3: Н3 — «Автомат»: резервный, KNS1.NORES → RtnUnack"
+pulse = "GVL_Hmi.stP103Cmd.stCommon.xSetAuto"
+wait = "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.Standby"
+timeout_s = 10
+wait_alarm = { code = "KNS1.NORES", state = "RtnUnack" }
+expect = ["GVL_Devices.fbP103.stSts.stCommon.eMode = E_DeviceMode.Auto"]
+
+[teardown]
+clear_faults = true

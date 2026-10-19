@@ -1,0 +1,109 @@
+# PMI-20. Аварийно высокий уровень по уровнемеру (06_PMI, раздел 5.6.4; приложение А: k = 20, 60 мин контура).
+#
+# Приток 250 м³/ч больше подачи трёх насосов (≈ 224 м³/ч на 4,0 м): от И0 HH через ≈ 33 мин контура, 4,20 м —
+# ≈ 38 мин, перелив 4,60 м — ≈ 50 мин (DESIGN 14.4). При срабатывании LS102 приток снижается до 100 м³/ч.
+# Задержки уставки HH (3 с) и входа LS102 (2 с) — от наблюдения уровня (метка, допуск обвязки); KNS1.EHL — в
+# следующем цикле станции после LT101.HH.
+id = "PMI-20"
+title = "Аварийно высокий уровень по уровнемеру"
+time_scale = 20.0
+timeout_s = 600
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 250.0
+
+[[step]]
+note = "пуск ведущего (1,60 м)"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+timeout_s = 300
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[[step]]
+note = "пуск подпорного (2,40 м)"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Assist"
+timeout_s = 900
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+expect = ["GVL_Station.stStationSts.rLevel_m >= 2.40"]
+
+[[step]]
+note = "LT101.H при 3,50 м"
+wait_alarm = { code = "LT101.H", state = "ActiveUnack" }
+timeout_s = 2400
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0", "GVL_Station.stStationSts.uiPumpsRequired = 2"]
+
+[[step]]
+note = "уровень ≥ 4,00 м"
+wait = "GVL_Station.stStationSts.rLevel_m >= 4.00"
+timeout_s = 900
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[[step]]
+note = "через 3 с LT101.HH и KNS1.EHL (Critical), аварийный режим"
+mark = "t_hh"
+wait_alarm = [
+  { code = "LT101.HH", state = "ActiveUnack" },
+  { code = "KNS1.EHL", state = "ActiveUnack" },
+]
+timeout_s = 30
+expect_delay = [
+  { from = "t_hh", alarm = "LT101.HH", state = "ActiveUnack", min_s = 3.0, max_s = 3.0 },
+  { since = "t_hh", from_alarm = "LT101.HH", state = "ActiveUnack", alarm = "KNS1.EHL", min_s = 0.0, max_s = 0.8 },
+]
+expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency"]
+
+[[step]]
+note = "третий насос пускается, все на 100 %; HA1, K1 обесточено"
+wait = "GVL_Devices.fbP103.stSts.rSpeedRef_pct >= 99.9"
+timeout_s = 60
+expect = [
+  "GVL_Station.stStationSts.uiPumpsRunning = 3",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 99.9",
+  "GVL_Devices.fbP102.stSts.rSpeedRef_pct >= 99.9",
+  "GVL_Station.rSpeedSp_pct = 100.0",
+  "GVL_IO.xHA1 = TRUE",
+  "GVL_IO.xK1 = FALSE",
+]
+
+[[step]]
+note = "уровень 4,20 м (поплавок LS102)"
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+timeout_s = 900
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[[step]]
+note = "через 2 с LS102.ALM"
+mark = "t_ls"
+wait_alarm = { code = "LS102.ALM", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { from = "t_ls", alarm = "LS102.ALM", state = "ActiveUnack", min_s = 2.0, max_s = 2.0 }
+
+[[step]]
+note = "шаг 2: приток 100 м³/ч — LS102 снят и уровень < 3,50 м: выход из аварийного режима"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
+wait = "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped"
+timeout_s = 900
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+expect = [
+  "GVL_Station.stStationSts.rLevel_m < 3.50",
+  "GVL_Devices.fbLS102.xValue = FALSE",
+]
+
+[[step]]
+note = "шаг 2: лишние насосы останавливаются по обычным правилам (ступенчатое — не больше двух)"
+wait = "GVL_Station.stStationSts.uiPumpsRunning <= 2"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.uiPumpsRequired <= 2"]
+
+[[step]]
+note = "шаг 2: уровень снижается; перелива нет"
+wait = "GVL_Station.stStationSts.rLevel_m <= 3.00"
+timeout_s = 900
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+expect = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[teardown]
+clear_faults = true

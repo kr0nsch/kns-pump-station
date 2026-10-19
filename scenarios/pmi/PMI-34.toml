@@ -1,0 +1,114 @@
+# PMI-34. Восстановление питания: последовательный пуск (06_PMI, раздел 5.6.8; приложение А: k = 20, 10 мин
+# контура).
+#
+# «Продолжение PMI-33»: каждый сценарий начинается с И0, поэтому состояние воспроизводится — приток 180 м³/ч, два
+# насоса, пропадание напряжения на 2 мин. Восстановление — при k = 1: отсчёт uiSeqRemain_s и шаги 10 с / 15 с видны
+# опросом 0,25 с. Пуск ведущего — событие 101005 через tPwrRestart после 101009; подпорный — через tSeqStep = 15 с
+# после подтверждения ведущего: по разности udiRunCurrent_s (одно чтение). Шаг 2: первый пуск не раньше tMinStop =
+# 30 с от пропадания — ни один насос не в работе до «пропадание + 29 с» (метка — значение подстановки).
+id = "PMI-34"
+title = "Восстановление питания: последовательный пуск"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 2.5
+inflow_m3h = 180.0
+
+[[step]]
+note = "PMI-33: работают два насоса"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 2"
+timeout_s = 120
+
+[[step]]
+note = "PMI-33: нет напряжения 2 мин"
+write = { "GVL_Sim.stFaultInj.xPowerLoss" = true }
+wait_alarm = { code = "ES301.ALM", state = "ActiveUnack" }
+timeout_s = 15
+hold_s = 120
+
+[[step]]
+note = "шаг 1: напряжение восстановлено — без ускорения"
+time_scale = 1.0
+write = { "GVL_Sim.stFaultInj.xPowerLoss" = false }
+mark = "t1"
+
+[[step]]
+note = "через 3 с ES301 — норма, Restart (событие 101009)"
+wait_alarm = { code = "ES301.ALM", state = "RtnUnack" }
+timeout_s = 10
+expect_delay = [
+  { since = "t1", from_event = "KNS1.E21", alarm = "ES301.ALM", state = "RtnUnack", min_s = 2.98, max_s = 3.04 },
+  { since = "t1", from_alarm = "ES301.ALM", state = "RtnUnack", event = "KNS1.E9", min_s = 0.0, max_s = 0.04 },
+]
+expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Restart"]
+
+[[step]]
+note = "uiSeqRemain_s отсчитывает 10 с"
+wait = "GVL_Station.stStationSts.uiSeqRemain_s <= 1"
+timeout_s = 15
+during = ["GVL_Station.stStationSts.uiSeqRemain_s <= 10"]
+during_span = { "GVL_Station.stStationSts.uiSeqRemain_s" = { min = 6.0 } }
+
+[[step]]
+note = "пуск ведущего через tPwrRestart = 10 с (событие 101005)"
+timeout_s = 15
+expect_delay = { since = "t1", from_event = "KNS1.E9", event = "KNS1.E5", min_s = 9.98, max_s = 10.04 }
+
+[[step]]
+note = "ведущий в работе; подпорный — через 15 с после подтверждения ведущего"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 2"
+timeout_s = 40
+
+[[step]]
+note = "интервал пусков ведущего и подпорного — 15 с (tSeqStep); последовательный пуск завершён (101010)"
+capture = { c1 = "GVL_Devices.fbP101.stSts.udiRunCurrent_s", c2 = "GVL_Devices.fbP102.stSts.udiRunCurrent_s" }
+expect = [
+  "{c1 - c2} >= 14",
+  "{c1 - c2} <= 16",
+]
+timeout_s = 10
+expect_event = [
+  { event = "KNS1.E9", since = "t1" },
+  { event = "KNS1.E10", value = 2, since = "t1" },
+]
+
+[[step]]
+note = "шаг 2: короткое пропадание 10 с"
+write = { "GVL_Sim.stFaultInj.xPowerLoss" = true }
+mark = "t_loss"
+hold_s = 10
+
+[[step]]
+note = "шаг 2: напряжение восстановлено"
+write = { "GVL_Sim.stFaultInj.xPowerLoss" = false }
+
+[[step]]
+note = "шаг 2: до 29 с от пропадания ни один насос не в работе (tMinStop)"
+wait = "GVL_Time.lrMainNow_s >= {t_loss + 29}"
+timeout_s = 40
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
+
+[[step]]
+note = "шаг 2: ведущий запрошен, ждёт паузу — остаток запрета на фейсплейте"
+expect = [
+  "GVL_Station.axPumpRun[1] = TRUE",
+  "GVL_Devices.fbP101.stSts.uiInhibitRemain_s >= 1",
+]
+
+[[step]]
+note = "шаг 2: первый пуск — не раньше 30 с от пропадания"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
+note = "шаг 2: момент первого пуска"
+mark = "t_run"
+expect = ["{t_run - t_loss} >= 29.7"]
+
+[teardown]
+clear_faults = true

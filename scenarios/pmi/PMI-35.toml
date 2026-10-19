@@ -1,0 +1,93 @@
+# PMI-35. Перезапуск ПЛК: сохранение режимов и данных (06_PMI, раздел 5.6.8; приложение А: k = 1, 15 мин контура,
+# авто (cds) + ручн.).
+#
+# Только исполнитель cds (DESIGN 14.4): тёплый и холодный сброс с «Стартом» — шаг reset моста online_bridge.py.
+# Штатную остановку и запуск рантайма (cds.py runtime stop/start) и загрузку изменённой программы выполняет инженер
+# (процесс рантайма и сборка — вне сеанса исполнителя; принудительное завершение процесса не применять, риск R-02).
+# Приток 0: за время проверки насосы не пускаются, наработка и пуски не меняются. После сброса неэнергонезависимые
+# параметры модели (ускорение 1, суточный профиль) — по умолчанию; проверка по ним не идёт.
+id = "PMI-35"
+title = "Перезапуск ПЛК: сохранение режимов и данных"
+time_scale = 1.0
+timeout_s = 60
+backends = ["cds"]
+mode = "auto+manual"
+manual = [
+  "шаг 2: штатная остановка и запуск рантайма (cds.py runtime stop / start), затем те же проверки, что после сброса",
+  "шаг 5: загрузка изменённой программы (сборка и загрузка из IDE или cds.py), затем те же проверки",
+]
+
+[setup]
+method = "LevelPid"
+inflow_m3h = 0.0
+
+[[step]]
+note = "шаг 1: задание 1,50 м, Н2 — вывод из работы, наработка и пуски насосов"
+write = { "GVL_Persist.stStationCfg.rLevelSp_m" = 1.50, "GVL_Persist.stP101Retain.udiOpTime_s" = 400000, "GVL_Persist.stP102Retain.udiOpTime_s" = 500000, "GVL_Persist.stP103Retain.udiOpTime_s" = 600000, "GVL_Persist.stP101Retain.udiOpCount" = 111, "GVL_Persist.stP102Retain.udiOpCount" = 222, "GVL_Persist.stP103Retain.udiOpCount" = 333 }
+pulse = "GVL_Hmi.stP102Cmd.stCommon.xSetOos"
+wait = "GVL_Station.stStationSts.rLevelSp_m = 1.50"
+timeout_s = 10
+expect = [
+  "GVL_Station.stStationSts.eMode = E_StationMode.Auto",
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.LevelPid",
+  "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.OutOfService",
+]
+
+[[step]]
+note = "шаг 1: записанные значения"
+capture = { lead_on = "GVL_Persist.stStationCfg.rLvlStartLead_m", h1 = "GVL_Persist.stP101Retain.udiOpTime_s", h2 = "GVL_Persist.stP102Retain.udiOpTime_s", h3 = "GVL_Persist.stP103Retain.udiOpTime_s", n1 = "GVL_Persist.stP101Retain.udiOpCount", n2 = "GVL_Persist.stP102Retain.udiOpCount", n3 = "GVL_Persist.stP103Retain.udiOpCount" }
+expect = ["GVL_Devices.fbP101.stSts.udiStarts = 111"]
+
+[[step]]
+note = "шаг 2: штатная остановка и запуск рантайма"
+manual = "cds.py runtime stop, cds.py runtime start; проверки — как после тёплого сброса"
+
+[[step]]
+note = "шаг 3: «Сброс тёплый», «Старт» — режим, способ, задание, уставки, режим Н2, моточасы и пуски прежние"
+mark = "t_warm"
+reset = "warm"
+wait = "GVL_Station.stStationSts.eMode = E_StationMode.Auto"
+timeout_s = 60
+expect_event = { event = "KNS1.E15", since = "t_warm" }
+expect_delay = { since = "t_warm", from_event = "KNS1.E15", event = "KNS1.E10", min_s = 9.98, max_s = 10.04 }
+expect = [
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.LevelPid",
+  "GVL_Station.stStationSts.rLevelSp_m = 1.50",
+  "GVL_Station.stCfgLkg.rLvlStartLead_m = {lead_on}",
+  "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.OutOfService",
+  "GVL_Persist.stP101Retain.udiOpTime_s = {h1}",
+  "GVL_Persist.stP102Retain.udiOpTime_s = {h2}",
+  "GVL_Persist.stP103Retain.udiOpTime_s = {h3}",
+  "GVL_Persist.stP101Retain.udiOpCount = {n1}",
+  "GVL_Persist.stP102Retain.udiOpCount = {n2}",
+  "GVL_Persist.stP103Retain.udiOpCount = {n3}",
+]
+
+[[step]]
+note = "шаг 4: «Сброс холодный», «Старт» — те же данные"
+mark = "t_cold"
+reset = "cold"
+wait = "GVL_Station.stStationSts.eMode = E_StationMode.Auto"
+timeout_s = 60
+expect_event = { event = "KNS1.E15", since = "t_cold" }
+expect_delay = { since = "t_cold", from_event = "KNS1.E15", event = "KNS1.E10", min_s = 9.98, max_s = 10.04 }
+expect = [
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.LevelPid",
+  "GVL_Station.stStationSts.rLevelSp_m = 1.50",
+  "GVL_Station.stCfgLkg.rLvlStartLead_m = {lead_on}",
+  "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.OutOfService",
+  "GVL_Persist.stP101Retain.udiOpTime_s = {h1}",
+  "GVL_Persist.stP102Retain.udiOpTime_s = {h2}",
+  "GVL_Persist.stP103Retain.udiOpTime_s = {h3}",
+  "GVL_Persist.stP101Retain.udiOpCount = {n1}",
+  "GVL_Persist.stP102Retain.udiOpCount = {n2}",
+  "GVL_Persist.stP103Retain.udiOpCount = {n3}",
+]
+
+[[step]]
+note = "шаг 5: загрузка изменённой программы"
+manual = "загрузка изменённой программы; проверки — как после холодного сброса"
+not_checked = "подхват работающего двигателя при старте ПЛК — юнит-тесты библиотеки (модель после перезапуска начинает с нуля)"
+
+[teardown]
+clear_faults = true

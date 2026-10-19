@@ -1,0 +1,87 @@
+# PMI-17. Нет насоса для АВР (06_PMI, раздел 5.6.3; приложение А: k = 20, 15 мин контура).
+#
+# Перед аварией ПЧ все тревоги квитированы: сирену HA1 включает новая неквитированная KNS1.LACK, а не KNS1.NORES
+# шага 1 (K1 при этом уже обесточено активной NORES — High). Шаг 3 — через 2 мин после аварии, как в 06: уровень
+# к этому моменту ≈ 2,0 м, требуется один насос, и возвращённый Н2 снимает нехватку (KNS1.LACK → RtnUnack).
+# LT101.H при 3,50 м за 2 мин не достигается (≈ 13 мин контура при 100 м³/ч) — см. not_checked.
+id = "PMI-17"
+title = "Нет насоса для АВР"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: Н3 выведен из работы, Н2 — переключатель «Местное» (стоит)"
+pulse = "GVL_Hmi.stP103Cmd.stCommon.xSetOos"
+write = { "GVL_Sim.stFaultInj.axLocal[2]" = true }
+wait = "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.Local"
+timeout_s = 10
+expect = ["GVL_Devices.fbP103.stSts.stCommon.eMode = E_DeviceMode.OutOfService"]
+
+[[step]]
+note = "шаг 1: доступен один насос — KNS1.NORES через 10 с"
+wait_alarm = { code = "KNS1.NORES", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 2: работает Н1"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 2: тревоги квитированы — сирены нет до аварии"
+pulse = "GVL_Station.stStationCmd.xAckAll"
+wait = "GVL_IO.xHA1 = FALSE"
+timeout_s = 10
+
+[[step]]
+note = "шаг 2: авария ПЧ Н1"
+write = { "GVL_Sim.stFaultInj.axVfdFault[1]" = true }
+mark = "t2"
+capture = { lv0 = "GVL_Sim.stSimSts.rLevel_m" }
+
+[[step]]
+note = "шаг 2: замены нет; через 10 с KNS1.LACK (High), KNS1.NORES — SuppressedByDesign"
+wait_alarm = { code = "KNS1.LACK", state = "ActiveUnack" }
+timeout_s = 60
+expect_delay = { since = "t2", from_alarm = "P101.EXT", state = "ActiveUnack", alarm = "KNS1.LACK", min_s = 9.6, max_s = 10.8 }
+expect_alarm = { code = "KNS1.NORES", state = "SuppressedByDesign" }
+expect_absent = { event = "KNS1.E6", since = "t2" }
+
+[[step]]
+note = "шаг 2: HA1, K1 обесточено, NE 107 станции — Failure"
+wait = "GVL_IO.xHA1 = TRUE"
+timeout_s = 5
+expect = [
+  "GVL_IO.xK1 = FALSE",
+  "GVL_Station.stStationSts.eNe107 = E_Ne107Status.Failure",
+]
+
+[[step]]
+note = "шаг 2: уровень растёт; до шага 3 — 2 мин после аварии"
+hold_s = 100
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
+expect = ["GVL_Sim.stSimSts.rLevel_m > {lv0}"]
+not_checked = "LT101.H (1011) при 3,50 м: за 2 мин шага 2 уровень при 100 м³/ч растёт с ≈ 1,7 до ≈ 2,0 м; если ждать 3,50 м (≈ 13 мин), станция требует два насоса и KNS1.LACK шага 3 не снимается — противоречие текста 06"
+
+[[step]]
+note = "шаг 3: Н2 — «Дистанционное»: возвращается в Auto, станция его пускает, KNS1.LACK → RtnUnack"
+write = { "GVL_Sim.stFaultInj.axLocal[2]" = false }
+wait = "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.Auto"
+timeout_s = 10
+
+[[step]]
+note = "шаг 3: станция пускает Н2"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+wait_alarm = { code = "KNS1.LACK", state = "RtnUnack" }
+
+[teardown]
+clear_faults = true

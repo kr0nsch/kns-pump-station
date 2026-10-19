@@ -1,0 +1,175 @@
+# PMI-01. Старт приложения имитации, исходное состояние, безопасный старт (06_PMI, раздел 5.6.1;
+# приложение А: k = 1, 2 мин контура, авто + ручн.).
+#
+# Шаг 1 06 (перезапуск рантайма, загрузка сборки имитации, «Старт») выполняет исполнитель серии
+# `cds.py scenarios` до первого сценария: PMI-01 идёт первым, И0 перед ним не выполняется, курсор журнала
+# читает кольцо с самой старой записи — события старта приложения записаны до сценария. Затем — И0 (шаг 2 06).
+# Допуски задержек между записями журнала: −1/+2 цикла MainTask при k (06 §5.3; +1 — станция видит выходы
+# устройств прошлого цикла). «Активна только KNS1.SIM» — по словам wAlmActive (06 §5.5): при стоящих насосах
+# уставки PT201 и FT202 подавлены по условию (SuppressedByDesign) и тоже есть в списке GVL_Log.stAlarmView.
+id = "PMI-01"
+title = "Старт приложения имитации, исходное состояние, безопасный старт"
+time_scale = 1.0
+timeout_s = 60
+backends = ["opcua", "cds"]
+mode = "auto+manual"
+manual = [
+  "шаг 1: перезапуск рантайма, загрузка сборки имитации и «Старт» — исполнитель серии cds.py scenarios перед PMI-01",
+  "шаг 1: при первой загрузке (пустой retain) — «Ручной» и KNS1.NOAUTO через 600 с; в серии retain заполнен, задержку NOAUTO вживую проверяет PMI-30",
+  "шаг 2: экран «Обзор» — уровень 1,20 м, три стоящих насоса, цвет только у индикатора KNS1.SIM",
+]
+
+[setup]
+skip_initial_state = true          # состояние сразу после старта приложения
+journal_from_start = true          # событие 101015 записано до сценария
+
+[[step]]
+note = "шаг 1: имитация включена, KNS1.SIM не квитирована, бит 11 состояния станции"
+wait_alarm = { code = "KNS1.SIM", state = "ActiveUnack" }
+timeout_s = 5
+expect = [
+  "GVL_Sim.xSimulation = TRUE",
+  "GVL_Station.stStationSts.wState & 16#0800",          # STN_ST_SIMULATION
+]
+expect_event = { event = "KNS1.E15" }                    # старт приложения ПЛК
+
+[[step]]
+note = "шаг 1: режим и способ — из GVL_Persist.stStationRetain"
+capture = { mode = "GVL_Persist.stStationRetain.eMode", method = "GVL_Persist.stStationRetain.eMethod" }
+expect = [
+  "GVL_Station.stStationSts.eMode = {mode}",
+  "GVL_Station.stStationSts.eMethod = {method}",
+  "GVL_Station.stCfgLkg.astAlarm[9].tOnDelay = T#10M",  # KNS1.NOAUTO — через 600 с «Ручного»
+]
+
+[[step]]
+note = "шаг 1: насосы не пускаются раньше tPlcStart = 10 с — последовательный пуск начат при старте и разрешён через 10 с"
+timeout_s = 30
+expect_delay = [
+  { from_event = "KNS1.E15", event = "KNS1.E9", min_s = 0.0, max_s = 0.04 },
+  { from_event = "KNS1.E15", event = "KNS1.E10", min_s = 9.98, max_s = 10.04 },
+]
+expect = ["GVL_Station.stCfgLkg.tPlcStart = T#10S"]
+
+[[step]]
+note = "шаг 2: исходное состояние И0 (06 §5.2)"
+init = { inflow_m3h = 100.0 }
+
+[[step]]
+note = "шаг 2: все устройства в норме NE 107, отказов нет"
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbP102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbP103.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbV1.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbV1.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbLT101.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbLT101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbLS102.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbLS102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbLS103.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbLS103.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbIT111.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbIT111.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbTS112.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbTS112.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbMS113.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbMS113.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbIT121.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbIT121.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbTS122.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbTS122.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbMS123.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbMS123.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbIT131.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbIT131.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbTS132.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbTS132.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbMS133.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbMS133.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbPT201.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbPT201.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbFT202.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbFT202.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbLS203.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbLS203.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbES301.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbES301.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbYS302.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbYS302.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbYS303.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbYS303.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbAT401.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbAT401.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbAT402.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbAT402.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbTT403.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbTT403.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbZS404.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbZS404.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbYS405.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbYS405.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbHS501.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbHS501.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbHS502.stSts.stCommon.eNe107 = E_Ne107Status.Good",
+  "GVL_Devices.fbHS502.stSts.stCommon.wFault = 0",
+]
+
+[[step]]
+note = "шаг 2: активна только KNS1.SIM (бит slot − 1 = 12 станции; у устройств и LIC101 активных тревог нет)"
+expect_alarm = { code = "KNS1.SIM", state = "ActiveAck" }
+expect = [
+  "GVL_Station.stStationSts.wAlmActive = 16#1000",
+  "GVL_Station.fbLIC101.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbP101.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbV1.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbLT101.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbLS102.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbLS103.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbIT111.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbTS112.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbMS113.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbIT121.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbTS122.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbMS123.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbIT131.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbTS132.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbMS133.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbPT201.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbFT202.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbLS203.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbES301.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbYS302.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbYS303.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbAT401.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbAT402.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbTT403.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbZS404.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbYS405.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbHS501.stSts.stCommon.wAlmActive = 0",
+  "GVL_Devices.fbHS502.stSts.stCommon.wAlmActive = 0",
+]
+
+[[step]]
+note = "шаг 2: Автомат, три насоса доступны и в резерве; K1 под напряжением, сирены нет"
+expect = [
+  "GVL_Station.stStationSts.eMode = E_StationMode.Auto",
+  "GVL_Station.stStationSts.uiPumpsAvailable = 3",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Standby",
+  "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Standby",
+  "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.Standby",
+  "GVL_IO.xK1 = TRUE",
+  "GVL_IO.xHA1 = FALSE",
+  "GVL_Station.stStationSts.rLevel_m >= 1.15",
+  "GVL_Station.stStationSts.rLevel_m <= 1.25",
+  "GVL_Station.stStationSts.uiPumpsRunning = 0",
+]
+manual = "экран «Обзор»: уровень 1,20 м, три стоящих насоса, цвет только у индикатора KNS1.SIM"
+
+[teardown]
+clear_faults = true

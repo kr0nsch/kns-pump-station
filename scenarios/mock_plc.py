@@ -2,7 +2,8 @@
 
 Узлы — как у сервера CODESYS: пространство имён ``…:IecVarAccess``, устройство в ``Objects/DeviceSet``,
 строковые узлы ``|var|<устройство>.Application.<путь>`` нужных типов. Поток «ПЛК» каждые 20 мс ведёт время
-процесса ``lrMainNow_s`` (с ускорением ``rTimeScale``), сбрасывает импульсы команд, считает ``uiCmdSeq`` и
+процесса ``lrMainNow_s`` (с ускорением ``rTimeScale``), сбрасывает импульсы команд (в том числе «Стоп» насосов
+для И0), считает ``uiCmdSeq`` и
 грубо повторяет реакцию станции на аварию ПЧ (PMI-13): отказ насоса, код аварии 11, тревоги
 ``P10n.EXT`` и ``KNS1.ATS`` в ``stAlarmView``, записи в журнале и курсоре ``stEventFeed``, смена ведущего,
 отказ сброса при действующей аварии. Это тестовая подставка исполнителя, а не модель объекта.
@@ -56,6 +57,7 @@ CLIENT_PATHS = frozenset(
     [f"GVL_Station.stStationCmd.{n}" for n in STATION_PULSES]
     + [f"GVL_Sim.stSimCmd.{n}" for n in SIM_PULSES]
     + [f"GVL_Hmi.stP10{i}Cmd.stCommon.{n}" for i in range(1, PUMPS + 1) for n in ("xSetAuto", "xReset")]
+    + [f"GVL_Hmi.stP10{i}Cmd.xStop" for i in range(1, PUMPS + 1)]
     + ["GVL_Hmi.xApplyProjectCfg", "GVL_Log.stEventFeed.udiFromSeq", "GVL_Sim.stSimCfg.rTimeScale"]
     + [f"GVL_Sim.stFaultInj.{a}[{i}]" for a in FAULT_ARRAYS for i in range(1, PUMPS + 1)]
 )
@@ -110,6 +112,7 @@ def variables() -> dict[str, tuple[Any, ua.VariantType]]:
             v[f"GVL_Sim.stFaultInj.{arr}[{n}]"] = (False, V.Boolean)
         v[f"GVL_Hmi.stP10{n}Cmd.stCommon.xSetAuto"] = (False, V.Boolean)
         v[f"GVL_Hmi.stP10{n}Cmd.stCommon.xReset"] = (False, V.Boolean)
+        v[f"GVL_Hmi.stP10{n}Cmd.xStop"] = (False, V.Boolean)
         v[f"GVL_Persist.stP10{n}Retain.udiOpTime_s"] = (0, V.UInt32)
         v[f"GVL_IO.uiP10{n}_FCODE"] = (0, V.UInt16)
         base = f"GVL_Devices.fbP10{n}.stSts"
@@ -217,6 +220,11 @@ class MockPlc:
         if self.get(f"{cmd}.xSetAuto"):
             self.set(f"{base}.stCommon.eMode", 1)
             self.set(f"{cmd}.xSetAuto", False)
+        stop = f"GVL_Hmi.stP10{n}Cmd.xStop"
+        if self.get(stop):  # «Стоп» с фейсплейта (И0): насос остановлен
+            if int(self.get(f"{base}.eState")) == MOTOR_RUNNING:
+                self.set(f"{base}.eState", 0)
+            self.set(stop, False)
         fault = bool(self.get(f"GVL_Sim.stFaultInj.axVfdFault[{n}]"))
         if fault and int(self.get(f"{base}.eState")) != MOTOR_FAULT:
             self.set(f"{base}.eState", MOTOR_FAULT)

@@ -1,0 +1,114 @@
+# PMI-25. Обрыв LT101 (NAMUR NE 43): удержание и резервное управление по поплавкам (06_PMI, раздел 5.6.5;
+# приложение А: k = 20, 60 мин контура).
+#
+# Первые 2 с отказа (подтверждение tFailDelay) — при k = 1: при k = 20 это 0,1 с, опрос их не увидит. Затем
+# k = 20: работающий насос откачивает на 100 % до LS103 (1,40 → 0,40 м ≈ 15 мин контура), стоп; наполнение до
+# LS102 (0,40 → 4,20 м ≈ 27 мин) и пуск всех доступных.
+id = "PMI-25"
+title = "Обрыв LT101 (NAMUR NE 43): удержание и резервное управление по поплавкам"
+time_scale = 20.0
+timeout_s = 600
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "работает ведущий под ПИД"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "уровень ≈ 1,4 м"
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.45"
+timeout_s = 1200
+
+[[step]]
+note = "шаг 1: обрыв LT101 — без ускорения"
+time_scale = 1.0
+capture = { held = "GVL_Devices.fbLT101.rValue_eu" }
+write = { "GVL_Sim.stFaultInj.aeAiFault[1]" = "E_SimAiFault.WireBreak" }
+mark = "t1"
+
+[[step]]
+note = "первые 2 с: последнее хорошее значение, AI_STS_FAIL_PENDING, xValid, нет LL и сухого хода"
+hold_s = 1.5
+during = [
+  "GVL_Devices.fbLT101.xValid = TRUE",
+  "GVL_Devices.fbLT101.xLL = FALSE",
+  "GVL_Devices.fbLT101.rValue_eu >= {held - 0.02}",
+  "GVL_Devices.fbLT101.rValue_eu <= {held + 0.02}",
+  "GVL_Station.stStationSts.wState !& 16#0001",
+]
+expect = ["GVL_Devices.fbLT101.stSts.stCommon.wStatus & 16#0040"]   # AI_STS_FAIL_PENDING
+
+[[step]]
+note = "через 2 с: xValid = FALSE, Failure, LT101.FAIL"
+wait_alarm = { code = "LT101.FAIL", state = "ActiveUnack" }
+timeout_s = 5
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "LT101.FAIL", state = "ActiveUnack", min_s = 1.98, max_s = 2.04 }
+expect = [
+  "GVL_Devices.fbLT101.xValid = FALSE",
+  "GVL_Devices.fbLT101.stSts.stCommon.eNe107 = E_Ne107Status.Failure",
+]
+
+[[step]]
+note = "KNS1.FLOAT, управление по поплавкам, ПИД в слежении"
+wait_alarm = { code = "KNS1.FLOAT", state = "ActiveUnack" }
+timeout_s = 5
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Float",
+  "GVL_Station.fbLIC101.xTrack = TRUE",
+]
+expect_absent = [
+  { alarm = "KNS1.DRY", since = "t1" },
+  { alarm = "LT101.LL", since = "t1" },
+]
+
+[[step]]
+note = "работающий насос продолжает на 100 %"
+time_scale = 20.0
+wait = "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 99.9"
+timeout_s = 30
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "откачка до LS103 (0,40 м)"
+wait = "GVL_Sim.stSimSts.rLevel_m <= 0.40"
+timeout_s = 1500
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "LS103 — стоп, KNS1.DRY подавлена"
+wait_alarm = { code = "LS103.ALM", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "все насосы остановлены"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 0"
+timeout_s = 60
+expect_alarm = { code = "KNS1.DRY", state = "SuppressedByDesign" }
+
+[[step]]
+note = "ожидание LS102: насосы стоят, уровень растёт до 4,20 м"
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+timeout_s = 2400
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
+
+[[step]]
+note = "пуск всех доступных при 4,20 м"
+wait_alarm = { code = "LS102.ALM", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "все доступные насосы в работе"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 3"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Float"]
+
+[teardown]
+clear_faults = true

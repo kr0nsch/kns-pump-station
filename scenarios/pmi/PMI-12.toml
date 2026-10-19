@@ -1,0 +1,84 @@
+# PMI-12. АВР: нет подтверждения пуска (06_PMI, раздел 5.6.3; приложение А: k = 20, 10 мин контура).
+#
+# Команда пуска — запрос станции в цикле, где назначен ведущий: тот же цикл, что событие 101005 (смена ведущего),
+# устройство входит в Starting в этом цикле. «В том же цикле — запрос Н2»: станция видит отказ устройства в
+# следующем цикле MainTask (выходы устройств прошлого цикла, 04 §2) и в нём же назначает замену — 101006 и
+# KNS1.ATS через один цикл после P101.FTS. Допуски между записями журнала: −1/+2 цикла MainTask при k (06 §5.3).
+id = "PMI-12"
+title = "АВР: нет подтверждения пуска"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.5                      # пуск ведущего на 1,60 м через ≈ 45 с контура
+inflow_m3h = 100.0                 # наработка И0 — ведущий Н1
+
+[[step]]
+note = "шаг 1: ОС «ПЧ в работе» Н1 не приходит — инъекция до пуска"
+write = { "GVL_Sim.stFaultInj.axNoFeedback[1]" = true }
+mark = "t0"
+
+[[step]]
+note = "шаг 2: пуск ведущего Н1 на 1,60 м (событие 101005)"
+expect_event = { event = "KNS1.E5", value = 1, since = "t0" }
+
+[[step]]
+note = "через 10 с после команды — P101.FTS, Н1 в отказе, выход снят, роль None"
+wait_alarm = { code = "P101.FTS", state = "ActiveUnack" }
+timeout_s = 60
+expect_delay = { since = "t0", from_event = "KNS1.E5", alarm = "P101.FTS", state = "ActiveUnack", min_s = 9.6, max_s = 10.8 }
+expect = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Fault",
+  "GVL_Devices.fbP101.xQRun = FALSE",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.None",
+]
+
+[[step]]
+note = "в том же цикле станции — запрос Н2 (101006, значение 2) и KNS1.ATS; Н2 в работе"
+wait_alarm = { code = "KNS1.ATS", state = "ActiveUnack" }
+timeout_s = 10
+expect_event = { event = "KNS1.E6", value = 2, since = "t0" }
+expect_delay = [
+  { since = "t0", from_alarm = "P101.FTS", state = "ActiveUnack", event = "KNS1.E6", min_s = 0.0, max_s = 0.8 },
+  { since = "t0", from_alarm = "P101.FTS", alarm = "KNS1.ATS", state = "ActiveUnack", min_s = 0.0, max_s = 0.8 },
+]
+
+[[step]]
+note = "Н2 в работе"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+expect = ["GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Lead"]
+
+[[step]]
+note = "через 10 с после KNS1.ATS — KNS1.NORES"
+wait_alarm = { code = "KNS1.NORES", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t0", from_alarm = "KNS1.ATS", alarm = "KNS1.NORES", state = "ActiveUnack", min_s = 9.6, max_s = 10.8 }
+
+[[step]]
+note = "шаг 3: снять инъекцию, «Сброс» на фейсплейте Н1"
+write = { "GVL_Sim.stFaultInj.axNoFeedback[1]" = false }
+pulse = "GVL_Hmi.stP101Cmd.stCommon.xReset"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Standby"
+timeout_s = 30
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"]
+
+[[step]]
+note = "шаг 3: Н1 — резервный, сам не пускается; KNS1.ATS и KNS1.NORES → RtnUnack"
+wait_alarm = [
+  { code = "KNS1.ATS", state = "RtnUnack" },
+  { code = "KNS1.NORES", state = "RtnUnack" },
+]
+timeout_s = 30
+hold_s = 20
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+  "GVL_Station.axPumpRun[1] = FALSE",
+]
+
+[teardown]
+clear_faults = true

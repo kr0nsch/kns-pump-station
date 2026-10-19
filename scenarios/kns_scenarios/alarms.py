@@ -61,6 +61,13 @@ class AlarmView:
             raise KeyError(f"тревоги {code} нет в 05_alarm_list.csv")
         return self.catalog[code].id
 
+    def code_of(self, alarm_id: int) -> str:
+        """Код тревоги по номеру (для отчёта); неизвестный номер — сам номер."""
+        for code, item in self.catalog.items():
+            if item.id == alarm_id:
+                return code
+        return str(alarm_id)
+
     def _read(self) -> tuple[dict[int, str], bool]:
         """Номер тревоги → имя состояния по строкам списка и признак переполнения списка."""
         count_raw, total_raw = self.client.read([f"{ALARM_VIEW}.uiCount", f"{ALARM_VIEW}.uiActiveTotal"])

@@ -20,7 +20,7 @@ from collections.abc import Mapping
 PlcValue = bool | int | float | str
 EnumTable = Mapping[str, Mapping[str, int]]
 
-OPERATORS = ("=", "<>", "<", "<=", ">", ">=", "&")
+OPERATORS = ("=", "<>", "<", "<=", ">", ">=", "&", "!&")
 _TYPED_RE = re.compile(r"^(?P<type>[A-Za-z_]+)#(?P<value>.+)$")
 _TIME_RE = re.compile(r"(?P<num>\d+(?:\.\d+)?)(?P<unit>MS|US|NS|D|H|M|S)", re.IGNORECASE)
 _TIME_UNITS = {"D": 86400.0, "H": 3600.0, "M": 60.0, "S": 1.0, "MS": 1e-3, "US": 1e-6, "NS": 1e-9}
@@ -115,15 +115,16 @@ def _equal(actual: PlcValue, expected: PlcValue) -> bool:
 
 
 def compare(actual: PlcValue, op: str, expected: PlcValue) -> bool:
-    """Сравнение значения ПЛК с ожидаемым: ``=``, ``<>``, ``<``, ``<=``, ``>``, ``>=``; ``&`` — есть общие биты."""
+    """Сравнение значения ПЛК с ожидаемым: ``=``, ``<>``, ``<``, ``<=``, ``>``, ``>=``; ``&`` — есть общие биты,
+    ``!&`` — общих битов нет (бит снят: ``wState !& 16#0400``)."""
     if op == "=":
         return _equal(actual, expected)
     if op == "<>":
         return not _equal(actual, expected)
-    if op == "&":
+    if op in ("&", "!&"):
         if isinstance(actual, bool | float | str) or isinstance(expected, bool | float | str):
-            raise LiteralError("маска & — только для целых")
-        return (actual & expected) != 0
+            raise LiteralError(f"маска {op} — только для целых")
+        return ((actual & expected) != 0) == (op == "&")
     if isinstance(actual, str) or isinstance(expected, str):
         raise LiteralError(f"сравнение {op} строк не поддержано")
     a, e = float(actual), float(expected)

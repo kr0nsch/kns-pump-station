@@ -1,0 +1,147 @@
+# PMI-30. Автомат → Ручной → Автомат без рывка; ручное управление насосом (06_PMI, раздел 5.6.7; приложение А:
+# k = 20, 20 мин контура).
+#
+# «Н1 на ≈ 88 %» — приток 120 м³/ч, ПИД устанавливается 20 мин контура. Шаг 3 — 10 мин «Ручного» (KNS1.NOAUTO —
+# задержка 600 с от события 101002). Шаг 4: «лишний насос» останавливается по правилам ПИД — выход ≤ 75 % дольше
+# tAssistOff = 60 с; «не раньше 60 с» — проверка «всё время» 55 с после перехода в «Автомат» (допуск наблюдения).
+id = "PMI-30"
+title = "Автомат → Ручной → Автомат без рывка; ручное управление насосом"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 120.0
+
+[[step]]
+note = "ведущий Н1 в работе под ПИД"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "ПИД устанавливается: Н1 на ≈ 88 %"
+hold_s = 1200
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 1"]
+expect = [
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 83.0",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct <= 93.0",
+]
+capture = { sp1 = "GVL_Devices.fbP101.stSts.rSpeedRef_pct" }
+
+[[step]]
+note = "шаг 1: Cmd.xSetManual"
+pulse = "GVL_Station.stStationCmd.xSetManual"
+mark = "t_manual"
+expect = ["GVL_Station.stStationSts.eMode = E_StationMode.Manual"]
+
+[[step]]
+note = "шаг 1: все насосы Manual, Н1 не останавливается, задание не меняется (≈ 88)"
+wait = "GVL_Devices.fbP103.stSts.stCommon.eMode = E_DeviceMode.Manual"
+timeout_s = 10
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Manual",
+  "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.Manual",
+  "GVL_Hmi.stP101Cmd.rSpeedSp_pct >= {sp1 - 3}",
+  "GVL_Hmi.stP101Cmd.rSpeedSp_pct <= {sp1 + 3}",
+]
+hold_s = 20
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= {sp1 - 3}",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct <= {sp1 + 3}",
+]
+
+[[step]]
+note = "шаг 2: фейсплейт Н2 — «Пуск», задание 70 %"
+write = { "GVL_Hmi.stP102Cmd.rSpeedSp_pct" = 70.0 }
+pulse = "GVL_Hmi.stP102Cmd.xStart"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
+note = "шаг 2: задание на ПЧ Н2 — 70 %"
+wait = "GVL_Devices.fbP102.stSts.rSpeedRef_pct >= 69.9"
+timeout_s = 30
+expect = ["GVL_Devices.fbP102.stSts.rSpeedRef_pct <= 70.1"]
+
+[[step]]
+note = "шаг 2: задание 40 % — на ПЧ не ниже 60 % (rSpeedMin_pct)"
+write = { "GVL_Hmi.stP102Cmd.rSpeedSp_pct" = 40.0 }
+wait = "GVL_Devices.fbP102.stSts.rSpeedRef_pct <= 60.1"
+timeout_s = 30
+during = ["GVL_Devices.fbP102.stSts.rSpeedRef_pct >= 59.9"]
+
+[[step]]
+note = "шаг 2: задание на ПЧ держится на 60 %"
+hold_s = 20
+during = [
+  "GVL_Devices.fbP102.stSts.rSpeedRef_pct >= 59.9",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running",
+]
+
+[[step]]
+note = "шаг 3: ждать 10 мин — KNS1.NOAUTO (Low) через 600 с «Ручного»"
+wait_alarm = { code = "KNS1.NOAUTO", state = "ActiveUnack" }
+timeout_s = 700
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running",
+]
+expect_delay = { since = "t_manual", from_event = "KNS1.E2", alarm = "KNS1.NOAUTO", state = "ActiveUnack", min_s = 599.6, max_s = 600.8 }
+
+[[step]]
+note = "шаг 3: до 10 мин"
+hold_s = 5
+capture = { st1 = "GVL_Devices.fbP101.stSts.udiStarts", st2 = "GVL_Devices.fbP102.stSts.udiStarts", st3 = "GVL_Devices.fbP103.stSts.udiStarts" }
+
+[[step]]
+note = "шаг 4: Cmd.xSetAuto"
+pulse = "GVL_Station.stStationCmd.xSetAuto"
+mark = "t_auto"
+expect = ["GVL_Station.stStationSts.eMode = E_StationMode.Auto"]
+
+[[step]]
+note = "шаг 4: насосы Auto; работающие не останавливаются и не пускаются в момент перехода; лишний — не раньше 60 с"
+wait = "GVL_Devices.fbP103.stSts.stCommon.eMode = E_DeviceMode.Auto"
+timeout_s = 10
+hold_s = 55
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Auto",
+  "GVL_Devices.fbP102.stSts.stCommon.eMode = E_DeviceMode.Auto",
+  "GVL_Devices.fbP101.stSts.udiStarts = {st1}",
+  "GVL_Devices.fbP102.stSts.udiStarts = {st2}",
+  "GVL_Devices.fbP103.stSts.udiStarts = {st3}",
+]
+
+[[step]]
+note = "шаг 4: KNS1.NOAUTO → RtnUnack"
+wait_alarm = { code = "KNS1.NOAUTO", state = "RtnUnack" }
+timeout_s = 10
+
+[[step]]
+note = "шаг 4: лишний насос (Н2, больше наработка) останавливается по правилам ПИД"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped"
+timeout_s = 1200
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 4: интервал от перехода в «Автомат» до останова лишнего — не меньше 60 с (допуск наблюдений ≈ 6 с)"
+mark = "t_off"
+expect = ["{t_off - t_auto} >= 54"]
+
+[[step]]
+note = "шаг 5: фейсплейт Н1 в «Автомате» — «Пуск» отклонён по режиму"
+pulse = "GVL_Hmi.stP101Cmd.xStart"
+expect = ["GVL_Devices.fbP101.stSts.stCommon.eCmdResult = E_CmdResult.RejectedMode"]
+
+[teardown]
+clear_faults = true

@@ -1,0 +1,96 @@
+# PMI-31. Местный режим насоса (06_PMI, раздел 5.6.7; приложение А: k = 20, 10 мин контура).
+#
+# «Местное» Н1: роль ведущего — у Н2 без АВР (событие 101005, нет KNS1.ATS и 101006), KNS1.NORES через 10 с после
+# перехода (смену режима отмечает событие 101018 в цикле, где станция видит Н1 недоступным). Пуск по месту: станция
+# учитывает Н1 в откачке как сторонний, лишний насос не пускается. Бит MOT_WRN_INTERLOCK_IN_LOCAL — «при блокировке»:
+# в шагах 06 блокировки нет — проверяется, что бита нет при wInterlock = 0 (см. not_checked).
+id = "PMI-31"
+title = "Местный режим насоса"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: работает ведущий Н1"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"]
+
+[[step]]
+note = "шаг 1: переключатель Н1 «Местное» (по месту не пущен)"
+write = { "GVL_Sim.stFaultInj.axLocal[1]" = true }
+mark = "t1"
+
+[[step]]
+note = "шаг 1: fbP101 в Local, выход снят, Н1 останавливается"
+wait = "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Local"
+timeout_s = 10
+expect = ["GVL_Devices.fbP101.xQRun = FALSE"]
+
+[[step]]
+note = "шаг 1: Н1 остановлен"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 60
+
+[[step]]
+note = "шаг 1: роль ведущего — Н2 без тревоги АВР (событие 101005)"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Lead"
+timeout_s = 15
+expect_event = { event = "KNS1.E5", value = 2, since = "t1" }
+expect_absent = [
+  { alarm = "KNS1.ATS", since = "t1" },
+  { event = "KNS1.E6", since = "t1" },
+]
+
+[[step]]
+note = "шаг 1: через 10 с KNS1.NORES"
+wait_alarm = { code = "KNS1.NORES", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t1", from_event = "KNS1.E18", alarm = "KNS1.NORES", state = "ActiveUnack", min_s = 9.6, max_s = 10.8 }
+expect_event = { event = "KNS1.E18", value = 113, since = "t1" }    # dev_no 11 · 10 + Local (3)
+
+[[step]]
+note = "шаг 2: пуск с местного поста"
+write = { "GVL_Sim.stFaultInj.axLocalRun[1]" = true }
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+
+[[step]]
+note = "шаг 2: Н1 работает по месту, станция учитывает его в откачке, лишний насос не пускается"
+hold_s = 30
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Station.stStationSts.uiPumpsRunning >= 1",
+  "GVL_Station.stStationSts.uiPumpsRunning <= 2",
+  "GVL_Station.axPumpRun[3] = FALSE",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Local",
+  "GVL_Station.stStationSts.uiPumpsRequired = 1",
+  "GVL_Devices.fbP101.stSts.wInterlock = 0",
+  "GVL_Devices.fbP101.stSts.stCommon.wWarning !& 16#0020",  # MOT_WRN_INTERLOCK_IN_LOCAL — блокировки нет
+]
+not_checked = "бит MOT_WRN_INTERLOCK_IN_LOCAL при блокировке насоса в «Местном»: в действиях 06 блокировки нет (бит проверяют юнит-тесты FB_Motor)"
+
+[[step]]
+note = "шаг 3: «Дистанционное», пуск по месту снят"
+write = { "GVL_Sim.stFaultInj.axLocal[1]" = false, "GVL_Sim.stFaultInj.axLocalRun[1]" = false }
+wait = "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Auto"
+timeout_s = 10
+
+[[step]]
+note = "шаг 3: Н1 в Auto (запомненный режим) — резервный, KNS1.NORES → RtnUnack"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Standby"
+timeout_s = 60
+wait_alarm = { code = "KNS1.NORES", state = "RtnUnack" }
+
+[teardown]
+clear_faults = true

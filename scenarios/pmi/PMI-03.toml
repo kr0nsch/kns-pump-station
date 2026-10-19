@@ -1,0 +1,120 @@
+# PMI-03. Ступенчатое регулирование: подпорный насос (06_PMI, раздел 5.6.1; приложение А: k = 20, 40 мин контура).
+#
+# Приток 180 м³/ч больше подачи одного насоса (≈ 150 м³/ч): уровень после пуска ведущего растёт до 2,40 м
+# (≈ 20 мин контура). Пересечения 2,40 м и 1,40 м с выдержкой 5 с — при k = 1 (запись журнала есть только у пуска
+# ведущего); интервал между наблюдениями сценария — с допуском ≈ ±0,4 с (см. PMI-02).
+id = "PMI-03"
+title = "Ступенчатое регулирование: подпорный насос"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 180.0
+
+[[step]]
+note = "не больше двух насосов в ступенчатом (uiDutyMax = 2); пуски Н3 — до проверки"
+capture = { s3 = "GVL_Devices.fbP103.stSts.udiStarts" }
+expect = ["GVL_Station.stCfgLkg.uiDutyMax = 2"]
+
+[[step]]
+note = "ведущий Н1 с 1,60 м"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+timeout_s = 300
+expect_event = { event = "KNS1.E5", value = 1 }
+
+[[step]]
+note = "Н1 в работе, уровень растёт к 2,40 м; Н2 и Н3 стоят"
+wait = "GVL_Station.stStationSts.rLevel_m >= 2.38"
+timeout_s = 1800
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "к уровню пуска подпорного — без ускорения"
+time_scale = 1.0
+wait = "GVL_Station.stStationSts.rLevel_m >= 2.40"
+timeout_s = 120
+
+[[step]]
+note = "уровень ≥ 2,40 м: ждать подпорного"
+mark = "t_as_lvl"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Assist"
+timeout_s = 15
+
+[[step]]
+note = "через 5 с — подпорный Н2"
+mark = "t_as"
+expect = [
+  "{t_as - t_as_lvl} >= 4.6",
+  "{t_as - t_as_lvl} <= 5.4",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead",
+]
+
+[[step]]
+note = "Н2 в работе, работают два насоса"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 10
+expect = ["GVL_Station.stStationSts.uiPumpsRunning = 2"]
+
+[[step]]
+note = "приток 100 м³/ч: два насоса откачивают до 1,40 м, Н3 не пускается"
+time_scale = 20.0
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.43"
+timeout_s = 900
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "к уровню останова подпорного — без ускорения"
+time_scale = 1.0
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.40"
+timeout_s = 60
+
+[[step]]
+note = "уровень ≤ 1,40 м: ждать снятия запроса с насоса с большей наработкой (Н2)"
+mark = "t_off_lvl"
+wait = "GVL_Station.axPumpRun[2] = FALSE"
+timeout_s = 15
+
+[[step]]
+note = "через 5 с останавливается Н2 (200 ч > 100 ч), Н1 остаётся ведущим"
+mark = "t_off2"
+expect = [
+  "{t_off2 - t_off_lvl} >= 4.6",
+  "{t_off2 - t_off_lvl} <= 5.4",
+  "GVL_Station.axPumpRun[1] = TRUE",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead",
+]
+
+[[step]]
+note = "Н1 работает до 1,00 м, Н3 не пускается"
+time_scale = 20.0
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.00"
+timeout_s = 900
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "останов на 1,00 м; Н3 за проверку не пускался"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 60
+expect = [
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.udiStarts = {s3}",
+]
+
+[teardown]
+clear_faults = true

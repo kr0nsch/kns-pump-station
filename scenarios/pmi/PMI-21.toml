@@ -1,0 +1,88 @@
+# PMI-21. Аварийно высокий уровень по поплавку при отказе уровнемера (06_PMI, раздел 5.6.4; приложение А:
+# k = 20, 90 мин контура).
+#
+# Насосы стоят при обрыве LT101 (уровень 1,20 м): режим по поплавкам ждёт LS102; при 230 м³/ч уровень доходит до
+# 4,20 м ≈ за 9,4 мин контура, после LS102 приток 60 м³/ч и откачка тремя насосами до LS103 ≈ 17,5 мин. Интервал
+# пусков tStagger = 5 с — по разности времени непрерывной работы насосов (udiRunCurrent_s, целые секунды, одно
+# чтение): не зависит от опроса и k. KNS1.EHL и KNS1.DRY подавлены по условию с входа в режим по поплавкам.
+id = "PMI-21"
+title = "Аварийно высокий уровень по поплавку при отказе уровнемера"
+time_scale = 20.0
+timeout_s = 600
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 230.0
+
+[[step]]
+note = "шаг 1: обрыв LT101, насосы стоят"
+write = { "GVL_Sim.stFaultInj.aeAiFault[1]" = "E_SimAiFault.WireBreak" }
+mark = "t1"
+expect = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
+
+[[step]]
+note = "KNS1.FLOAT, действует управление по поплавкам; KNS1.EHL подавлена"
+wait_alarm = { code = "KNS1.FLOAT", state = "ActiveUnack" }
+timeout_s = 30
+expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Float"]
+expect_event = { event = "KNS1.E13", since = "t1" }
+expect_alarm = { code = "KNS1.EHL", state = "SuppressedByDesign" }
+
+[[step]]
+note = "ожидание LS102: насосы стоят, уровень растёт"
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+timeout_s = 900
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
+
+[[step]]
+note = "при 4,20 м через 2 с LS102.ALM"
+mark = "t_ls"
+wait_alarm = { code = "LS102.ALM", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { from = "t_ls", alarm = "LS102.ALM", state = "ActiveUnack", min_s = 2.0, max_s = 2.0 }
+
+[[step]]
+note = "пускаются все доступные насосы по одному, 100 %"
+wait = "GVL_Devices.fbP103.stSts.rSpeedRef_pct >= 99.9"
+timeout_s = 60
+expect = [
+  "GVL_Station.stStationSts.uiPumpsRunning = 3",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 99.9",
+  "GVL_Devices.fbP102.stSts.rSpeedRef_pct >= 99.9",
+]
+
+[[step]]
+note = "интервал пусков 5 с (tStagger): Н1, Н2, Н3 по наработке"
+capture = { c1 = "GVL_Devices.fbP101.stSts.udiRunCurrent_s", c2 = "GVL_Devices.fbP102.stSts.udiRunCurrent_s", c3 = "GVL_Devices.fbP103.stSts.udiRunCurrent_s" }
+expect = [
+  "{c1 - c2} >= 4",
+  "{c1 - c2} <= 6",
+  "{c2 - c3} >= 4",
+  "{c2 - c3} <= 6",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Float",
+]
+expect_alarm = { code = "KNS1.EHL", state = "SuppressedByDesign" }
+
+[[step]]
+note = "шаг 2: приток 60 м³/ч — откачка всеми насосами до LS103 (0,40 м)"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 60.0 }
+wait = "GVL_Sim.stSimSts.rLevel_m <= 0.40"
+timeout_s = 1800
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 3"]
+
+[[step]]
+note = "LS103: все насосы стоп, KNS1.DRY — SuppressedByDesign"
+wait_alarm = { code = "LS103.ALM", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "все насосы остановлены"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 0"
+timeout_s = 30
+expect_alarm = { code = "KNS1.DRY", state = "SuppressedByDesign" }
+
+[teardown]
+clear_faults = true

@@ -1,0 +1,154 @@
+# PMI-39. Сутки работы по суточному профилю с ливнями (06_PMI, раздел 5.6.9; приложение А: k = 50, 1440 мин
+# контура, ≈ 29 мин реального времени).
+#
+# Фазы — по времени суток модели (SimSts.rTimeOfDay_h, udiDay): ступенчатое 0…12 ч, ПИД 12…24 ч. Ливни — по
+# SimCfg.udiSeed для текущих суток модели (номер суток зависит от того, сколько контура прошло с загрузки: в серии
+# это не обязательно сутки 0 эталона). Поэтому условные требования 06 записаны с охраной (during_if): «при
+# аварийном режиме — три насоса на 100 %»; «уровень 1,40 ± 0,15 м» — в отсчётах без ливня, с притоком выше
+# 41 м³/ч и при действующем ПИД, начиная с 30 мин после его включения; перелив допустим, только если приток
+# превышал подачу трёх насосов (≈ 213 м³/ч). Пики притока и ливня, перелив — в отчёте (захваченные границы) для
+# протокола. Курсор журнала во время суток читается не реже раза в секунду (≈ 50 с контура).
+id = "PMI-39"
+title = "Сутки работы по суточному профилю с ливнями"
+time_scale = 50.0
+timeout_s = 600
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"                         # шаг 2
+run_hours_s = [360000, 360000, 360000]     # шаг 1: наработка всех насосов — 100 ч
+
+[[step]]
+note = "шаг 1: суточный профиль и ливни по SimCfg.udiSeed, время суток 0 ч"
+write = { "GVL_Sim.stSimCmd.xInflowOverride" = false, "GVL_Sim.stSimCmd.rTimeOfDay_h" = 0.0 }
+pulse = "GVL_Sim.stSimCmd.xSetTimeOfDay"
+mark = "t_day"
+capture = { day0 = "GVL_Sim.stSimSts.udiDay", h1 = "GVL_Persist.stP101Retain.udiOpTime_s", h2 = "GVL_Persist.stP102Retain.udiOpTime_s", h3 = "GVL_Persist.stP103Retain.udiOpTime_s", ow0 = "GVL_Station.stStationSts.udiLogOverwritten", seq0 = "GVL_Station.stStationSts.udiEventSeq" }
+expect = [
+  "GVL_Sim.stSimSts.rTimeOfDay_h < 0.1",
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.Stepped",
+]
+
+[[step]]
+note = "шаг 2: ступенчатое 12 ч — нет отказов, пусков на насос ≤ 10 в час; при аварийном режиме — три насоса на 100 %"
+wait = "GVL_Sim.stSimSts.rTimeOfDay_h >= 12.0"
+timeout_s = 45000
+during = [
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP102.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP103.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.wFault = 0",
+]
+during_if = [
+  { when = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency"], then = ["GVL_Station.stStationSts.uiPumpsRequired = 3", "GVL_Station.rSpeedSp_pct = 100.0"] },
+]
+during_span = { "GVL_Sim.stSimSts.rInflow_m3h" = { capture = "q1" }, "GVL_Sim.stSimSts.rStormInflow_m3h" = { capture = "storm1" }, "GVL_Sim.stSimSts.rLevel_m" = { capture = "lvl1" } }
+
+[[step]]
+note = "шаг 3: способ «ПИД уровня»"
+pulse = "GVL_Station.stStationCmd.xSetLevelPid"
+mark = "t_pid"
+expect = ["GVL_Station.stStationSts.eMethod = E_ControlMethod.LevelPid"]
+
+[[step]]
+note = "шаг 3: ПИД устанавливается (30 мин) — нет отказов, пусков ≤ 10 в час"
+wait = "GVL_Sim.stSimSts.rTimeOfDay_h >= 12.5"
+timeout_s = 2400
+during = [
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP102.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP103.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.wFault = 0",
+]
+during_if = [
+  { when = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency"], then = ["GVL_Station.stStationSts.uiPumpsRequired = 3", "GVL_Station.rSpeedSp_pct = 100.0"] },
+]
+
+[[step]]
+note = "шаг 3: ПИД до 23,5 ч — уровень 1,40 ± 0,15 м в паузах между ливнями при притоке выше 41 м³/ч"
+wait = "GVL_Sim.stSimSts.rTimeOfDay_h >= 23.5"
+timeout_s = 45000
+during = [
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP102.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP103.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.wFault = 0",
+]
+during_if = [
+  { when = ["GVL_Sim.stSimSts.xStormActive = FALSE", "GVL_Sim.stSimSts.rInflow_m3h > 41.0", "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid"], then = ["GVL_Station.stStationSts.rLevel_m >= 1.25", "GVL_Station.stStationSts.rLevel_m <= 1.55"] },
+  { when = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency"], then = ["GVL_Station.stStationSts.uiPumpsRequired = 3", "GVL_Station.rSpeedSp_pct = 100.0"] },
+]
+during_span = { "GVL_Sim.stSimSts.rInflow_m3h" = { capture = "q2" }, "GVL_Sim.stSimSts.rStormInflow_m3h" = { capture = "storm2" }, "GVL_Sim.stSimSts.rLevel_m" = { capture = "lvl2" } }
+
+[[step]]
+note = "шаг 3: до конца суток — нет отказов, пусков ≤ 10 в час"
+wait = "GVL_Sim.stSimSts.udiDay > {day0}"
+timeout_s = 3600
+during = [
+  "GVL_Devices.fbP101.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP102.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP103.stSts.uiStartsLastHour <= 10",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.wFault = 0",
+]
+during_if = [
+  { when = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency"], then = ["GVL_Station.stStationSts.uiPumpsRequired = 3", "GVL_Station.rSpeedSp_pct = 100.0"] },
+]
+during_span = { "GVL_Sim.stSimSts.rInflow_m3h" = { capture = "q3" } }
+
+[[step]]
+note = "за сутки: нет отказов насосов, KNS1.DRY и KNS1.LACK; наработка каждого насоса — не меньше 20 % общей"
+capture = { e1 = "GVL_Persist.stP101Retain.udiOpTime_s", e2 = "GVL_Persist.stP102Retain.udiOpTime_s", e3 = "GVL_Persist.stP103Retain.udiOpTime_s", ov = "GVL_Sim.stSimSts.udiOverflow_s" }
+expect = [
+  "{e1 - h1 + e2 - h2 + e3 - h3} > 0",
+  "{e1 - h1} >= {0.2 * (e1 - h1 + e2 - h2 + e3 - h3)}",
+  "{e2 - h2} >= {0.2 * (e1 - h1 + e2 - h2 + e3 - h3)}",
+  "{e3 - h3} >= {0.2 * (e1 - h1 + e2 - h2 + e3 - h3)}",
+]
+expect_absent = [
+  { alarm = "KNS1.DRY", since = "t_day" },
+  { alarm = "KNS1.LACK", since = "t_day" },
+  { alarm = "P101.FTS", since = "t_day" },
+  { alarm = "P102.FTS", since = "t_day" },
+  { alarm = "P103.FTS", since = "t_day" },
+  { alarm = "P101.FBL", since = "t_day" },
+  { alarm = "P102.FBL", since = "t_day" },
+  { alarm = "P103.FBL", since = "t_day" },
+  { alarm = "P101.FTP", since = "t_day" },
+  { alarm = "P102.FTP", since = "t_day" },
+  { alarm = "P103.FTP", since = "t_day" },
+  { alarm = "P101.UCR", since = "t_day" },
+  { alarm = "P102.UCR", since = "t_day" },
+  { alarm = "P103.UCR", since = "t_day" },
+  { alarm = "P101.EXT", since = "t_day" },
+  { alarm = "P102.EXT", since = "t_day" },
+  { alarm = "P103.EXT", since = "t_day" },
+]
+
+[[step]]
+note = "перелив — только при притоке больше подачи трёх насосов (≈ 213 м³/ч); аварийный режим снят после спада"
+expect = [
+  "{ov * (q1_max <= 213) * (q2_max <= 213) * (q3_max <= 213)} = 0",
+  "GVL_Station.stStationSts.eControlAct <> E_ControlAct.Emergency",
+]
+
+[[step]]
+note = "журнал ведётся, счётчик затёртых записей растёт без ошибок (пропуск записей курсора — ошибка сценария)"
+expect = [
+  "GVL_Station.stStationSts.udiEventSeq > {seq0}",
+  "GVL_Station.stStationSts.udiLogOverwritten >= {ow0}",
+]
+expect_log_order = true
+
+[teardown]
+clear_faults = true
+write = { "GVL_Sim.stSimCmd.xInflowOverride" = true, "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }

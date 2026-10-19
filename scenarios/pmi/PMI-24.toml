@@ -1,0 +1,64 @@
+# PMI-24. Поплавок LS102 не срабатывает (06_PMI, раздел 5.6.4; приложение А: k = 20, 60 мин контура).
+#
+# Приток 250 м³/ч: HH (4,00 м) ≈ через 33 мин контура, 4,40 м — ≈ 44 мин, перелив 4,60 м — ≈ 50 мин
+# (DESIGN 14.4). Противоречие «LS102 не сработал» — уровень > rLdev102Off_m = 4,40 м дольше tLdev = 30 с
+# (от наблюдения уровня, метка, допуск обвязки); затем приток 100 м³/ч — до перелива остаётся ≈ 5 мин контура.
+id = "PMI-24"
+title = "Поплавок LS102 не срабатывает"
+time_scale = 20.0
+timeout_s = 600
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 250.0
+
+[[step]]
+note = "шаг 1: LS102 не срабатывает"
+write = { "GVL_Sim.stFaultInj.eLs102Stuck" = "E_SimFloatStuck.StuckNormal" }
+mark = "t1"
+
+[[step]]
+note = "аварийный режим по LT101.HH (4,00 м) действует без поплавка"
+wait_alarm = { code = "KNS1.EHL", state = "ActiveUnack" }
+timeout_s = 3000
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency",
+  "GVL_Station.stStationSts.rLevel_m >= 4.00",
+]
+expect_alarm = { code = "LT101.HH", state = "ActiveUnack" }
+
+[[step]]
+note = "три насоса на 100 % без поплавка"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 3"
+timeout_s = 60
+expect = ["GVL_Station.rSpeedSp_pct = 100.0"]
+
+[[step]]
+note = "уровень > 4,40 м (поплавок на 4,20 м не сработал)"
+wait = "GVL_Station.stStationSts.rLevel_m > 4.40"
+timeout_s = 1200
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0", "GVL_Station.stStationSts.eControlAct = E_ControlAct.Emergency"]
+expect_absent = { alarm = "LS102.ALM", since = "t1" }
+
+[[step]]
+note = "дольше 30 с выше 4,40 м — KNS1.LDEV"
+mark = "t_hi"
+wait_alarm = { code = "KNS1.LDEV", state = "ActiveUnack" }
+timeout_s = 90
+expect_delay = { from = "t_hi", alarm = "KNS1.LDEV", state = "ActiveUnack", min_s = 30.0, max_s = 30.0 }
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[[step]]
+note = "шаг 2: приток 100 м³/ч — уровень снижается, перелива нет"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
+wait = "GVL_Station.stStationSts.rLevel_m <= 3.40"
+timeout_s = 1200
+during = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+expect = ["GVL_Sim.stSimSts.udiOverflow_s = 0"]
+
+[teardown]
+clear_faults = true

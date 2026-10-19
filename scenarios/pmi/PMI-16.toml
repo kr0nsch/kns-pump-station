@@ -1,0 +1,97 @@
+# PMI-16. Перегрев обмотки и протечка (06_PMI, раздел 5.6.3; приложение А: k = 20, 10 мин контура).
+#
+# Перегрев: TS132 без задержки — блокировка станции wInterlock.2 и АВР, затем авария ПЧ (цепь аварии разомкнута,
+# фильтр tExtFaultFilter 0,2 с) — P103.EXT. Протечка MS113 — задержка входа 10 с, только тревога. Задержки после
+# инъекций — от события 101021, допуск −1/+2 цикла MainTask при k.
+id = "PMI-16"
+title = "Перегрев обмотки и протечка"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+run_hours_s = [360000, 720000, 180000]   # шаг 1: наработка Н3 — 50 ч, ведущий Н3
+
+[[step]]
+note = "шаг 1: работает ведущий Н3"
+wait = "GVL_Devices.fbP103.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.aeRole[3] = E_PumpRole.Lead"]
+
+[[step]]
+note = "шаг 1: перегрев обмотки Н3"
+write = { "GVL_Sim.stFaultInj.axOverheat[3]" = true }
+mark = "t1"
+
+[[step]]
+note = "шаг 1: TS132.ALM (High) и P103.EXT, блокировка wInterlock.2, Н3 остановлен"
+wait_alarm = [
+  { code = "TS132.ALM", state = "ActiveUnack" },
+  { code = "P103.EXT", state = "ActiveUnack" },
+]
+timeout_s = 10
+expect_delay = [
+  { since = "t1", from_event = "KNS1.E21", alarm = "TS132.ALM", state = "ActiveUnack", min_s = 0.0, max_s = 0.8 },
+  { since = "t1", from_event = "KNS1.E21", alarm = "P103.EXT", state = "ActiveUnack", min_s = 0.0, max_s = 1.0 },
+]
+expect = [
+  "GVL_Devices.fbP103.stSts.wInterlock & 16#0004",       # KNS_ILK_OVERHEAT
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Fault",
+  "GVL_Devices.fbP103.xQRun = FALSE",
+]
+
+[[step]]
+note = "шаг 1: АВР — резервный (Н1, 100 ч) в работе, KNS1.ATS"
+wait_alarm = { code = "KNS1.ATS", state = "ActiveUnack" }
+timeout_s = 10
+expect_event = { event = "KNS1.E6", value = 1, since = "t1" }
+
+[[step]]
+note = "шаг 1: резервный в работе"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
+note = "шаг 2: «Сброс» Н3 при действующем перегреве — RejectedFault через окно сброса 3 с, пуск запрещён"
+pulse = "GVL_Hmi.stP103Cmd.stCommon.xReset"
+hold_s = 4
+expect = [
+  "GVL_Devices.fbP103.stSts.stCommon.eCmdResult = E_CmdResult.RejectedFault",
+  "GVL_Devices.fbP103.stSts.wInterlock & 16#0004",
+  "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.None",
+  "GVL_Station.axPumpRun[3] = FALSE",
+]
+
+[[step]]
+note = "шаг 3: снять перегрев, «Сброс» — Н3 резервный"
+write = { "GVL_Sim.stFaultInj.axOverheat[3]" = false }
+pulse = "GVL_Hmi.stP103Cmd.stCommon.xReset"
+wait = "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.Standby"
+timeout_s = 15
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 3: протечка в камеру статора Н1"
+write = { "GVL_Sim.stFaultInj.axLeak[1]" = true }
+mark = "t3"
+
+[[step]]
+note = "шаг 3: через 10 с MS113.ALM (Medium), Н1 не останавливается"
+wait_alarm = { code = "MS113.ALM", state = "ActiveUnack" }
+timeout_s = 30
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+expect_delay = { since = "t3", from_event = "KNS1.E21", alarm = "MS113.ALM", state = "ActiveUnack", min_s = 9.6, max_s = 10.8 }
+
+[[step]]
+note = "шаг 3: Н1 продолжает работать"
+hold_s = 10
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+expect = ["GVL_Devices.fbP101.stSts.wInterlock = 0"]
+
+[teardown]
+clear_faults = true

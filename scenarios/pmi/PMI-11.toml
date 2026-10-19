@@ -1,0 +1,73 @@
+# PMI-11. Ограничение непрерывной работы (06_PMI, раздел 5.6.2; приложение А: k = 20, 15 мин контура).
+#
+# Cfg.tMaxContRun = T#10M (TIME в мс, К3-18). Передача роли с перекрытием: резервный Н2 (меньшая наработка) в
+# работе, через tOverlap = 10 с снят запрос с Н1 — событие 101007 в тот же цикл. Выдержка 10 с — от наблюдения
+# «Н2 в работе» (метка) до записи журнала: допуск обвязки (DESIGN 14.3).
+id = "PMI-11"
+title = "Ограничение непрерывной работы"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "Cfg.tMaxContRun = T#10M"
+write = { "GVL_Persist.stStationCfg.tMaxContRun" = "T#10M" }
+wait = "GVL_Station.stCfgLkg.tMaxContRun = T#10M"
+timeout_s = 10
+
+[[step]]
+note = "ведущий Н1 в работе под ПИД, подача есть"
+wait = "GVL_Sim.stSimSts.rOutflow_m3h > 0.0"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"]
+
+[[step]]
+note = "Н1 работает непрерывно 10 мин; подача не прерывается"
+mark = "t_run"
+wait = "GVL_Devices.fbP101.stSts.udiRunCurrent_s >= 600"
+timeout_s = 900
+during = [
+  "GVL_Sim.stSimSts.rOutflow_m3h > 0.0",
+  "GVL_Station.stStationSts.uiPumpsRunning = 1",
+]
+
+[[step]]
+note = "пускается резервный с наименьшей наработкой (Н2)"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+during = ["GVL_Sim.stSimSts.rOutflow_m3h > 0.0", "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped"]
+during_rate = { "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
+
+[[step]]
+note = "после подтверждения Н2 + 10 с запрос с Н1 снят (событие 101007, значение 2)"
+mark = "t_new"
+timeout_s = 60
+expect_delay = { from = "t_new", event = "KNS1.E7", min_s = 10.0, max_s = 10.0 }
+expect_event = { event = "KNS1.E7", value = 2, since = "t_run" }
+
+[[step]]
+note = "роль Lead у Н2, Н1 остановлен; подача не прерывалась, ПИД без рывка"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 60
+during = ["GVL_Sim.stSimSts.rOutflow_m3h > 0.0"]
+during_rate = { "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
+expect = [
+  "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Lead",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+]
+
+[[step]]
+note = "FT202.L не появлялась"
+hold_s = 40
+during = ["GVL_Sim.stSimSts.rOutflow_m3h > 0.0"]
+expect_absent = { alarm = "FT202.L", since = "t_run" }
+
+[teardown]
+clear_faults = true

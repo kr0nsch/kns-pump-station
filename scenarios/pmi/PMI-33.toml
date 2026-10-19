@@ -1,0 +1,111 @@
+# PMI-33. Пропадание напряжения на вводе (06_PMI, раздел 5.6.8; приложение А: k = 20, 5 мин контура).
+#
+# «Приток 180 м³/ч, работают два насоса» — подготовка уровнем 2,50 м (пуск ведущего и подпорного без 20 мин
+# наполнения). Перед пропаданием тревоги квитированы: HA1 и K1 после пропадания — от ES301.ALM (High). Задержки
+# ES301.ALM (3 с) и YS302.ALM, YS303.ALM (5 с) — от события 101021. «ПЛК и HMI работают» — время MainTask идёт,
+# журнал ведётся (WebVisu — та же задача рантайма от ИБП).
+id = "PMI-33"
+title = "Пропадание напряжения на вводе"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 2.5
+inflow_m3h = 180.0
+
+[[step]]
+note = "шаг 1: работают два насоса"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 2"
+timeout_s = 120
+
+[[step]]
+note = "шаг 1: тревоги квитированы, K1 под напряжением"
+pulse = "GVL_Station.stStationCmd.xAckAll"
+wait = "GVL_IO.xHA1 = FALSE"
+timeout_s = 10
+expect = ["GVL_IO.xK1 = TRUE"]
+
+[[step]]
+note = "шаг 1: нет напряжения на вводе"
+write = { "GVL_Sim.stFaultInj.xPowerLoss" = true }
+mark = "t1"
+capture = { now1 = "GVL_Time.lrMainNow_s", seq1 = "GVL_Station.stStationSts.udiEventSeq" }
+
+[[step]]
+note = "через 3 с ES301.ALM (High); насосы Stopped без отказов, MOT_WRN_POWER_LOST; PowerLost; событие 101008"
+wait_alarm = { code = "ES301.ALM", state = "ActiveUnack" }
+timeout_s = 15
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "ES301.ALM", state = "ActiveUnack", min_s = 2.6, max_s = 3.8 }
+expect_event = { event = "KNS1.E8", since = "t1" }
+expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.PowerLost"]
+
+[[step]]
+note = "насосы остановлены без отказов"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 0"
+timeout_s = 30
+expect = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP102.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP103.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP101.stSts.stCommon.wWarning & 16#0010",  # MOT_WRN_POWER_LOST
+  "GVL_Devices.fbP102.stSts.stCommon.wWarning & 16#0010",
+  "GVL_Devices.fbP103.stSts.stCommon.wWarning & 16#0010",
+]
+
+[[step]]
+note = "KNS1.NORES — SuppressedByDesign; через 5 с YS302.ALM; HA1, K1 обесточено"
+wait_alarm = { code = "YS302.ALM", state = "ActiveUnack" }
+timeout_s = 15
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "YS302.ALM", state = "ActiveUnack", min_s = 4.6, max_s = 5.8 }
+expect_alarm = { code = "KNS1.NORES", state = "SuppressedByDesign" }
+expect = [
+  "GVL_IO.xHA1 = TRUE",
+  "GVL_IO.xK1 = FALSE",
+]
+
+[[step]]
+note = "без напряжения 2 мин: ПЛК работает, журнал ведётся; нет P10n.FBL, KNS1.ATS, KNS1.LACK"
+hold_s = 110
+during = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.PowerLost",
+  "GVL_Station.stStationSts.uiPumpsRunning = 0",
+]
+expect = [
+  "GVL_Time.lrMainNow_s > {now1 + 100}",
+  "GVL_Station.stStationSts.udiEventSeq > {seq1}",
+]
+expect_alarm = { code = "KNS1.NORES", state = "SuppressedByDesign" }
+expect_absent = [
+  { alarm = "P101.FBL", since = "t1" },
+  { alarm = "P102.FBL", since = "t1" },
+  { alarm = "P103.FBL", since = "t1" },
+  { alarm = "KNS1.ATS", since = "t1" },
+  { alarm = "KNS1.LACK", since = "t1" },
+]
+
+[[step]]
+note = "шаг 2: неисправность ИБП"
+write = { "GVL_Sim.stFaultInj.xUpsFault" = true }
+mark = "t2"
+
+[[step]]
+note = "шаг 2: через 5 с YS303.ALM; затем снять"
+wait_alarm = { code = "YS303.ALM", state = "ActiveUnack" }
+timeout_s = 15
+expect_delay = { since = "t2", from_event = "KNS1.E21", alarm = "YS303.ALM", state = "ActiveUnack", min_s = 4.6, max_s = 5.8 }
+
+[[step]]
+note = "шаг 2: ИБП в норме — YS303.ALM → RtnUnack"
+write = { "GVL_Sim.stFaultInj.xUpsFault" = false }
+wait_alarm = { code = "YS303.ALM", state = "RtnUnack" }
+timeout_s = 15
+
+[teardown]
+clear_faults = true

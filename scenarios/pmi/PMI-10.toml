@@ -1,0 +1,81 @@
+# PMI-10. Чередование по кругу (06_PMI, раздел 5.6.2; приложение А: k = 20, 60 мин контура).
+#
+# Как PMI-09, Cfg.eRotation = Cyclic, наработка Н3 — наименьшая; круг начинается с Н1 (uiNextLead = 1).
+# Тёплый сброс и «Старт» после второго цикла — шаг reset, только исполнитель cds (мост online_bridge.py): у
+# исполнителя opcua шаг сброса и проверки после него — «не проверялось», циклы 3 и 4 идут без перезапуска.
+# После сброса неэнергонезависимые параметры модели (ускорение, постоянный приток) задаются заново.
+id = "PMI-10"
+title = "Чередование по кругу"
+time_scale = 20.0
+timeout_s = 900
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 100.0
+run_hours_s = [36036, 36018, 36000]   # Н3 — наименьшая наработка
+
+[[step]]
+note = "Cfg.eRotation = Cyclic, круг с Н1"
+write = { "GVL_Persist.stStationCfg.eRotation" = "E_RotationMode.Cyclic", "GVL_Persist.stStationRetain.uiNextLead" = 1 }
+wait = "GVL_Station.stCfgLkg.eRotation = E_RotationMode.Cyclic"
+timeout_s = 10
+
+[[step]]
+note = "цикл 1: ведущий Н1, хотя у Н3 наработка меньше"
+mark = "c1"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 1, since = "c1" }
+
+[[step]]
+note = "цикл 1: откачка и останов Н1"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+during = ["GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped"]
+
+[[step]]
+note = "цикл 2: ведущий Н2"
+mark = "c2"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 2, since = "c2" }
+
+[[step]]
+note = "цикл 2: откачка и останов Н2; следующий по кругу — Н3"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped"
+during = ["GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped"]
+expect = ["GVL_Persist.stStationRetain.uiNextLead = 3"]
+capture = { next = "GVL_Persist.stStationRetain.uiNextLead" }
+
+[[step]]
+note = "«Сброс тёплый» и «Старт» (исполнитель cds): режим, способ и следующий по кругу сохранены"
+mark = "t_reset"
+reset = "warm"
+write = { "GVL_Sim.stSimCfg.rTimeScale" = 20.0, "GVL_Sim.stSimCmd.xInflowOverride" = true, "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
+wait = "GVL_Station.stStationSts.eMode = E_StationMode.Auto"
+timeout_s = 60
+expect_event = { event = "KNS1.E15", since = "t_reset" }
+expect = [
+  "GVL_Persist.stStationRetain.uiNextLead = {next}",
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.Stepped",
+  "GVL_Station.stCfgLkg.eRotation = E_RotationMode.Cyclic",
+]
+
+[[step]]
+note = "цикл 3: круг продолжается — ведущий Н3"
+mark = "c3"
+wait = "GVL_Station.stStationSts.aeRole[3] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 3, since = "c3" }
+
+[[step]]
+note = "цикл 3: откачка и останов Н3"
+wait = "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped"
+
+[[step]]
+note = "цикл 4: ведущий снова Н1 — независимо от наработки"
+mark = "c4"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+expect_event = { event = "KNS1.E5", value = 1, since = "c4" }
+
+[teardown]
+clear_faults = true

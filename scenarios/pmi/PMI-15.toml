@@ -1,0 +1,118 @@
+# PMI-15. Сухой ход и засор насоса по току (06_PMI, раздел 5.6.3; приложение А: k = 20, 15 мин контура).
+#
+# Модель (DESIGN, раздел 11.3): сухой ход на 100 % — ≈ 10,8 А (< 12 А), засор — ≈ 34,3 А (> HH 34 А), подача
+# засорённого насоса ≈ 75 м³/ч вместо ≈ 150. Выдержки tUnderload = 15 с и задержка уставок IT 10 с — от
+# наблюдения тока за порогом (метка, допуск обвязки): ток фильтруется (tFilter 1 с), записи журнала у пересечения
+# нет. «Пуск Н1 невозможен (RejectedInterlock)» — пуск с фейсплейта в режиме Manual насоса: в Auto пуск с
+# фейсплейта отклоняется по режиму (RejectedMode).
+id = "PMI-15"
+title = "Сухой ход и засор насоса по току"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"                 # частота 100 %
+level_m = 1.7
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: работает Н1 на 100 %"
+wait = "GVL_Devices.fbP101.stSts.rSpeedAct_pct >= 99.0"
+timeout_s = 60
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 1: сухой ход Н1"
+write = { "GVL_Sim.stFaultInj.axAirLock[1]" = true }
+mark = "t1"
+wait = "GVL_Devices.fbIT111.rValue_eu < 12.0"
+timeout_s = 30
+
+[[step]]
+note = "шаг 1: ток ≈ 11 А < 12 А при скорости ≥ 80 %"
+mark = "t_ul"
+expect = [
+  "GVL_Devices.fbIT111.rValue_eu >= 10.0",
+  "GVL_Devices.fbP101.stSts.rSpeedAct_pct >= 80.0",
+]
+
+[[step]]
+note = "шаг 1: через 15 с KNS1.UL1, блокировка wInterlock.1, Н1 остановлен"
+wait_alarm = { code = "KNS1.UL1", state = "ActiveUnack" }
+timeout_s = 60
+expect_delay = { from = "t_ul", alarm = "KNS1.UL1", state = "ActiveUnack", min_s = 15.0, max_s = 15.0 }
+expect = ["GVL_Devices.fbP101.stSts.wInterlock & 16#0002"]   # KNS_ILK_UNDERLOAD
+
+[[step]]
+note = "шаг 1: АВР и KNS1.ATS в том же цикле, что UL1"
+wait_alarm = { code = "KNS1.ATS", state = "ActiveUnack" }
+timeout_s = 10
+expect_delay = { since = "t1", from_alarm = "KNS1.UL1", state = "ActiveUnack", alarm = "KNS1.ATS", min_s = 0.0, max_s = 0.8 }
+expect_event = { event = "KNS1.E6", value = 2, since = "t1" }
+
+[[step]]
+note = "шаг 1: Н1 остановлен, резервный Н2 в работе"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 30
+expect = ["GVL_Station.stStationSts.aeRole[1] = E_PumpRole.None"]
+
+[[step]]
+note = "шаг 1: до сброса пуск Н1 невозможен — пуск с фейсплейта в Manual отклонён блокировкой"
+pulse = [
+  "GVL_Hmi.stP101Cmd.stCommon.xSetManual",
+  "GVL_Hmi.stP101Cmd.xStart",
+]
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eCmdResult = E_CmdResult.RejectedInterlock",
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "шаг 2: снять инъекцию, Н1 в Auto, «Сброс» Н1 — блокировка снята"
+write = { "GVL_Sim.stFaultInj.axAirLock[1]" = false }
+pulse = [
+  "GVL_Hmi.stP101Cmd.stCommon.xSetAuto",
+  "GVL_Hmi.stP101Cmd.stCommon.xReset",
+]
+wait = "GVL_Devices.fbP101.stSts.wInterlock !& 16#0002"
+timeout_s = 10
+
+[[step]]
+note = "шаг 2: работает Н2 на 100 %"
+wait = "GVL_Devices.fbP102.stSts.rSpeedAct_pct >= 99.0"
+timeout_s = 30
+capture = { q2 = "GVL_Sim.stSimSts.arPumpFlow_m3h[2]" }
+
+[[step]]
+note = "шаг 2: засор Н2"
+write = { "GVL_Sim.stFaultInj.axClog[2]" = true }
+mark = "t2"
+wait = "GVL_Devices.fbIT121.rValue_eu > 34.0"
+timeout_s = 30
+
+[[step]]
+note = "шаг 2: ток Н2 выше 34 А, подача Н2 упала"
+mark = "t_hh"
+expect = ["GVL_Sim.stSimSts.arPumpFlow_m3h[2] < {q2 - 30}"]
+
+[[step]]
+note = "шаг 2: через 10 с IT121.H (Low) и IT121.HH (Medium); насос продолжает работать"
+wait_alarm = [
+  { code = "IT121.HH", state = "ActiveUnack" },
+  { code = "IT121.H", state = "ActiveUnack" },
+]
+timeout_s = 60
+expect_delay = { from = "t_hh", alarm = "IT121.HH", state = "ActiveUnack", min_s = 10.0, max_s = 10.0 }
+during = ["GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 2: насос продолжает работать, недогрузки нет"
+hold_s = 20
+during = ["GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"]
+expect_absent = { alarm = "KNS1.UL2", since = "t2" }
+
+[teardown]
+clear_faults = true

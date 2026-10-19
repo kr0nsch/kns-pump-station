@@ -1,0 +1,71 @@
+# PMI-27. Восстановление LT101 (06_PMI, раздел 5.6.5; приложение А: k = 20, 2 мин контура).
+#
+# «Продолжение PMI-25»: каждый сценарий начинается с И0, поэтому состояние после PMI-25 воспроизводится — ПИД,
+# ведущий в работе у задания, обрыв LT101, режим по поплавкам, насос продолжает откачку. Возврат к способу —
+# через tLtRecover = 30 с достоверного уровня: от снятия LT101.FAIL (станция видит уровнемер в следующем цикле).
+id = "PMI-27"
+title = "Восстановление LT101"
+time_scale = 20.0
+timeout_s = 120
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "PMI-25: работает ведущий под ПИД"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "PMI-25: уровень ≈ 1,4 м"
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.45"
+timeout_s = 1200
+
+[[step]]
+note = "PMI-25: обрыв LT101 — режим по поплавкам, насос продолжает работу"
+write = { "GVL_Sim.stFaultInj.aeAiFault[1]" = "E_SimAiFault.WireBreak" }
+wait_alarm = [
+  { code = "LT101.FAIL", state = "ActiveUnack" },
+  { code = "KNS1.FLOAT", state = "ActiveUnack" },
+]
+timeout_s = 10
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Float",
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+]
+
+[[step]]
+note = "шаг 1: LT101 восстановлен"
+write = { "GVL_Sim.stFaultInj.aeAiFault[1]" = "E_SimAiFault.None" }
+mark = "t1"
+
+[[step]]
+note = "через 2 с xValid = TRUE, LT101.FAIL → RtnUnack; насос работает"
+wait_alarm = { code = "LT101.FAIL", state = "RtnUnack" }
+timeout_s = 10
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "LT101.FAIL", state = "RtnUnack", min_s = 1.6, max_s = 2.8 }
+expect = ["GVL_Devices.fbLT101.xValid = TRUE"]
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "через 30 с — возврат к выбранному способу (ПИД), работающие насосы не останавливаются, событие 101014"
+wait = "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid"
+timeout_s = 60
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+expect_delay = { since = "t1", from_alarm = "LT101.FAIL", state = "RtnUnack", event = "KNS1.E14", min_s = 29.6, max_s = 30.8 }
+
+[[step]]
+note = "KNS1.FLOAT → RtnUnack; насос работает"
+wait_alarm = { code = "KNS1.FLOAT", state = "RtnUnack" }
+timeout_s = 10
+hold_s = 10
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+expect = ["GVL_Station.stStationSts.uiPumpsRunning >= 1"]
+
+[teardown]
+clear_faults = true

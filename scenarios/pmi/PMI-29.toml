@@ -1,0 +1,108 @@
+# PMI-29. Потеря связи со всеми ПЧ (линия RS485-1) (06_PMI, раздел 5.6.6; приложение А: k = 20, 30 мин контура).
+#
+# Связь потеряна при стоящих насосах (И0): ПИД не готов, ступенчатое по уровням, пуски проводом на 50 Гц
+# (сторожевой таймер ПЧ). При 180 м³/ч ведущий пускается на 1,60 м (≈ 1,6 мин контура), подпорный — на 2,40 м
+# (≈ 20 мин). Шаг 2 — при двух работающих насосах; остановы на 1,40 / 1,00 м при 180 м³/ч до шага 2 не
+# наступают (два насоса снижают уровень медленно, один — не откачивает) — см. not_checked.
+id = "PMI-29"
+title = "Потеря связи со всеми ПЧ (линия RS485-1)"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+inflow_m3h = 180.0
+
+[[step]]
+note = "шаг 1: потеря связи со всеми ПЧ"
+write = { "GVL_Sim.stFaultInj.axVfdCommLoss[1]" = true, "GVL_Sim.stFaultInj.axVfdCommLoss[2]" = true, "GVL_Sim.stFaultInj.axVfdCommLoss[3]" = true }
+mark = "t1"
+
+[[step]]
+note = "P101.COM, P102.COM, P103.COM, IT111.FAIL, IT121.FAIL, IT131.FAIL"
+wait_alarm = [
+  { code = "P101.COM", state = "ActiveUnack" },
+  { code = "P102.COM", state = "ActiveUnack" },
+  { code = "P103.COM", state = "ActiveUnack" },
+  { code = "IT111.FAIL", state = "ActiveUnack" },
+  { code = "IT121.FAIL", state = "ActiveUnack" },
+  { code = "IT131.FAIL", state = "ActiveUnack" },
+]
+timeout_s = 30
+
+[[step]]
+note = "KNS1.STEP, действует ступенчатое управление"
+wait_alarm = { code = "KNS1.STEP", state = "ActiveUnack" }
+timeout_s = 30
+expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped"]
+
+[[step]]
+note = "пуск ведущего на 1,60 м проводом, ПЧ на 50 Гц"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 300
+expect = [
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead",
+  "GVL_Station.stStationSts.rLevel_m >= 1.60",
+  "GVL_IO.xP101_RUN = TRUE",
+]
+
+[[step]]
+note = "ведущий на 50 Гц (сторожевой таймер ПЧ)"
+wait = "GVL_Sim.stSimSts.arFreq_Hz[1] >= 49.9"
+timeout_s = 30
+
+[[step]]
+note = "подпорный на 2,40 м проводом, 50 Гц; контроль недогрузки не действует (ток недостоверен)"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 1800
+during = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped",
+  "GVL_Devices.fbIT111.xValid = FALSE",
+]
+expect = [
+  "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Assist",
+  "GVL_Station.stStationSts.rLevel_m >= 2.40",
+  "GVL_IO.xP102_RUN = TRUE",
+]
+
+[[step]]
+note = "подпорный на 50 Гц; токи недостоверны — недогрузки нет"
+wait = "GVL_Sim.stSimSts.arFreq_Hz[2] >= 49.9"
+timeout_s = 30
+expect = [
+  "GVL_Devices.fbIT111.xValid = FALSE",
+  "GVL_Devices.fbIT121.xValid = FALSE",
+]
+expect_absent = [
+  { alarm = "KNS1.UL1", since = "t1" },
+  { alarm = "KNS1.UL2", since = "t1" },
+  { alarm = "KNS1.UL3", since = "t1" },
+]
+not_checked = "остановы на 1,40 / 1,00 м: при притоке 180 м³/ч два насоса (≈ 200 м³/ч) снижают уровень медленно, а один (≈ 150 м³/ч) не откачивает — до шага 2 «при работе двух насосов» уровни останова не достигаются; ступенчатый автомат проверяют PMI-02, PMI-03"
+
+[[step]]
+note = "шаг 2: при работе двух насосов — авария ПЧ Н1 (провод P101_FLT)"
+write = { "GVL_Sim.stFaultInj.axVfdFault[1]" = true }
+mark = "t2"
+
+[[step]]
+note = "шаг 2: АВР по аварии ПЧ работает — P101.EXT, резервный (Н3) пущен"
+wait_alarm = [
+  { code = "P101.EXT", state = "ActiveUnack" },
+  { code = "KNS1.ATS", state = "ActiveUnack" },
+]
+timeout_s = 10
+expect_delay = { since = "t2", from_event = "KNS1.E21", alarm = "P101.EXT", state = "ActiveUnack", min_s = 0.0, max_s = 1.0 }
+expect_event = { event = "KNS1.E6", value = 3, since = "t2" }
+
+[[step]]
+note = "шаг 2: резервный в работе"
+wait = "GVL_Devices.fbP103.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+expect = ["GVL_IO.xP103_RUN = TRUE"]
+
+[teardown]
+clear_faults = true

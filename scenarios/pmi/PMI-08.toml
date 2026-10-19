@@ -1,0 +1,76 @@
+# PMI-08. Изменение задания и уставок, проверка диапазона, права (06_PMI, раздел 5.6.1; приложение А: k = 1,
+# 5 мин контура, авто + ручн.).
+#
+# Сценарий пишет уставки в GVL_Persist.stStationCfg так же, как кнопка «Применить» экрана «Настройки» и запись в
+# обход поля (онлайн); ввод с экрана, проверку диапазона полем, выделение строки и права ролей отмечает инженер.
+# «Уровень переходит к новому заданию» — ПИД с работающим ведущим: при задании 1,80 м выход уходит на минимум
+# (≈ 41 м³/ч), уровень растёт при притоке 100 м³/ч.
+id = "PMI-08"
+title = "Изменение задания и уставок, проверка диапазона, права"
+time_scale = 1.0
+timeout_s = 60
+backends = ["opcua", "cds"]
+mode = "auto+manual"
+manual = [
+  "шаг 1: роль «Наладчик», экран «Настройки» — ввод задания 1,80 м и «Применить»",
+  "шаг 2: поле задания не принимает значение вне 1,20…2,20 м; строка уставки выделена",
+  "шаг 4: роль «Оператор» — поля уставок на экране «Настройки» только для чтения",
+]
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "ведущий в работе, LIC101 управляет"
+wait = "GVL_Station.fbLIC101.xTrack = FALSE"
+timeout_s = 60
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 1: задание 1,40 → 1,80 м, «Применить»"
+write = { "GVL_Persist.stStationCfg.rLevelSp_m" = 1.80 }
+mark = "t_sp"
+wait = "GVL_Station.stStationSts.rLevelSp_m = 1.80"
+timeout_s = 10
+expect = [
+  "GVL_Station.stStationSts.wCfgErr = 0",
+  "GVL_Station.stCfgLkg.rLevelSp_m = 1.80",
+]
+expect_event = { event = "KNS1.E17", value = 8, since = "t_sp" }   # № 8 раздела 18.2 — задание уровня
+manual = "ввод с экрана «Настройки» под ролью «Наладчик»"
+
+[[step]]
+note = "шаг 1: уровень переходит к новому заданию"
+wait = "GVL_Station.stStationSts.rLevel_m >= 1.70"
+timeout_s = 300
+during = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid"]
+
+[[step]]
+note = "шаг 2: 3,00 м в обход поля — не применяется, работа по stCfgLkg (1,80 м)"
+write = { "GVL_Persist.stStationCfg.rLevelSp_m" = 3.00 }
+mark = "t_bad"
+wait = "GVL_Station.stStationSts.wCfgErr & 16#0400"     # STN_CFG_SETPOINT
+timeout_s = 10
+expect = [
+  "GVL_Station.stCfgLkg.rLevelSp_m = 1.80",
+  "GVL_Station.stStationSts.rLevelSp_m = 1.80",
+]
+manual = "поле задания не принимает 3,00 м (диапазон 1,20…2,20); строка уставки выделена"
+
+[[step]]
+note = "шаг 3: уровень пуска ведущего 0,90 м — не применяется, нарушен порядок отметок"
+write = { "GVL_Persist.stStationCfg.rLvlStartLead_m" = 0.90 }
+wait = "GVL_Station.stStationSts.wCfgErr & 16#0001"     # STN_CFG_LEVEL_ORDER
+timeout_s = 10
+expect = ["GVL_Station.stCfgLkg.rLvlStartLead_m = 1.60"]
+expect_absent = { event = "KNS1.E17", since = "t_bad" } # неверные уставки событием 101017 не принимаются
+
+[[step]]
+note = "шаг 4: права ролей"
+manual = "роль «Оператор»: поля уставок экрана «Настройки» только для чтения"
+
+[teardown]
+clear_faults = true
+write = { "GVL_Hmi.xApplyProjectCfg" = true }            # уставки проекта (импульс сбрасывает PRG_Devices)
