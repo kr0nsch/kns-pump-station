@@ -9,6 +9,9 @@
 VAR_GLOBAL
     fbVfdAdapterCondTest : FB_VfdAdapter_Cond_Test;   // 8.2
     fbEventLogTest       : FB_EventLog_Test;          // 9.1
+    fbEventLogCsvTest    : FB_EventLogCsv_Test;       // 9.2 (многоцикловые, CAA File)
+    fbUtcToIsoTest       : FB_F_UtcToIso_Test;        // 9.2
+    fbAlarmCodeTest      : FB_F_AlarmCode_Test;       // 9.2
     fbAlarmSummaryTest   : FB_AlarmSummary_Test;      // 9.3
     fbDeviceAuditTest    : FB_DeviceAudit_Test;       // 9.3
 END_VAR
