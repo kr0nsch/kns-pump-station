@@ -1,0 +1,3599 @@
+{
+ "source": "plc-process-lib 1.0.0 (ветка integrate, коммит 4b0541c)",
+ "types": {
+  "E_AiAlarm": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Failure": 4,
+    "H": 1,
+    "HH": 0,
+    "L": 2,
+    "LL": 3,
+    "OutOfRange": 5
+   }
+  },
+  "E_AiFailValue": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "HoldLast": 0,
+    "Substitute": 1
+   }
+  },
+  "E_AiInputType": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Eng": 3,
+    "MilliAmp": 0,
+    "Norm01": 2,
+    "Norm420": 1,
+    "Raw": 4
+   }
+  },
+  "E_AiSignalState": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "ChannelFault": 5,
+    "FailHigh": 4,
+    "FailLow": 3,
+    "Good": 0,
+    "NotFinite": 6,
+    "OverRange": 2,
+    "UnderRange": 1
+   }
+  },
+  "E_AlarmEventReason": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Acked": 3,
+    "Activated": 1,
+    "Cleared": 2,
+    "None": 0,
+    "OosOff": 10,
+    "OosOn": 9,
+    "ShelveExpired": 6,
+    "Shelved": 4,
+    "Suppressed": 7,
+    "Unshelved": 5,
+    "Unsuppressed": 8
+   }
+  },
+  "E_AlarmPriority": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Critical": 4,
+    "High": 3,
+    "Low": 1,
+    "Medium": 2,
+    "None": 0
+   }
+  },
+  "E_AlarmState": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "ActiveAck": 2,
+    "ActiveUnack": 1,
+    "Normal": 0,
+    "OutOfService": 6,
+    "RtnUnack": 3,
+    "Shelved": 4,
+    "SuppressedByDesign": 5
+   }
+  },
+  "E_CmdResult": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Accepted": 1,
+    "None": 0,
+    "RejectedCfg": 9,
+    "RejectedFault": 6,
+    "RejectedInhibit": 5,
+    "RejectedInterlock": 3,
+    "RejectedMode": 2,
+    "RejectedNotSupported": 8,
+    "RejectedPermit": 4,
+    "RejectedState": 7,
+    "SubstExpired": 10
+   }
+  },
+  "E_CvAlarm": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Deviation": 0,
+    "FbFailure": 1,
+    "InterlockAct": 3,
+    "PositionerFault": 2
+   }
+  },
+  "E_CvFaultAction": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Hold": 0,
+    "SafePos": 1
+   }
+  },
+  "E_DeviceMode": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Auto": 1,
+    "Local": 3,
+    "Manual": 2,
+    "OutOfService": 4
+   }
+  },
+  "E_DeviceType": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "AnalogInput": 1,
+    "ControlValve": 6,
+    "DigitalInput": 2,
+    "Motor": 3,
+    "MotorVfd": 4,
+    "None": 0,
+    "Pid": 7,
+    "Valve": 5
+   }
+  },
+  "E_DiAlarm": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Failure": 1,
+    "State": 0
+   }
+  },
+  "E_DiFailValue": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "ForceFalse": 1,
+    "ForceTrue": 2,
+    "HoldLast": 0
+   }
+  },
+  "E_MotorAlarm": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "CommLoss": 6,
+    "ExtFault": 4,
+    "FailToStart": 0,
+    "FailToStop": 2,
+    "FeedbackLost": 1,
+    "InterlockTrip": 5,
+    "SpeedDeviation": 7,
+    "UncommandedRun": 3
+   }
+  },
+  "E_MotorState": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Fault": 4,
+    "Running": 2,
+    "Starting": 1,
+    "Stopped": 0,
+    "Stopping": 3
+   }
+  },
+  "E_Ne107Status": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "CheckFunction": 3,
+    "Failure": 4,
+    "Good": 0,
+    "MaintenanceRequired": 1,
+    "OutOfSpecification": 2
+   }
+  },
+  "E_PidAction": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Direct": 1,
+    "Reverse": 0
+   }
+  },
+  "E_PidAlarm": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "PvInvalid": 0
+   }
+  },
+  "E_PidPvFailAction": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Hold": 0,
+    "SafeOut": 1,
+    "ShedToManual": 2
+   }
+  },
+  "E_ValveAlarm": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "BothLimits": 2,
+    "ExtFault": 5,
+    "FailToClose": 1,
+    "FailToOpen": 0,
+    "InterlockAct": 6,
+    "PositionLost": 3,
+    "TorqueTrip": 4
+   }
+  },
+  "E_ValveSafePos": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Closed": 0,
+    "Open": 1,
+    "Stay": 2
+   }
+  },
+  "E_ValveState": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Closed": 1,
+    "Closing": 4,
+    "Fault": 7,
+    "Intermediate": 5,
+    "Open": 3,
+    "Opening": 2,
+    "Reversing": 6,
+    "Unknown": 0
+   }
+  },
+  "E_ValveType": {
+   "kind": "enum",
+   "base": null,
+   "members": {},
+   "values": {
+    "Motorized": 2,
+    "SolenoidEtc": 1,
+    "SolenoidEto": 0
+   }
+  },
+  "FB_Alarm": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "Ack": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "Active": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "AlarmPriority": [
+     "E_AlarmPriority",
+     null,
+     "property"
+    ],
+    "Id": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "Seq": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "Shelve": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "State": [
+     "E_AlarmState",
+     null,
+     "property"
+    ],
+    "Unacked": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Unshelve": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "eState": [
+     "E_AlarmState",
+     "E_AlarmState.Normal",
+     "output"
+    ],
+    "itfTime": [
+     "I_TimeSource",
+     null,
+     "input"
+    ],
+    "ltLastChange": [
+     "LTIME",
+     null,
+     "output"
+    ],
+    "rValue": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "stCfg": [
+     "ST_AlarmCfg",
+     null,
+     "input"
+    ],
+    "tShelveRemain": [
+     "TIME",
+     null,
+     "output"
+    ],
+    "udiId": [
+     "UDINT",
+     null,
+     "input"
+    ],
+    "udiSeq": [
+     "UDINT",
+     null,
+     "output"
+    ],
+    "xActive": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xIn": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xInList": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xOutOfService": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xShelved": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xSuppress": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xUnacked": [
+     "BOOL",
+     null,
+     "output"
+    ]
+   },
+   "values": {}
+  },
+  "FB_AnalogInput": {
+   "kind": "fb",
+   "base": "FB_DeviceBase",
+   "members": {
+    "rIn": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rValue_eu": [
+     "REAL",
+     null,
+     "output"
+    ],
+    "rValue_pct": [
+     "REAL",
+     null,
+     "output"
+    ],
+    "stCfg": [
+     "ST_AnalogInputCfg",
+     null,
+     "inout"
+    ],
+    "stCmd": [
+     "ST_AnalogInputCmd",
+     null,
+     "inout"
+    ],
+    "stSts": [
+     "ST_AnalogInputSts",
+     null,
+     "output"
+    ],
+    "xChannelFault": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xH": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xHH": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xL": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xLL": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xSuppressLimitAlarms": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xValid": [
+     "BOOL",
+     null,
+     "output"
+    ]
+   },
+   "values": {}
+  },
+  "FB_ControlValve": {
+   "kind": "fb",
+   "base": "FB_DeviceBase",
+   "members": {
+    "rOut_mA": [
+     "REAL",
+     "4.0",
+     "output"
+    ],
+    "rOut_pct": [
+     "REAL",
+     null,
+     "output"
+    ],
+    "rPosFb_pct": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rPosSpAuto_pct": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "stCfg": [
+     "ST_ControlValveCfg",
+     null,
+     "inout"
+    ],
+    "stCmd": [
+     "ST_ControlValveCmd",
+     null,
+     "inout"
+    ],
+    "stRetain": [
+     "ST_DeviceRetain",
+     null,
+     "inout"
+    ],
+    "stSts": [
+     "ST_ControlValveSts",
+     null,
+     "output"
+    ],
+    "wInterlock": [
+     "WORD",
+     "16#0000",
+     "input"
+    ],
+    "xAutoActive": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xLocal": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xPosFbValid": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xPositionerFault": [
+     "BOOL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "FB_Delay": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "Preset": [
+     "METHOD",
+     null,
+     "method"
+    ],
+    "itfTime": [
+     "I_TimeSource",
+     null,
+     "input"
+    ],
+    "tOffDelay": [
+     "TIME",
+     "T#0S",
+     "input"
+    ],
+    "tOnDelay": [
+     "TIME",
+     "T#0S",
+     "input"
+    ],
+    "tRemaining": [
+     "TIME",
+     null,
+     "output"
+    ],
+    "xIn": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xOut": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xTimingOff": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xTimingOn": [
+     "BOOL",
+     null,
+     "output"
+    ]
+   },
+   "values": {}
+  },
+  "FB_DeviceBase": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "AckAll": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "AlarmCount": [
+     "UINT",
+     null,
+     "property"
+    ],
+    "Available": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Fault": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "GetAlarm": [
+     "I_Alarm",
+     null,
+     "method"
+    ],
+    "Mode": [
+     "E_DeviceMode",
+     null,
+     "property"
+    ],
+    "RequestMode": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "Reset": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "Status": [
+     "E_Ne107Status",
+     null,
+     "property"
+    ],
+    "itfTime": [
+     "I_TimeSource",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "FB_DigitalInput": {
+   "kind": "fb",
+   "base": "FB_DeviceBase",
+   "members": {
+    "stCfg": [
+     "ST_DigitalInputCfg",
+     null,
+     "inout"
+    ],
+    "stCmd": [
+     "ST_DigitalInputCmd",
+     null,
+     "inout"
+    ],
+    "stSts": [
+     "ST_DigitalInputSts",
+     null,
+     "output"
+    ],
+    "xChannelFault": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xIn": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xValid": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xValue": [
+     "BOOL",
+     null,
+     "output"
+    ]
+   },
+   "values": {}
+  },
+  "FB_FakeTime": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "Advance": [
+     "METHOD",
+     null,
+     "method"
+    ],
+    "AdvanceL": [
+     "METHOD",
+     null,
+     "method"
+    ],
+    "Now": [
+     "LTIME",
+     null,
+     "method"
+    ],
+    "SetNow": [
+     "METHOD",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "FB_LimitMonitor": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "itfTime": [
+     "I_TimeSource",
+     null,
+     "input"
+    ],
+    "rValue_eu": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "stCfg": [
+     "ST_AiLimitCfg",
+     null,
+     "input"
+    ],
+    "xForceOff": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xHighLimit": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xOut": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xRaw": [
+     "BOOL",
+     null,
+     "output"
+    ]
+   },
+   "values": {}
+  },
+  "FB_Motor": {
+   "kind": "fb",
+   "base": "FB_DeviceBase",
+   "members": {
+    "CurrentRunSeconds": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "PresetCounters": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "ReadyToStart": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "RunSeconds": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "Running": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Starts": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "stCfg": [
+     "ST_MotorCfg",
+     null,
+     "inout"
+    ],
+    "stCmd": [
+     "ST_MotorCmd",
+     null,
+     "inout"
+    ],
+    "stRetain": [
+     "ST_DeviceRetain",
+     null,
+     "inout"
+    ],
+    "stSts": [
+     "ST_MotorSts",
+     null,
+     "output"
+    ],
+    "wInterlock": [
+     "WORD",
+     "16#0000",
+     "input"
+    ],
+    "wPermit": [
+     "WORD",
+     "16#FFFF",
+     "input"
+    ],
+    "xAutoRun": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xExtFault": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xFbRun": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xLocal": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xPowerOk": [
+     "BOOL",
+     "TRUE",
+     "input"
+    ],
+    "xQReset": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xQRun": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xRunning": [
+     "BOOL",
+     null,
+     "output"
+    ]
+   },
+   "values": {}
+  },
+  "FB_MotorVfd": {
+   "kind": "fb",
+   "base": "FB_Motor",
+   "members": {
+    "SpeedAct": [
+     "REAL",
+     null,
+     "property"
+    ],
+    "SpeedAutoActive": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "SpeedRef": [
+     "REAL",
+     null,
+     "property"
+    ],
+    "rSpeedAct_pct": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rSpeedRef_pct": [
+     "REAL",
+     null,
+     "output"
+    ],
+    "rSpeedSpAuto_pct": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "xCommOk": [
+     "BOOL",
+     "TRUE",
+     "input"
+    ],
+    "xSpeedAutoActive": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xVfdFault": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xVfdReady": [
+     "BOOL",
+     "TRUE",
+     "input"
+    ],
+    "xVfdRunning": [
+     "BOOL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "FB_PID": {
+   "kind": "fb",
+   "base": "FB_DeviceBase",
+   "members": {
+    "rOutAct_pct": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rOut_pct": [
+     "REAL",
+     null,
+     "output"
+    ],
+    "rPv_eu": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rSpExt_eu": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rTrack_pct": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "stCfg": [
+     "ST_PidCfg",
+     null,
+     "inout"
+    ],
+    "stCmd": [
+     "ST_PidCmd",
+     null,
+     "inout"
+    ],
+    "stRetain": [
+     "ST_DeviceRetain",
+     null,
+     "inout"
+    ],
+    "stSts": [
+     "ST_PidSts",
+     null,
+     "output"
+    ],
+    "xPvValid": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xSatHigh": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xSatLow": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xSpExt": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xTrack": [
+     "BOOL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "FB_StartsWindow": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "Clear": [
+     "METHOD",
+     null,
+     "method"
+    ],
+    "Count": [
+     "UINT",
+     null,
+     "method"
+    ],
+    "Register": [
+     "METHOD",
+     null,
+     "method"
+    ],
+    "TimeToFree": [
+     "LTIME",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "FB_SystemTime": {
+   "kind": "fb",
+   "base": null,
+   "members": {
+    "Now": [
+     "LTIME",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "FB_Valve": {
+   "kind": "fb",
+   "base": "FB_DeviceBase",
+   "members": {
+    "stCfg": [
+     "ST_ValveCfg",
+     null,
+     "inout"
+    ],
+    "stCmd": [
+     "ST_ValveCmd",
+     null,
+     "inout"
+    ],
+    "stRetain": [
+     "ST_DeviceRetain",
+     null,
+     "inout"
+    ],
+    "stSts": [
+     "ST_ValveSts",
+     null,
+     "output"
+    ],
+    "wInterlock": [
+     "WORD",
+     "16#0000",
+     "input"
+    ],
+    "wPermitClose": [
+     "WORD",
+     "16#FFFF",
+     "input"
+    ],
+    "wPermitOpen": [
+     "WORD",
+     "16#FFFF",
+     "input"
+    ],
+    "xAutoOpen": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xClosed": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xExtFault": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xLocal": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xOpened": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xPowerOk": [
+     "BOOL",
+     "TRUE",
+     "input"
+    ],
+    "xQClose": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xQCoil": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xQOpen": [
+     "BOOL",
+     null,
+     "output"
+    ],
+    "xTorqueClose": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xTorqueOpen": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xZsc": [
+     "BOOL",
+     null,
+     "input"
+    ],
+    "xZso": [
+     "BOOL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "F_IsFinite": {
+   "kind": "function",
+   "base": null,
+   "members": {
+    "rIn": [
+     "REAL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "F_LTimeToSec": {
+   "kind": "function",
+   "base": null,
+   "members": {
+    "ltIn": [
+     "LTIME",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "F_Ne107Worst": {
+   "kind": "function",
+   "base": null,
+   "members": {
+    "eA": [
+     "E_Ne107Status",
+     null,
+     "input"
+    ],
+    "eB": [
+     "E_Ne107Status",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "F_RateLimit": {
+   "kind": "function",
+   "base": null,
+   "members": {
+    "lrDt_s": [
+     "LREAL",
+     null,
+     "input"
+    ],
+    "rCurrent": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rRateDown_ups": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rRateUp_ups": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rTarget": [
+     "REAL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "F_TimeToSec": {
+   "kind": "function",
+   "base": null,
+   "members": {
+    "tIn": [
+     "TIME",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
+  "I_Alarm": {
+   "kind": "interface",
+   "base": null,
+   "members": {
+    "Ack": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "Active": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "AlarmPriority": [
+     "E_AlarmPriority",
+     null,
+     "property"
+    ],
+    "Id": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "Seq": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "Shelve": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "State": [
+     "E_AlarmState",
+     null,
+     "property"
+    ],
+    "Unacked": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Unshelve": [
+     "BOOL",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "I_AlarmSink": {
+   "kind": "interface",
+   "base": null,
+   "members": {
+    "OnAlarmEvent": [
+     "BOOL",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "I_AlarmSource": {
+   "kind": "interface",
+   "base": null,
+   "members": {
+    "AckAll": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "AlarmCount": [
+     "UINT",
+     null,
+     "property"
+    ],
+    "GetAlarm": [
+     "I_Alarm",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "I_Device": {
+   "kind": "interface",
+   "base": "I_AlarmSource",
+   "members": {
+    "Available": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Fault": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Mode": [
+     "E_DeviceMode",
+     null,
+     "property"
+    ],
+    "RequestMode": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "Reset": [
+     "BOOL",
+     null,
+     "method"
+    ],
+    "Status": [
+     "E_Ne107Status",
+     null,
+     "property"
+    ]
+   },
+   "values": {}
+  },
+  "I_Motor": {
+   "kind": "interface",
+   "base": "I_Device",
+   "members": {
+    "CurrentRunSeconds": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "ReadyToStart": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "RunSeconds": [
+     "UDINT",
+     null,
+     "property"
+    ],
+    "Running": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "Starts": [
+     "UDINT",
+     null,
+     "property"
+    ]
+   },
+   "values": {}
+  },
+  "I_MotorVfd": {
+   "kind": "interface",
+   "base": "I_Motor",
+   "members": {
+    "SpeedAct": [
+     "REAL",
+     null,
+     "property"
+    ],
+    "SpeedAutoActive": [
+     "BOOL",
+     null,
+     "property"
+    ],
+    "SpeedRef": [
+     "REAL",
+     null,
+     "property"
+    ]
+   },
+   "values": {}
+  },
+  "I_TimeSource": {
+   "kind": "interface",
+   "base": null,
+   "members": {
+    "Now": [
+     "LTIME",
+     null,
+     "method"
+    ]
+   },
+   "values": {}
+  },
+  "ST_AiLimitCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rHyst_eu": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rSetpoint_eu": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "tOffDelay": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tOnDelay": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "xEnable": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_AlarmCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "ePriority": [
+     "E_AlarmPriority",
+     "E_AlarmPriority.Medium",
+     "var"
+    ],
+    "tOffDelay": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tOnDelay": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tShelveMax": [
+     "TIME",
+     "T#8H",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_AlarmEvent": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "eNewState": [
+     "E_AlarmState",
+     null,
+     "var"
+    ],
+    "eOldState": [
+     "E_AlarmState",
+     null,
+     "var"
+    ],
+    "ePriority": [
+     "E_AlarmPriority",
+     null,
+     "var"
+    ],
+    "eReason": [
+     "E_AlarmEventReason",
+     null,
+     "var"
+    ],
+    "ltTime": [
+     "LTIME",
+     null,
+     "var"
+    ],
+    "rValue": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "udiId": [
+     "UDINT",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_AnalogInputCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "astAlarm": [
+     "ARRAY[0..GVL_Const.DEV_ALARMS_MAX - 1] OF ST_AlarmCfg",
+     "[ (ePriority := E_AlarmPriority.High), (ePriority := E_AlarmPriority.Low), (ePriority := E_AlarmPriority.Low), (ePriority := E_AlarmPriority.High), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Low), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None)]",
+     "var"
+    ],
+    "astLimit": [
+     "ARRAY[0..3] OF ST_AiLimitCfg",
+     null,
+     "var"
+    ],
+    "eFailValue": [
+     "E_AiFailValue",
+     "E_AiFailValue.HoldLast",
+     "var"
+    ],
+    "eInput": [
+     "E_AiInputType",
+     "E_AiInputType.MilliAmp",
+     "var"
+    ],
+    "rFailValue_eu": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rLowCut_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rRangeHi_eu": [
+     "REAL",
+     "100.0",
+     "var"
+    ],
+    "rRangeLo_eu": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rRawHi_cnt": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rRawLo_cnt": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "tFailDelay": [
+     "TIME",
+     "T#2S",
+     "var"
+    ],
+    "tFilter": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tSubstMax": [
+     "TIME",
+     "T#8H",
+     "var"
+    ],
+    "udiAlarmIdBase": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "xClamp": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xLimitsOnFail": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xSqrt": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_AnalogInputCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rSubstValue_eu": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceCmd",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_AnalogInputSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "eSignal": [
+     "E_AiSignalState",
+     null,
+     "var"
+    ],
+    "rIn": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rValue_eu": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rValue_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceSts",
+     null,
+     "var"
+    ],
+    "uiSubstRemain_s": [
+     "UINT",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_ControlValveCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "astAlarm": [
+     "ARRAY[0..GVL_Const.DEV_ALARMS_MAX - 1] OF ST_AlarmCfg",
+     "[ (ePriority := E_AlarmPriority.Low), (ePriority := E_AlarmPriority.Low), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None)]",
+     "var"
+    ],
+    "eFaultAction": [
+     "E_CvFaultAction",
+     "E_CvFaultAction.Hold",
+     "var"
+    ],
+    "rDevMax_pct": [
+     "REAL",
+     "5.0",
+     "var"
+    ],
+    "rOutMax_pct": [
+     "REAL",
+     "100.0",
+     "var"
+    ],
+    "rOutMin_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rRateDown_pctps": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rRateUp_pctps": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rSafePos_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rTightShut_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "tDev": [
+     "TIME",
+     "T#30S",
+     "var"
+    ],
+    "udiAlarmIdBase": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "wInterlockMask": [
+     "WORD",
+     "16#FFFF",
+     "var"
+    ],
+    "xDevIsFault": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xFbUsed": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xOutInvert": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_ControlValveCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rPosSpMan_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceCmd",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_ControlValveSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rDeviation_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rOut_mA": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rOut_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rPosFb_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rPosSp_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceSts",
+     null,
+     "var"
+    ],
+    "uiFirstOut": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "wInterlock": [
+     "WORD",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_DeviceCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "wAckReq": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wShelveReq": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wUnshelveReq": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "xAck": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xReset": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xSetAuto": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xSetManual": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xSetOos": [
+     "BOOL",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_DeviceRetain": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "audiReserve": [
+     "ARRAY[0..3] OF UDINT",
+     null,
+     "var"
+    ],
+    "eRemoteMode": [
+     "E_DeviceMode",
+     "E_DeviceMode.Manual",
+     "var"
+    ],
+    "udiOpCount": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "udiOpCountMaint": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "udiOpTimeMaint_s": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "udiOpTime_s": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "xOutOfService": [
+     "BOOL",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_DeviceSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "eCmdResult": [
+     "E_CmdResult",
+     "E_CmdResult.None",
+     "var"
+    ],
+    "eDevType": [
+     "E_DeviceType",
+     "E_DeviceType.None",
+     "var"
+    ],
+    "eMode": [
+     "E_DeviceMode",
+     "E_DeviceMode.Manual",
+     "var"
+    ],
+    "eNe107": [
+     "E_Ne107Status",
+     "E_Ne107Status.CheckFunction",
+     "var"
+    ],
+    "ePrioUnack": [
+     "E_AlarmPriority",
+     "E_AlarmPriority.None",
+     "var"
+    ],
+    "uiCmdSeq": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "wAlmActive": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wAlmShelved": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wAlmUnack": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wCfgErr": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wFault": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wReserve": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wStatus": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wWarning": [
+     "WORD",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_DigitalInputCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "astAlarm": [
+     "ARRAY[0..GVL_Const.DEV_ALARMS_MAX - 1] OF ST_AlarmCfg",
+     "[ (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None)]",
+     "var"
+    ],
+    "eFailValue": [
+     "E_DiFailValue",
+     "E_DiFailValue.HoldLast",
+     "var"
+    ],
+    "tOffDelay": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tOnDelay": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tSubstMax": [
+     "TIME",
+     "T#8H",
+     "var"
+    ],
+    "udiAlarmIdBase": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "xAlarmOnTrue": [
+     "BOOL",
+     "TRUE",
+     "var"
+    ],
+    "xInvert": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_DigitalInputCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "stCommon": [
+     "ST_DeviceCmd",
+     null,
+     "var"
+    ],
+    "xSubstValue": [
+     "BOOL",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_DigitalInputSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "stCommon": [
+     "ST_DeviceSts",
+     null,
+     "var"
+    ],
+    "uiSubstRemain_s": [
+     "UINT",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_MotorCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "astAlarm": [
+     "ARRAY[0..GVL_Const.DEV_ALARMS_MAX - 1] OF ST_AlarmCfg",
+     "[ (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.High), (ePriority := E_AlarmPriority.High), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Low)]",
+     "var"
+    ],
+    "stVfd": [
+     "ST_VfdCfg",
+     null,
+     "var"
+    ],
+    "tExtFaultFilter": [
+     "TIME",
+     "T#200MS",
+     "var"
+    ],
+    "tFbLossFilter": [
+     "TIME",
+     "T#500MS",
+     "var"
+    ],
+    "tFbStart": [
+     "TIME",
+     "T#5S",
+     "var"
+    ],
+    "tFbStop": [
+     "TIME",
+     "T#5S",
+     "var"
+    ],
+    "tMinRun": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tMinStop": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "tResetPulse": [
+     "TIME",
+     "T#1S",
+     "var"
+    ],
+    "tResetWindow": [
+     "TIME",
+     "T#3S",
+     "var"
+    ],
+    "udiAlarmIdBase": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "udiMaintInterval_h": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "udiMaintStarts": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "uiMaxStartsPerHour": [
+     "UINT",
+     "0",
+     "var"
+    ],
+    "wInterlockMask": [
+     "WORD",
+     "16#FFFF",
+     "var"
+    ],
+    "wPermitMask": [
+     "WORD",
+     "16#FFFF",
+     "var"
+    ],
+    "xFbUsed": [
+     "BOOL",
+     "TRUE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_MotorCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rSpeedSp_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceCmd",
+     null,
+     "var"
+    ],
+    "xResetMaint": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xStart": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xStop": [
+     "BOOL",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_MotorSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "eState": [
+     "E_MotorState",
+     null,
+     "var"
+    ],
+    "rRunTimeMaint_h": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rRunTime_h": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rSpeedAct_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rSpeedRef_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceSts",
+     null,
+     "var"
+    ],
+    "udiRunCurrent_s": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "udiStarts": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "udiStartsMaint": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "uiFirstOut": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "uiInhibitRemain_s": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "uiStartsLastHour": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "wInterlock": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wPermitMissing": [
+     "WORD",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_PidCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "astAlarm": [
+     "ARRAY[0..GVL_Const.DEV_ALARMS_MAX - 1] OF ST_AlarmCfg",
+     "[ (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None)]",
+     "var"
+    ],
+    "eAction": [
+     "E_PidAction",
+     "E_PidAction.Reverse",
+     "var"
+    ],
+    "ePvFailAction": [
+     "E_PidPvFailAction",
+     "E_PidPvFailAction.Hold",
+     "var"
+    ],
+    "rDFilterN": [
+     "REAL",
+     "10.0",
+     "var"
+    ],
+    "rDeadband_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rKp": [
+     "REAL",
+     "1.0",
+     "var"
+    ],
+    "rOutMax_pct": [
+     "REAL",
+     "100.0",
+     "var"
+    ],
+    "rOutMin_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rOutRate_pctps": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rPvMax_eu": [
+     "REAL",
+     "100.0",
+     "var"
+    ],
+    "rPvMin_eu": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rSafeOut_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rSpMax_eu": [
+     "REAL",
+     "100.0",
+     "var"
+    ],
+    "rSpMin_eu": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rSpRate_ups": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rTd_s": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rTi_s": [
+     "REAL",
+     "30.0",
+     "var"
+    ],
+    "rTt_s": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "tDtMax": [
+     "TIME",
+     "T#2S",
+     "var"
+    ],
+    "tSample": [
+     "TIME",
+     "T#0S",
+     "var"
+    ],
+    "udiAlarmIdBase": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "xSpTrackPv": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xUseOutAct": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_PidCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rManualOut_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rSp_eu": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceCmd",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_PidSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rD_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rDt_ms": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rErr_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rI_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rOut_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rP_pct": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rPv_eu": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rSpTarget_eu": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "rSp_eu": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceSts",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_ValveCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "astAlarm": [
+     "ARRAY[0..GVL_Const.DEV_ALARMS_MAX - 1] OF ST_AlarmCfg",
+     "[ (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.Medium), (ePriority := E_AlarmPriority.None), (ePriority := E_AlarmPriority.None)]",
+     "var"
+    ],
+    "eSafePos": [
+     "E_ValveSafePos",
+     "E_ValveSafePos.Closed",
+     "var"
+    ],
+    "eType": [
+     "E_ValveType",
+     "E_ValveType.Motorized",
+     "var"
+    ],
+    "tLimitFilter": [
+     "TIME",
+     "T#500MS",
+     "var"
+    ],
+    "tResetWindow": [
+     "TIME",
+     "T#3S",
+     "var"
+    ],
+    "tReverse": [
+     "TIME",
+     "T#1S",
+     "var"
+    ],
+    "tTravel": [
+     "TIME",
+     "T#60S",
+     "var"
+    ],
+    "udiAlarmIdBase": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "udiMaintCycles": [
+     "UDINT",
+     "0",
+     "var"
+    ],
+    "wInterlockMask": [
+     "WORD",
+     "16#FFFF",
+     "var"
+    ],
+    "wPermitCloseMask": [
+     "WORD",
+     "16#FFFF",
+     "var"
+    ],
+    "wPermitOpenMask": [
+     "WORD",
+     "16#FFFF",
+     "var"
+    ],
+    "xCloseOnTorque": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xTorqueUsed": [
+     "BOOL",
+     "FALSE",
+     "var"
+    ],
+    "xZscUsed": [
+     "BOOL",
+     "TRUE",
+     "var"
+    ],
+    "xZsoUsed": [
+     "BOOL",
+     "TRUE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_ValveCmd": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "stCommon": [
+     "ST_DeviceCmd",
+     null,
+     "var"
+    ],
+    "xClose": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xOpen": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xResetMaint": [
+     "BOOL",
+     null,
+     "var"
+    ],
+    "xStop": [
+     "BOOL",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_ValveSts": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "eState": [
+     "E_ValveState",
+     null,
+     "var"
+    ],
+    "rActTime_h": [
+     "REAL",
+     null,
+     "var"
+    ],
+    "stCommon": [
+     "ST_DeviceSts",
+     null,
+     "var"
+    ],
+    "udiCycles": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "udiCyclesMaint": [
+     "UDINT",
+     null,
+     "var"
+    ],
+    "uiFirstOut": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "uiTravelRemain_s": [
+     "UINT",
+     null,
+     "var"
+    ],
+    "wInterlock": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wPermitMissing": [
+     "WORD",
+     null,
+     "var"
+    ],
+    "wReserve": [
+     "WORD",
+     null,
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "ST_VfdCfg": {
+   "kind": "struct",
+   "base": null,
+   "members": {
+    "rRampDown_pctps": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rRampUp_pctps": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "rSpeedDev_pct": [
+     "REAL",
+     "10.0",
+     "var"
+    ],
+    "rSpeedMax_pct": [
+     "REAL",
+     "100.0",
+     "var"
+    ],
+    "rSpeedMin_pct": [
+     "REAL",
+     "0.0",
+     "var"
+    ],
+    "tCommLoss": [
+     "TIME",
+     "T#3S",
+     "var"
+    ],
+    "tSpeedDev": [
+     "TIME",
+     "T#10S",
+     "var"
+    ],
+    "xCommLossIsFault": [
+     "BOOL",
+     "TRUE",
+     "var"
+    ],
+    "xFbFromComm": [
+     "BOOL",
+     "TRUE",
+     "var"
+    ]
+   },
+   "values": {}
+  },
+  "U_RealBits": {
+   "kind": "struct",
+   "base": null,
+   "members": {},
+   "values": {}
+  }
+ },
+ "gvls": {
+  "GVL_Const": {
+   "AI_ALARM_COUNT": [
+    "UINT",
+    "6",
+    "const"
+   ],
+   "AI_CFG_ALARM": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "AI_CFG_FAIL_VALUE": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "AI_CFG_HYST": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "AI_CFG_INPUT_TYPE": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "AI_CFG_LIMIT_ORDER": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "AI_CFG_LIMIT_OUT_OF_RANGE": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "AI_CFG_LOW_CUT": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "AI_CFG_RANGE": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "AI_CFG_RAW_RANGE": [
+    "WORD",
+    "16#0100",
+    "const"
+   ],
+   "AI_FLT_CHANNEL": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "AI_FLT_FAIL_HIGH": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "AI_FLT_FAIL_LOW": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "AI_FLT_NOT_FINITE": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "AI_LOWCUT_MAX_PCT": [
+    "REAL",
+    "20.0",
+    "const"
+   ],
+   "AI_STS_FAIL_PENDING": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "AI_STS_H": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "AI_STS_HH": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "AI_STS_L": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "AI_STS_LL": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "AI_STS_LOW_CUT": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "AI_STS_OUT_OF_RANGE": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "AI_STS_SIGNAL_FAIL": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "AI_WRN_CLAMPED": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "AI_WRN_OVER_RANGE": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "AI_WRN_UNDER_RANGE": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "CV_ALARM_COUNT": [
+    "UINT",
+    "4",
+    "const"
+   ],
+   "CV_CFG_ALARM": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "CV_CFG_DEVIATION": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "CV_CFG_FAULT_ACTION": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "CV_CFG_LIMITS": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "CV_CFG_RATE": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "CV_CFG_SAFE_POS": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "CV_CFG_TIGHT_SHUT": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "CV_FLT_DEVIATION": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "CV_FLT_POSITIONER": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "CV_STS_AT_SETPOINT": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "CV_STS_AVAILABLE": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "CV_STS_INTERLOCKED": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "CV_STS_LIMITED_MAX": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "CV_STS_LIMITED_MIN": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "CV_STS_RAMPING": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "CV_STS_SAFE_POS": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "CV_STS_TIGHT_SHUT": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "CV_WRN_DEVIATION": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "CV_WRN_FB_INVALID": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "CV_WRN_SP_INVALID": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "DEV_ALARMS_MAX": [
+    "UINT",
+    "8",
+    "const"
+   ],
+   "DEV_STS_ALARM_UNACK": [
+    "WORD",
+    "16#8000",
+    "const"
+   ],
+   "DEV_STS_CFG_ERROR": [
+    "WORD",
+    "16#1000",
+    "const"
+   ],
+   "DEV_STS_FAILURE": [
+    "WORD",
+    "16#2000",
+    "const"
+   ],
+   "DEV_STS_MODE_AUTO": [
+    "WORD",
+    "16#0100",
+    "const"
+   ],
+   "DEV_STS_MODE_LOCAL": [
+    "WORD",
+    "16#0400",
+    "const"
+   ],
+   "DEV_STS_MODE_MANUAL": [
+    "WORD",
+    "16#0200",
+    "const"
+   ],
+   "DEV_STS_MODE_OOS": [
+    "WORD",
+    "16#0800",
+    "const"
+   ],
+   "DEV_STS_WARNING": [
+    "WORD",
+    "16#4000",
+    "const"
+   ],
+   "DI_ALARM_COUNT": [
+    "UINT",
+    "2",
+    "const"
+   ],
+   "DI_CFG_ALARM": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "DI_CFG_FAIL_VALUE": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "DI_FLT_CHANNEL": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "DI_STS_ALARM_COND": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "DI_STS_CHANNEL_FAULT": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "DI_STS_RAW": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "DI_STS_TIMING_OFF": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "DI_STS_TIMING_ON": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "DI_STS_VALUE": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "DT_ACCUM_MAX": [
+    "LTIME",
+    "LTIME#10S",
+    "const"
+   ],
+   "MA_SPAN": [
+    "REAL",
+    "16.0",
+    "const"
+   ],
+   "MA_ZERO": [
+    "REAL",
+    "4.0",
+    "const"
+   ],
+   "MOT_ALARM_COUNT": [
+    "UINT",
+    "8",
+    "const"
+   ],
+   "MOT_CFG_ALARM": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "MOT_CFG_FB_TIMES": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "MOT_CFG_RESET": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "MOT_CFG_STARTS_LIMIT": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "MOT_CFG_VFD_COMM": [
+    "WORD",
+    "16#0400",
+    "const"
+   ],
+   "MOT_CFG_VFD_RAMP": [
+    "WORD",
+    "16#0200",
+    "const"
+   ],
+   "MOT_CFG_VFD_SPEED_DEV": [
+    "WORD",
+    "16#0800",
+    "const"
+   ],
+   "MOT_CFG_VFD_SPEED_LIMITS": [
+    "WORD",
+    "16#0100",
+    "const"
+   ],
+   "MOT_FLT_COMM_LOSS": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "MOT_FLT_EXT_FAULT": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "MOT_FLT_FAIL_TO_START": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "MOT_FLT_FAIL_TO_STOP": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "MOT_FLT_FEEDBACK_LOST": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "MOT_FLT_UNCOMMANDED_RUN": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "MOT_STS_AVAILABLE": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "MOT_STS_INTERLOCKED": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "MOT_STS_PERMIT_MISSING": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "MOT_STS_RUNNING": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "MOT_STS_RUN_CMD": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "MOT_STS_STARTING": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "MOT_STS_START_INHIBIT": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "MOT_STS_STOPPING": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "MOT_WRN_COMM_LOSS": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "MOT_WRN_FB_SUSPENDED": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "MOT_WRN_INTERLOCK_IN_LOCAL": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "MOT_WRN_MAINT_RUNTIME": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "MOT_WRN_MAINT_STARTS": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "MOT_WRN_POWER_LOST": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "MOT_WRN_SPEED_DEV": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "MOT_WRN_SPEED_SP_INVALID": [
+    "WORD",
+    "16#0100",
+    "const"
+   ],
+   "MOT_WRN_STARTS_LIMIT": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "MS_PER_S": [
+    "LREAL",
+    "1000.0",
+    "const"
+   ],
+   "NE43_FAIL_HIGH_MA": [
+    "REAL",
+    "21.0",
+    "const"
+   ],
+   "NE43_FAIL_LOW_MA": [
+    "REAL",
+    "3.6",
+    "const"
+   ],
+   "NE43_MEAS_HIGH_MA": [
+    "REAL",
+    "20.5",
+    "const"
+   ],
+   "NE43_MEAS_LOW_MA": [
+    "REAL",
+    "3.8",
+    "const"
+   ],
+   "NO_FIRST_OUT": [
+    "UINT",
+    "16#FFFF",
+    "const"
+   ],
+   "NS_PER_S": [
+    "LREAL",
+    "1.0E9",
+    "const"
+   ],
+   "PCT_FULL": [
+    "REAL",
+    "100.0",
+    "const"
+   ],
+   "PID_ALARM_COUNT": [
+    "UINT",
+    "1",
+    "const"
+   ],
+   "PID_CFG_ACTION": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "PID_CFG_ALARM": [
+    "WORD",
+    "16#1000",
+    "const"
+   ],
+   "PID_CFG_DEADBAND": [
+    "WORD",
+    "16#0100",
+    "const"
+   ],
+   "PID_CFG_DFILTER": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "PID_CFG_KP": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "PID_CFG_OUT_RANGE": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "PID_CFG_PV_FAIL": [
+    "WORD",
+    "16#0800",
+    "const"
+   ],
+   "PID_CFG_PV_RANGE": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "PID_CFG_RATES": [
+    "WORD",
+    "16#0200",
+    "const"
+   ],
+   "PID_CFG_SAMPLE": [
+    "WORD",
+    "16#0400",
+    "const"
+   ],
+   "PID_CFG_SP_RANGE": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "PID_CFG_TI_TD": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "PID_CFG_TT": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "PID_DEADBAND_MAX_PCT": [
+    "REAL",
+    "10.0",
+    "const"
+   ],
+   "PID_DFILTER_N_MAX": [
+    "REAL",
+    "50.0",
+    "const"
+   ],
+   "PID_DFILTER_N_MIN": [
+    "REAL",
+    "2.0",
+    "const"
+   ],
+   "PID_FLT_PV_INVALID": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "PID_STS_DT_GAP": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "PID_STS_IN_DEADBAND": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "PID_STS_OUT_RATE_LIMITED": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "PID_STS_PV_FAIL": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "PID_STS_SAT_HIGH": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "PID_STS_SAT_LOW": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "PID_STS_SP_RAMPING": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "PID_STS_TRACKING": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "PID_WRN_DT_GAP": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "PID_WRN_SP_INVALID": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "REAL_EXP_MASK": [
+    "DWORD",
+    "16#7F800000",
+    "const"
+   ],
+   "REAL_SANE_MAX": [
+    "REAL",
+    "1.0E30",
+    "const"
+   ],
+   "STARTS_WINDOW": [
+    "LTIME",
+    "LTIME#1H",
+    "const"
+   ],
+   "STARTS_WINDOW_MAX": [
+    "UINT",
+    "30",
+    "const"
+   ],
+   "S_PER_H": [
+    "UDINT",
+    "3600",
+    "const"
+   ],
+   "UINT_MAX": [
+    "UINT",
+    "65535",
+    "const"
+   ],
+   "VLV_ALARM_COUNT": [
+    "UINT",
+    "7",
+    "const"
+   ],
+   "VLV_CFG_ALARM": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "VLV_CFG_RESET": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "VLV_CFG_REVERSE": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "VLV_CFG_SAFE_POS": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "VLV_CFG_TORQUE": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "VLV_CFG_TRAVEL": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "VLV_CFG_TYPE": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "VLV_FLT_BOTH_LIMITS": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "VLV_FLT_EXT_FAULT": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "VLV_FLT_FAIL_TO_CLOSE": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "VLV_FLT_FAIL_TO_OPEN": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "VLV_FLT_POSITION_LOST": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "VLV_FLT_TORQUE_TRIP": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "VLV_STS_AVAILABLE": [
+    "WORD",
+    "16#0080",
+    "const"
+   ],
+   "VLV_STS_CLOSED": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "VLV_STS_CLOSING": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "VLV_STS_INTERLOCKED": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "VLV_STS_OPENED": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "VLV_STS_OPENING": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "VLV_STS_PERMIT_MISSING": [
+    "WORD",
+    "16#0020",
+    "const"
+   ],
+   "VLV_STS_TORQUE": [
+    "WORD",
+    "16#0040",
+    "const"
+   ],
+   "VLV_WRN_INTERLOCK_IN_LOCAL": [
+    "WORD",
+    "16#0004",
+    "const"
+   ],
+   "VLV_WRN_MAINT_CYCLES": [
+    "WORD",
+    "16#0001",
+    "const"
+   ],
+   "VLV_WRN_POSITION_BY_TIME": [
+    "WORD",
+    "16#0008",
+    "const"
+   ],
+   "VLV_WRN_POSITION_UNKNOWN": [
+    "WORD",
+    "16#0010",
+    "const"
+   ],
+   "VLV_WRN_POWER_LOST": [
+    "WORD",
+    "16#0002",
+    "const"
+   ],
+   "WORD_ALL": [
+    "WORD",
+    "16#FFFF",
+    "const"
+   ],
+   "WORD_LOW_BYTE": [
+    "WORD",
+    "16#00FF",
+    "const"
+   ]
+  },
+  "GVL_Lib": {
+   "itfAlarmSink": [
+    "I_AlarmSink",
+    null,
+    "var"
+   ]
+  }
+ }
+}
