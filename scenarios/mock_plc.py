@@ -117,6 +117,8 @@ def variables() -> dict[str, tuple[Any, ua.VariantType]]:
         v[f"GVL_Hmi.stP10{n}Cmd.stCommon.xReset"] = (False, V.Boolean)
         v[f"GVL_Hmi.stP10{n}Cmd.xStop"] = (False, V.Boolean)
         v[f"GVL_Persist.stP10{n}Retain.udiOpTime_s"] = (0, V.UInt32)
+        v[f"GVL_Persist.stP10{n}Cfg.uiMaxStartsPerHour"] = (10, V.UInt16)
+        v[f"GVL_Devices.fbP10{n}.stSts.uiStartsLastHour"] = (0, V.UInt16)
         v[f"GVL_IO.uiP10{n}_FCODE"] = (0, V.UInt16)
         base = f"GVL_Devices.fbP10{n}.stSts"
         for name, typ in (

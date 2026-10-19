@@ -418,6 +418,34 @@ def test_capture_after_wait_in_same_step() -> None:
 # --- шаги и И0 -----------------------------------------------------------------------------------
 
 
+def test_initial_state_waits_for_start_windows() -> None:
+    """Окно пусков Н1 у предела: И0 при k = 50 и притоке 0 ждёт, пока пуски не выйдут из окна, затем k сценария."""
+    starts = "GVL_Devices.fbP101.stSts.uiStartsLastHour"
+    plc = FakeJournalPlc(
+        {f"GVL_Persist.stP10{n}Cfg.uiMaxStartsPerHour": 10 for n in PUMPS}
+        | {f"GVL_Devices.fbP10{n}.stSts.uiStartsLastHour": 0 for n in PUMPS}
+        | {starts: 10}
+    )
+    clk = FakeClock()
+    runner, ctx = make_runner(plc, clk)
+    base_read = plc.read
+
+    def read(paths: Sequence[str]) -> list[PlcValue]:
+        if starts in paths and plc.values.get(TIME_SCALE) == 50.0:
+            plc.values[starts] = max(int(plc.values[starts]) - 1, 0)  # старые пуски выходят из окна
+        return base_read(paths)
+
+    plc.read = read  # type: ignore[method-assign]
+    runner._wait_start_windows()
+    assert plc.values[starts] == 7  # 10 − START_RESERVE
+    assert plc.values["GVL_Sim.stSimCmd.rInflowOverride_m3h"] == 0.0
+    assert plc.values[TIME_SCALE] == K and ctx.time_scale == K
+    plc.values[starts] = 3
+    plc.writes.clear()
+    runner._wait_start_windows()  # окно свободно — ничего не пишет
+    assert plc.writes == []
+
+
 def test_time_scale_init_manual_and_not_checked_steps() -> None:
     plc = FakeJournalPlc({"GVL_T.xOk": True})
     runner, ctx = make_runner(plc)
@@ -440,6 +468,8 @@ def test_time_scale_init_manual_and_not_checked_steps() -> None:
 def test_initial_state_stops_pumps_before_run_hours() -> None:
     plc = FakeJournalPlc(
         {CMD_SEQ: 0, f"{STATION_STS}.uiPumpsRunning": 1, f"{STATION_STS}.eControlAct": ENUMS["E_ControlAct"]["Float"]}
+        | {f"GVL_Persist.stP10{n}Cfg.uiMaxStartsPerHour": 10 for n in PUMPS}
+        | {f"GVL_Devices.fbP10{n}.stSts.uiStartsLastHour": 0 for n in PUMPS}
     )
 
     def plc_cycle(values: Mapping[str, PlcValue]) -> None:

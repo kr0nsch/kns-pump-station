@@ -114,6 +114,8 @@ SAME_CYCLE_FRACTION = 0.5  # записи журнала ближе полцик
 TIME_SCALE_RANGE = (1.0, 50.0)  # SIM_TIME_SCALE_MAX
 STOP_TIMEOUT_S = 120.0  # И0: насосы остановлены (выбег ПЧ 10 с), секунды контура
 CONTROL_TIMEOUT_S = 180.0  # И0: действует ступенчатое или ПИД (выход из Float — tLtRecover, из Restart — 13 с)
+START_RESERVE = 3  # И0: запас пусков в окне часа на проверку (06 §5.2, п. 9)
+START_WINDOW_S = 3600.0  # окно «пусков в час» FB_Motor, секунды контура
 FEED_POLL_MIN_S = 1.0  # курсор журнала во время выдержек и ожиданий, реальные секунды
 VALUE_TOL = 1e-3  # допуск значения события журнала (номер насоса, параметра, число строк)
 PASS = "соответствует"
@@ -420,6 +422,7 @@ class Runner:
             for n in range(1, PUMPS + 1):
                 ctx.pulse(f"GVL_Hmi.stP10{n}Cmd.xStop")
             ctx.wait(f"{STATION_STS}.uiPumpsRunning = 0", STOP_TIMEOUT_S)
+            self._wait_start_windows()
             ctx.pulse(f"{STATION_CMD}.xResetAll")
             ctx.pulse(f"{STATION_CMD}.xAckAll")
             ctx.pulse("GVL_Hmi.xApplyProjectCfg")
@@ -452,6 +455,34 @@ class Runner:
             raise ScenarioError(f"[setup] method = {method!r}: ожидается Stepped или LevelPid")
         if not skip:
             ctx.pulse(f"{STATION_CMD}.xAckAll")
+
+    def _wait_start_windows(self) -> None:
+        """Окно «пусков в час» насосов не ближе ``START_RESERVE`` к пределу (06 §5.2, п. 9): в серии на имитаторе
+        пуски набираются быстрее, чем на объекте (короткие проверки подряд при k = 20), и ведущий Н1 упирался в
+        предел (PMI-08, PMI-19, PMI-20). Насосы стоят, приток 0: контур при k = ``TIME_SCALE_MAX`` ждёт, пока старые
+        пуски не выйдут из окна (не дольше часа контура), затем ускорение сценария восстанавливается."""
+        ctx = self.ctx
+        limits = [f"GVL_Persist.stP10{n}Cfg.uiMaxStartsPerHour" for n in range(1, PUMPS + 1)]
+        starts = [f"GVL_Devices.fbP10{n}.stSts.uiStartsLastHour" for n in range(1, PUMPS + 1)]
+
+        def crowded() -> bool:
+            values = ctx.client.read(limits + starts)
+            pairs = zip(values[:PUMPS], values[PUMPS:], strict=True)
+            return any(int(lim) > 0 and int(cnt) > int(lim) - START_RESERVE for lim, cnt in pairs)
+
+        if not crowded():
+            return
+        k = ctx.time_scale
+        ctx.write({f"{SIM_CMD}.xInflowOverride": True, f"{SIM_CMD}.rInflowOverride_m3h": 0.0})
+        ctx.set_time_scale(TIME_SCALE_RANGE[1])
+        deadline = ctx.clock() + ctx.real_timeout(START_WINDOW_S)
+        try:
+            while crowded():
+                if ctx.clock() >= deadline:
+                    raise ScenarioTimeout(f"И0: окно пусков в час не освободилось за {START_WINDOW_S:g} с контура")
+                ctx.sleep(ctx.poll_s)
+        finally:
+            ctx.set_time_scale(k)
 
     def _start_feed(self, setup: Mapping[str, Any]) -> None:
         """Курсор журнала сценария — один раз за прогон (с самой старой записи при ``journal_from_start``)."""
