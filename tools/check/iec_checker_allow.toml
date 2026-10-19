@@ -155,3 +155,79 @@ reason = "Ложное срабатывание iec_checker 0.4: вход пом
 id = "UnusedVariable"
 file = "tests/POUs/Fakes/*"
 reason = "Подменные объекты: поля читают аксессоры свойств и методы, которые понижение iec-checker выносит в отдельные функции (тело ФБ пустое); параметр uiIndex метода GetAlarm подменного насоса намеренно не используется — тревог у него нет"
+
+# ===== Модель, имитация, часы контура (К2): src/POUs/Model, src/POUs/Time, tests/POUs/Model =====
+# Разбор — docs/STATIC_ANALYSIS.md, раздел «Модель объекта и часы контура».
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/Model/*"
+reason = "У условий модели нет действия «иначе»: команда не пришла, причины аварии нет, шаг времени 0, поле инъекции не изменилось, проверка неконечного значения; пустая ветвь ELSE только добавит шум (как в plc-process-lib)"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/Time/FB_ScaledClock/*"
+reason = "Часы: «не ручной режим», «коэффициент не изменился», «базы уже заданы», «время не прошло» — действия «иначе» нет"
+
+[[allow]]
+id = "PLCOPEN-CP9"
+file = "src/POUs/Model/*"
+reason = "Тела модели — нормативная последовательность шагов DESIGN 11.1–11.2 с номерами шагов в комментариях; iec_checker 0.4 считает сложность завышенно (FB_PlantModel 171 при классической 28, FB_VfdSim 116 при 27, остальные ≤ 10 — docs/STATIC_ANALYSIS.md); деление на методы спрятало бы порядок шагов"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/FB_PlantModel/FB_PlantModel.decl.st"
+match = "STCFG|STCMD|STIO|STSTS|FBINFLOW|FBSTORMS|FBTANK|FBHYDRAULIC|AFBVFD|AFBAI|FBHS501|FBHS502|FBV1FB"
+reason = "Ложное срабатывание iec_checker 0.4: структуры используются обращениями к полям (stCfg.rLevelInit_m, stIo.xLS102), экземпляры ФБ — вызовом, методами и чтением выходов; это он использованием не считает"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/FB_HydraulicSolver/FB_HydraulicSolver.decl.st"
+match = "ARK"
+reason = "arK пишет метод Solve и читает метод FlowsAt; понижение выносит методы в отдельные функции, в теле ФБ переменная не видна"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/FB_StormGenerator/FB_StormGenerator.decl.st"
+match = "DWSTATE|STMANUAL"
+reason = "dwState используется только в методах Generate и Draw (понижение выносит их в функции); stManual — обращениями к полям (stManual.tDuration)"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/FB_VfdSim/FB_VfdSim.decl.st"
+match = "FBBOOT|FBWATCHDOG"
+reason = "Ложное срабатывание: экземпляры PL.FB_Delay используются вызовом, чтением xOut и методом Preset"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/F_FaultInjEqual/F_FaultInjEqual.decl.st"
+match = "STA|STB|UBITSA|UBITSB"
+reason = "Ложное срабатывание: VAR_IN_OUT CONSTANT-структуры и объединения U_RealBits используются обращениями к полям (stA.axVfdFault[uiI], uBitsA.dwValue)"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/F_PumpCurrent/F_PumpCurrent.decl.st"
+match = "STPUMP"
+reason = "Ложное срабатывание: структура характеристики используется обращениями к полям (stPump.rPnom_kW)"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Model/PRG_PlantModel/PRG_PlantModel.decl.st"
+match = "FBPLANT"
+reason = "Ложное срабатывание: экземпляр FB_PlantModel используется вызовом и чтением выходов (fbPlant.stIo.*)"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Time/FB_ScaledClock/FB_ScaledClock.decl.st"
+reason = "Тело FB_ScaledClock пустое, все переменные используются только в методах Now, Update, SetManual, AdvanceL, ScaledAt и свойстве Scale — понижение выносит их в отдельные функции"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Model/*.method.decl.st"
+match = "variable: (FB|ST|U)[A-Z0-9]+$"
+reason = "Ложное срабатывание iec_checker 0.4: экземпляры ФБ (fbDut, fbClock, fbOther…) используются вызовом, методами и чтением выходов, структуры (stCfg, stPump) и объединения (uBits) — обращениями к полям"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "tests/POUs/Model/FB_StormGenerator_Test/StormCrossingMidnightContinues.method.impl.st"
+reason = "Поиск ливня суток 21 в списке: на остальных элементах делать нечего"

@@ -1,0 +1,33 @@
+coUnit.TEST('PlantModel_FloatStuckNormalTripped');
+
+stCmd.xSetLevel := TRUE;
+stCmd.rSetLevel_m := 4.3;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertFalse(Condition := fbDut.stIo.xLS102, Message := 'LS102 tripped at 4.3 m');
+stFault.eLs102Stuck := E_SimFloatStuck.StuckNormal;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertTrue(Condition := fbDut.stIo.xLS102, Message := 'LS102 stuck normal');
+stFault.eLs102Stuck := E_SimFloatStuck.None;
+stCmd.xSetLevel := TRUE;
+stCmd.rSetLevel_m := 4.2;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertFalse(Condition := fbDut.stIo.xLS102, Message := 'LS102 trips at the mark');
+stCmd.xSetLevel := TRUE;
+stCmd.rSetLevel_m := 1.0;
+stFault.eLs102Stuck := E_SimFloatStuck.StuckTripped;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertFalse(Condition := fbDut.stIo.xLS102, Message := 'LS102 stuck tripped at 1.0 m');
+AssertTrue(Condition := fbDut.stIo.xLS103, Message := 'LS103 normal at 1.0 m');
+stFault.eLs103Stuck := E_SimFloatStuck.StuckTripped;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertFalse(Condition := fbDut.stIo.xLS103, Message := 'LS103 stuck tripped');
+stFault.eLs103Stuck := E_SimFloatStuck.None;
+stCmd.xSetLevel := TRUE;
+stCmd.rSetLevel_m := 0.35;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertFalse(Condition := fbDut.stIo.xLS103, Message := 'LS103 tripped at 0.35 m');
+stFault.eLs103Stuck := E_SimFloatStuck.StuckNormal;
+fbDut(itfTime := fbTime, stCfg := stCfg, stCmd := stCmd, stFault := stFault);
+AssertTrue(Condition := fbDut.stIo.xLS103, Message := 'LS103 stuck normal');
+
+coUnit.TEST_FINISHED();

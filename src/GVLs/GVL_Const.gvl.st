@@ -150,4 +150,59 @@ VAR_GLOBAL CONSTANT
     STN_LDEV_LS103_MISSED : WORD := 16#0008; // LS103 не сработал (уровень ниже rLdev103Off_m)
     STN_LDEV_LT_MASKED : WORD := 16#0010;    // LT101 исключён по противоречию (вне диапазона)
     STN_MS_PER_S : UDINT := 1000;            // мс в секунде: остаток в целых секундах вверх (uiSeqRemain_s)
+    // ===== Модель (К2) =====
+    SIM_TIME_SCALE_MAX : REAL := 50.0;       // k · T_MainTask ≤ 1 с (ARCHITECTURE, раздел 11)
+    SIM_DT_SUBSTEP : LTIME := LTIME#200MS;   // шаг интегрирования резервуара
+    SIM_AI_COUNT : UINT := 5;                // индексы aeAiFault/arAiForced_mA
+    SIM_AI_LT101 : UINT := 1;
+    SIM_AI_PT201 : UINT := 2;
+    SIM_AI_FT202 : UINT := 3;
+    SIM_AI_AT401 : UINT := 4;
+    SIM_AI_AT402 : UINT := 5;
+    SIM_MA_FAIL_LOW : REAL := 3.0;           // токи инъекций (NE 43: ≤ 3,6 — отказ)
+    SIM_MA_UNDER_RANGE : REAL := 3.7;
+    SIM_MA_OVER_RANGE : REAL := 20.8;
+    SIM_MA_FAIL_HIGH : REAL := 22.0;
+    SIM_GRAVITY_MPS2 : REAL := 9.81;
+    SIM_RHO_KGM3 : REAL := 1000.0;
+    SIM_HOURS_PER_DAY : REAL := 24.0;
+    SIM_PROFILE_POINTS : UINT := 24;
+    SIM_STORMS_MAX : UINT := 4;              // ливней в сутки, предел генератора
+    SIM_PUMP_INTAKE_M : REAL := 0.30;        // ниже — насос подсасывает воздух (подача 0)
+    SIM_VFD_FCODE_EXT : UINT := 11;          // условные коды аварии ПЧ (06 §5.4)
+    SIM_VFD_FCODE_OVERHEAT : UINT := 12;
+    SIM_VFD_FCODE_UNDERVOLT : UINT := 13;
+    SIM_VFD_WATCHDOG : TIME := T#5S;         // сторожевой таймер связи ПЧ (04 §12)
+    SIM_VFD_WATCHDOG_FREQ_HZ : REAL := 50.0; // предустановленная частота после срабатывания сторожевого таймера
+    // частота местного поста ПЧ: в «Местном» FB_MotorVfd задание по сети не ведёт (следит за фактом), пуск по
+    // месту — на предустановленной частоте (условно; на объекте — настройка ПЧ)
+    SIM_VFD_LOCAL_FREQ_HZ : REAL := 50.0;
+    SIM_BUTTON_PULSE : TIME := T#500MS;      // длительность нажатия кнопки шкафа в модели
+    SIM_V1_FB_DELAY : TIME := T#1S;          // ОС вентилятора после команды
+    // имитация разрешена сборкой; в targets/plc210 файл-наложение даёт FALSE (раздел 8.1)
+    SIM_ALLOWED : BOOL := TRUE;
+    SIM_DT_MAX : LTIME := LTIME#2S;          // больший шаг времени за вызов модели обрезается (пауза задачи, отладка)
+    SIM_DAY_MAX : UDINT := 100000;           // предел счёта суток модели (≈ 270 лет): защита LREAL → UDINT
+    SIM_VFD_COUNTS_PER_HZ : REAL := 100.0;   // FREF и FACT ПЧ: 0,01 Гц (= VFD_COUNTS_PER_PCT · 100 % / VFD_FREQ_NOM_HZ)
+    SIM_IT_COUNTS_PER_A : REAL := 10.0;      // регистр тока ПЧ: 0,1 А (перечень, IT1n1: 0…600 отсчётов = 0…60 А)
+    SIM_S_PER_H : REAL := 3600.0;            // с в часе: м³/ч ↔ м³/с
+    SIM_PA_PER_BAR : REAL := 100000.0;
+    SIM_W_PER_KW : REAL := 1000.0;
+    SIM_SOLVER_ITERATIONS : UINT := 30;      // бисекция рабочей точки насосов (раздел 11.2)
+    SIM_CLOG_K_FACTOR : REAL := 6.25;        // засор: крутизна характеристики ×6,25 — подача −60 % при том же напоре
+    SIM_CLOG_I_FACTOR : REAL := 1.3;         // засор: ток ×1,3 к току того же насоса без засора
+    SIM_STORM_RISE_SHARE : REAL := 0.15;     // трапеция ливня: рост 15 % длительности
+    SIM_STORM_FALL_SHARE : REAL := 0.35;     // спад 35 % (полка — остальные 50 %)
+    SIM_SEED_DAY_MUL : UDINT := 16#9E3779B9; // x0 = udiSeed XOR (сутки · 16#9E3779B9)
+    SIM_XS_ZERO_STATE : DWORD := 16#2545F491; // замена нулевого состояния xorshift (из нуля генератор не выходит)
+    SIM_XS_SHIFT_A : UINT := 13;             // F_Xorshift32: x ^= x << 13; x ^= x >> 17; x ^= x << 5
+    SIM_XS_SHIFT_B : UINT := 17;
+    SIM_XS_SHIFT_C : UINT := 5;
+    SIM_U24_MASK : DWORD := 16#00FFFFFF;     // равномерное u = (x AND маска) / 2^24, точно в REAL
+    SIM_U24_SCALE : REAL := 16777216.0;
+    SIM_LT101_RANGE_M : REAL := 5.0;         // шкалы датчиков 4–20 мА (перечень сигналов), нижняя граница — 0
+    SIM_PT201_RANGE_BAR : REAL := 10.0;
+    SIM_FT202_RANGE_M3H : REAL := 500.0;
+    SIM_AT401_RANGE_MGM3 : REAL := 40.0;
+    SIM_AT402_RANGE_PCTLEL : REAL := 100.0;
 END_VAR

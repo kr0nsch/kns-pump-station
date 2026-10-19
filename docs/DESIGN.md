@@ -81,7 +81,7 @@ src/
     Time/       FB_ScaledClock                                                   К2
     Model/      PRG_PlantModel, FB_PlantModel, FB_InflowProfile, FB_StormGenerator, F_Xorshift32,
                 FB_TankModel, FB_HydraulicSolver, FB_VfdSim, FB_AnalogSensorSim, F_FloatContact,
-                F_PumpCurrent                                                    К2
+                F_PumpCurrent, F_FaultInjEqual                                   К2
 targets/plc210/                                  К3  сборка ПЛК210: PRG_ModbusDiag, привязки каналов, README
 tests/
   GVLs/  GVL_TestsStation (К1), GVL_TestsModel (К2), GVL_TestsInfra (К3) — экземпляры наборов, {attribute 'linkalways'}
@@ -298,11 +298,39 @@ VAR_GLOBAL CONSTANT
     SIM_VFD_FCODE_UNDERVOLT : UINT := 13;
     SIM_VFD_WATCHDOG : TIME := T#5S;         // сторожевой таймер связи ПЧ (04 §12)
     SIM_VFD_WATCHDOG_FREQ_HZ : REAL := 50.0; // предустановленная частота после срабатывания сторожевого таймера
+    SIM_VFD_LOCAL_FREQ_HZ : REAL := 50.0;    // частота местного поста ПЧ (в «Местном» задание по сети не ведётся)
     SIM_BUTTON_PULSE : TIME := T#500MS;      // длительность нажатия кнопки шкафа в модели
     SIM_V1_FB_DELAY : TIME := T#1S;          // ОС вентилятора после команды
     SIM_ALLOWED : BOOL := TRUE;              // имитация разрешена сборкой; в targets/plc210 файл-наложение даёт FALSE (раздел 8.1)
+    SIM_DT_MAX : LTIME := LTIME#2S;          // больший шаг времени за вызов модели обрезается (пауза задачи, отладка)
+    SIM_DAY_MAX : UDINT := 100000;           // предел счёта суток модели (≈ 270 лет): защита LREAL → UDINT
+    SIM_VFD_COUNTS_PER_HZ : REAL := 100.0;   // FREF и FACT ПЧ: 0,01 Гц (= VFD_COUNTS_PER_PCT · 100 % / VFD_FREQ_NOM_HZ)
+    SIM_IT_COUNTS_PER_A : REAL := 10.0;      // регистр тока ПЧ: 0,1 А (перечень, IT1n1: 0…600 отсчётов = 0…60 А)
+    SIM_S_PER_H : REAL := 3600.0;            // с в часе: м³/ч ↔ м³/с
+    SIM_PA_PER_BAR : REAL := 100000.0;
+    SIM_W_PER_KW : REAL := 1000.0;
+    SIM_SOLVER_ITERATIONS : UINT := 30;      // бисекция рабочей точки насосов (раздел 11.2)
+    SIM_CLOG_K_FACTOR : REAL := 6.25;        // засор: крутизна характеристики ×6,25 — подача −60 % при том же напоре
+    SIM_CLOG_I_FACTOR : REAL := 1.3;         // засор: ток ×1,3 к току того же насоса без засора
+    SIM_STORM_RISE_SHARE : REAL := 0.15;     // трапеция ливня: рост 15 % длительности
+    SIM_STORM_FALL_SHARE : REAL := 0.35;     // спад 35 % (полка — остальные 50 %)
+    SIM_SEED_DAY_MUL : UDINT := 16#9E3779B9; // x0 = udiSeed XOR (сутки · 16#9E3779B9)
+    SIM_XS_ZERO_STATE : DWORD := 16#2545F491; // замена нулевого состояния xorshift (из нуля генератор не выходит)
+    SIM_XS_SHIFT_A : UINT := 13;             // F_Xorshift32: x ^= x << 13; x ^= x >> 17; x ^= x << 5
+    SIM_XS_SHIFT_B : UINT := 17;
+    SIM_XS_SHIFT_C : UINT := 5;
+    SIM_U24_MASK : DWORD := 16#00FFFFFF;     // равномерное u = (x AND маска) / 2^24, точно в REAL
+    SIM_U24_SCALE : REAL := 16777216.0;
+    SIM_LT101_RANGE_M : REAL := 5.0;         // шкалы датчиков 4–20 мА (перечень сигналов), нижняя граница — 0
+    SIM_PT201_RANGE_BAR : REAL := 10.0;
+    SIM_FT202_RANGE_M3H : REAL := 500.0;
+    SIM_AT401_RANGE_MGM3 : REAL := 40.0;
+    SIM_AT402_RANGE_PCTLEL : REAL := 100.0;
 END_VAR
 ```
+
+Поплавки модели срабатывают на отметках `STN_LS102_MARK_M` и `STN_LS103_MARK_M` раздела «Станция» (одна
+отметка поплавка на проект: и для проверки порядка уставок, и для контакта в модели).
 
 Тексты причин блокировок для `TL_Reason` (источник для `gen_textlists.py`): `P10n.ILK.0` —
 «Сухой ход станции (LS103 или LL уровнемера)», `P10n.ILK.1` — «Сухой ход насоса (недогрузка по
@@ -560,18 +588,18 @@ END_TYPE
 ```st
 TYPE ST_FaultInjection :            // GVL_Sim.stFaultInj — пишут HMI (экран «Имитация») и сценарии; действует только при xSimulation
 STRUCT
-    axVfdFault      : ARRAY[1..3] OF BOOL;  // авария ПЧ: реле FLT, бит STW.2, код SIM_VFD_FCODE_EXT; снимается сбросом ПЧ после снятия инъекции
-    axNoFeedback    : ARRAY[1..3] OF BOOL;  // реле «Работа» не замыкается (ПЧ работает) → FailToStart / FeedbackLost
-    axFeedbackStuck : ARRAY[1..3] OF BOOL;  // реле «Работа» залипло в TRUE → FailToStop / UncommandedRun
-    axAirLock       : ARRAY[1..3] OF BOOL;  // сухой ход насоса: подача 0, ток мал → недогрузка
-    axClog          : ARRAY[1..3] OF BOOL;  // засор: подача −60 %, ток ×1,3 к току до засора
-    axOverheat      : ARRAY[1..3] OF BOOL;  // TS1n2 размыкается и разрывает цепь аварии ПЧ
-    axLeak          : ARRAY[1..3] OF BOOL;  // MS1n3
-    axVfdCommLoss   : ARRAY[1..3] OF BOOL;  // нет ответа ПЧ: регистры замирают, xMbOk = FALSE; через SIM_VFD_WATCHDOG — 50 Гц (04 §12); все три — потеря линии RS485-1
-    axLocal         : ARRAY[1..3] OF BOOL;  // переключатель HS1n4 в «Местное»
-    axLocalRun      : ARRAY[1..3] OF BOOL;  // пуск с местного поста (в «Местном»)
-    aeAiFault       : ARRAY[1..5] OF E_SimAiFault;   // индексы SIM_AI_*: LT101, PT201, FT202, AT401, AT402
-    arAiForced_mA   : ARRAY[1..5] OF REAL;  // ток при Forced
+    axVfdFault      : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // авария ПЧ: реле FLT, бит STW.2, код SIM_VFD_FCODE_EXT; снимается сбросом ПЧ после снятия инъекции
+    axNoFeedback    : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // реле «Работа» не замыкается (ПЧ работает) → FailToStart / FeedbackLost
+    axFeedbackStuck : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // реле «Работа» залипло в TRUE → FailToStop / UncommandedRun
+    axAirLock       : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // сухой ход насоса: подача 0, ток мал → недогрузка
+    axClog          : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // засор: подача −60 %, ток ×1,3 к току без засора
+    axOverheat      : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // TS1n2 размыкается и разрывает цепь аварии ПЧ
+    axLeak          : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // MS1n3
+    axVfdCommLoss   : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // нет ответа ПЧ: регистры замирают, xMbOk = FALSE; через SIM_VFD_WATCHDOG — 50 Гц (04 §12); все три — потеря линии RS485-1
+    axLocal         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // переключатель HS1n4 в «Местное»
+    axLocalRun      : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;  // пуск с местного поста (в «Местном»)
+    aeAiFault       : ARRAY[1..GVL_Const.SIM_AI_COUNT] OF E_SimAiFault;   // индексы SIM_AI_*: LT101, PT201, FT202, AT401, AT402
+    arAiForced_mA   : ARRAY[1..GVL_Const.SIM_AI_COUNT] OF REAL;  // ток при Forced
     eLs102Stuck     : E_SimFloatStuck;
     eLs103Stuck     : E_SimFloatStuck;
     xPowerLoss      : BOOL;                 // нет напряжения на вводе: ES301 = 0, ПЧ обесточены, ИБП на батареях (YS302)
@@ -581,16 +609,16 @@ STRUCT
     xFanNoFeedback  : BOOL;                 // V1_RFB не приходит при работающем вентиляторе (04 §20, вопрос 10: делает V1.FTS и V1.FBL проверяемыми)
     xValveChamberFlood : BOOL;              // LS203
     xFire           : BOOL;                 // YS405
-    rH2S_mgm3       : REAL;                 // концентрации газов (вместо фоновых из stSimCfg), < 0 — фон
-    rCh4_pctLel     : REAL;
+    rH2S_mgm3       : REAL := -1.0;         // концентрации газов (вместо фоновых из stSimCfg), < 0 — фон
+    rCh4_pctLel     : REAL := -1.0;         // (по умолчанию и после xClearFaults — фон)
 END_STRUCT
 END_TYPE
 ```
 
 ```st
-TYPE ST_SimCmd :                    // GVL_Sim.stSimCmd — команды модели; импульсы сбрасывает PRG_PlantModel
+TYPE ST_SimCmd :                    // GVL_Sim.stSimCmd — команды модели; импульсы сбрасывает FB_PlantModel
 STRUCT
-    xResetPlant      : BOOL;        // импульс: уровень := stSimCfg.rLevelInit_m, ливни сняты, ПЧ готовы
+    xResetPlant      : BOOL;        // импульс: уровень := stSimCfg.rLevelInit_m, перелив 0, ливни сняты, ПЧ готовы
     xClearFaults     : BOOL;        // импульс: обнулить stFaultInj (ускорение и приток не меняются)
     xSetLevel        : BOOL;        // импульс: уровень := rSetLevel_m
     rSetLevel_m      : REAL;
@@ -632,7 +660,7 @@ STRUCT
     rLevelOverflow_m  : REAL := 4.60;
     rLevelInit_m      : REAL := 1.20;
     rInflowAvg_m3h    : REAL := 70.0;
-    arDailyProfile    : ARRAY[0..23] OF REAL := [0.55, 0.45, 0.40, 0.38, 0.40, 0.55, 0.92, 1.35, 1.60, 1.50, 1.30,
+    arDailyProfile    : ARRAY[0..GVL_Const.SIM_PROFILE_POINTS - 1] OF REAL := [0.55, 0.45, 0.40, 0.38, 0.40, 0.55, 0.92, 1.35, 1.60, 1.50, 1.30,
                             1.15, 1.10, 1.05, 1.00, 1.00, 1.00, 1.15, 1.35, 1.50, 1.45, 1.20, 0.95, 0.70];
     udiSeed           : UDINT := 20261016;  // генератор ливней (одинаковый seed — одинаковые ливни)
     uiStormsPerDayMax : UINT := 2;          // не больше SIM_STORMS_MAX
@@ -1937,20 +1965,28 @@ flowchart LR
     pm --> sen
 ```
 
-`PRG_PlantModel`: если `NOT GVL_Sim.xSimulation` — выход. Иначе
-`GVL_Time.fbClockModel.Update(GVL_Sim.stSimCfg.rTimeScale)`; `xClearFaults` — обнулить `stFaultInj`;
-читает выходы `GVL_IO` (`xP10n_RUN`, `wP10n_CTW`, `uiP10n_FREF`, `xV1_RUN`); вызывает
-`fbPlant(stCfg, stCmd, stFault, itfTime, …, stIo => ST_PlantIo, stSts => …)`; копирует `ST_PlantIo`
-во входы `GVL_IO`; сбрасывает импульсы `stSimCmd`; при изменении `stFaultInj` (сравнение с копией
-прошлого цикла) — `stSimSts.udiFaultSeq + 1`, событие 101021 пишет `PRG_Station` (журнал вызывается
-только из `MainTask`).
+`PRG_PlantModel`: если `NOT GVL_Sim.xSimulation` — `stSimSts.xRunning := FALSE` и выход. Иначе
+`GVL_Time.fbClockModel.Update(GVL_Sim.stSimCfg.rTimeScale)`; читает выходы `GVL_IO` (`xP10n_RUN`,
+`wP10n_CTW`, `uiP10n_FREF`, `xV1_RUN`); вызывает `fbPlant` (входы `itfTime := GVL_Time.fbClockModel`,
+`axRun`, `awCtw`, `auiFref`, `xV1Run`, `rTimeScaleAct := GVL_Time.fbClockModel.Scale`; `stCfg`, `stCmd`,
+`stFault` — `GVL_Sim.stSimCfg`, `stSimCmd`, `stFaultInj`); копирует `fbPlant.stIo` (`ST_PlantIo`) в
+одноимённые входы `GVL_IO` и `fbPlant.stSts` в `GVL_Sim.stSimSts`. Команды модели выполняет сам
+`FB_PlantModel` (так их проверяют юнит-тесты без глобальных переменных): `xClearFaults` обнуляет `stFault`
+(значения по умолчанию типа), импульсы `stCmd` сбрасываются после выполнения, изменение `stFault`
+(сравнение с копией прошлого вызова, `F_FaultInjEqual`) — `udiFaultSeq + 1`; событие 101021 по
+`stSimSts.udiFaultSeq` пишет `PRG_Station` (журнал вызывается только из `MainTask`).
 
 `FB_PlantModel` не обращается к глобальным переменным: интеграционные тесты вызывают его так же,
-как программа.
+как программа. Шаг времени за вызов — от `itfTime`, не больше `SIM_DT_MAX` (пауза задачи или отладчик не
+заставляют модель догонять время); «время назад» — шаг 0. За вызов: команды → ПЧ (`FB_VfdSim`, частота
+этого вызова) → подшаги не длиннее `SIM_DT_SUBSTEP` (часы модели, приток, рабочая точка насосов по уровню
+начала подшага, баланс резервуара — явный Эйлер) → датчики, контакты, регистры, состояние. Ток в
+регистре ПЧ — по гидравлике прошлого вызова (запаздывание на один цикл модели).
 
 ### 11.2 Уравнения
 
 - **Время суток:** `tod = rStartTimeOfDay_h + t_model / 3600` по модулю 24; `udiDay` — счёт суток.
+  `xSetTimeOfDay` меняет время в тех же сутках и снимает уже идущие ливни (скачок времени).
 - **Приток:** `Qin = rInflowAvg_m3h · f(tod) + Q_storm(t)`; `f` — линейная интерполяция
   `arDailyProfile` (24 точки, среднее 1,0, раздел 11.3); при `xInflowOverride` —
   `rInflowOverride_m3h` (без профиля и ливней); `xStormNow` — внеочередной ливень с пиком
@@ -1960,39 +1996,56 @@ flowchart LR
   Число ливней `0…uiStormsPerDayMax`, начало — равномерно в сутках, длительность — между
   `tStormMin` и `tStormMax`, пик — между `rStormPeakMin_m3h` и `rStormPeakMax_m3h`; форма —
   трапеция: рост 15 %, полка 50 %, спад 35 % длительности. Одинаковый `udiSeed` — одинаковые ливни
-  при любом ускорении.
+  при любом ускорении. Все `u` считаются в `LREAL` точно (24 бита), порядок выборок — число, затем для
+  каждого ливня начало, длительность, пик (как в эталоне). Нулевое начальное состояние (seed 0 в сутки 0)
+  заменяется `SIM_XS_ZERO_STATE`. Ливень, начавшийся до полуночи, продолжается в следующих сутках.
+  `xResetPlant` снимает ливни, начавшиеся раньше (и внеочередной); ливни, которые начнутся позже, идут.
 - **Резервуар:** `dV = (Qin − Qout) · dt / 3600`, `h = V / rTankArea_m2`, шаги не длиннее
-  `SIM_DT_SUBSTEP`. Выше `rLevelOverflow_m` — перелив (уровень ограничен, `udiOverflow_s` растёт);
-  ниже `SIM_PUMP_INTAKE_M` — насосы подсасывают воздух (подача 0).
+  `SIM_DT_SUBSTEP`. Выше `rLevelOverflow_m` — перелив (уровень ограничен, `udiOverflow_s` растёт: целые
+  секунды, перелив короче секунды — 1 с; `xResetPlant` обнуляет — проверки ПМИ «перелива нет» не зависят
+  от прошлых); ниже `SIM_PUMP_INTAKE_M` — насосы подсасывают воздух (подача 0). Признак «приёмок осушен»
+  для гидравлики и баланса — один (`FB_TankModel.xIntakeDry` по уровню `LREAL`; `SetLevel` обновляет его
+  сразу): иначе на отметке уровень `REAL` и `LREAL` давали бы подачу FT202, которую резервуар не откачивает.
 - **Насосы (законы подобия):** скорость `s = f / 50 Гц`; напор насоса `H_i = H0 · s_i² − k · q_i²`;
   сеть `H = (Hgeo − h) + R · Q²`, `Q = Σ q_i`; обратные клапаны — `q_i = 0` при `H0 · s_i² ≤ H`.
   Рабочая точка — бисекция по `H` на `[Hgeo − h, max(H0 · s_i²)]` (30 итераций), так решаются и
   разные частоты насосов. Сухой ход насоса — `q_i = 0`; засор — `k_i · 6,25` (подача −60 %).
 - **Давление PT201** (у дна, условно): в работе `p = ρ · g · (H + h) / 10⁵` бар, насосы стоят —
   столб за обратными клапанами `ρ · g · Hgeo / 10⁵`.
-- **Ток:** `P_hyd = ρ · g · (q_i / 3600) · H / 1000` кВт; `P = P_hyd / η` (при подаче — иначе
-  `rLossShare · Pnom · s³`); `I = rImagShare · Inom · s + (1 − rImagShare) · Inom · P / Pnom`;
-  засор — ×1,3 к току того же насоса без засора в той же точке сети (06 §5.4: на 100 % — выше
-  34 А); сухой ход — по той же формуле при `q_i = 0` (на 100 % ≈ 11 А, меньше порога 12 А).
-  Регистр — `I · 10` (0,1 А).
+- **Ток (`F_PumpCurrent`):** `P_hyd = ρ · g · (q_i / 3600) · H / 1000` кВт;
+  `P = max(P_hyd / η, rLossShare · Pnom · s³)` — потребляемая мощность не меньше потерь без подачи, ток
+  непрерывен при закрытии обратного клапана (числа раздела 11.3 те же);
+  `I = rImagShare · Inom · s + (1 − rImagShare) · Inom · P / Pnom`; засор — ×1,3 к току того же насоса в
+  сети без засора при тех же частотах и уровне (второе решение рабочей точки; 06 §5.4: на 100 % — выше
+  34 А); сухой ход и осушенный приёмок — по той же формуле при `q_i = 0` (на 100 % ≈ 11 А, меньше
+  порога 12 А), и с засором тоже — множитель засора только у насоса, который может подавать. Регистр —
+  `I · 10` (0,1 А), пока выход ПЧ активен; иначе 0.
 - **ПЧ (`FB_VfdSim`):** частота идёт к заданию `FREF / 100` Гц с ускорением `50 Гц / tVfdAccel`, пока
-  есть «Пуск» (`xP10n_RUN`, в «Местном» — `axLocalRun`), иначе тормозит; реле «Работа» — пока выход
+  есть «Пуск» (`xP10n_RUN`; в «Местном» — `axLocalRun` с частотой местного поста `SIM_VFD_LOCAL_FREQ_HZ`:
+  `FB_MotorVfd` в Local задание по сети не ведёт, а следит за фактом, у стоящего насоса — 0 %), иначе тормозит; реле «Работа» — пока выход
   инвертора активен; авария (инъекция или перегрев) — выбег до 0, реле FLT, бит STW.2, код;
-  сбрасывается фронтом бита CTW.2 после снятия причины. Пропадание питания — ПЧ обесточен
-  (`STW = 0`, связи нет), после восстановления — `tVfdBoot` до готовности. Потеря связи
+  сбрасывается фронтом бита CTW.2 после снятия причины; код — последней аварии (не сбрасывается).
+  Пропадание питания — ПЧ обесточен (регистры 0, связи нет; на ходу — код
+  `SIM_VFD_FCODE_UNDERVOLT`, зафиксированная авария теряется: если причина осталась, она снова
+  появится после загрузки), после восстановления — `tVfdBoot` до готовности. `xResetPlant` («ПЧ
+  готовы») снимает аварию без фронта CTW.2, если причины уже нет. Бит STW.3 модель не формирует,
+  STW.4 — «не местное». Потеря связи
   (`axVfdCommLoss[i]`) — регистры чтения замирают, `xMbOk_RS485_1_Sn = FALSE`, записи
   не доходят; через `SIM_VFD_WATCHDOG` (5 с) без запросов сторожевой таймер ПЧ переводит задание на
   `SIM_VFD_WATCHDOG_FREQ_HZ` (50 Гц), пуск и стоп — по-прежнему проводом (04 §12); после
   восстановления связи ПЧ снова следует `FREF`. ОС «Работа» при `axNoFeedback` — FALSE при
   вращении, при `axFeedbackStuck` — TRUE всегда.
-- **Датчики:** ток, мА, `= 4 + 16 · (x − min) / (max − min)`, затем инъекция `E_SimAiFault` (токи
+- **Датчики (`FB_AnalogSensorSim`):** ток, мА, `= 4 + 16 · (x − min) / (max − min)` с насыщением
+  преобразователя на границах измерения NE 43 (3,8…20,5 мА, константы библиотеки; шкалы — `SIM_*_RANGE_*`
+  по перечню), затем инъекция `E_SimAiFault` (токи
   `SIM_MA_*`, `Forced` — `arAiForced_mA`); FT202 — `Q`; LT101 — истинный уровень; газы — фон или
   значение инъекции; TT403 — `rAirTemp_C` по RS485-2 (`xTempCommLoss` — регистр замирает,
   `xMbOk_RS485_2_S10 = FALSE`).
 - **Контакты:** поплавки НЗ (`TRUE` — норма): `xLS102 := NOT (h ≥ 4,2)`, `xLS103 := NOT (h ≤ 0,4)`,
   затем `E_SimFloatStuck`; `TS1n2`, `MS1n3` — по инъекциям; `ES301` — `NOT xPowerLoss`; `YS302` —
   `xPowerLoss`; `HS1n4` — `axLocal`; кнопки HS501/HS502 — импульс `SIM_BUTTON_PULSE`; `V1_RFB` —
-  следует `xV1_RUN` через `SIM_V1_FB_DELAY` (при `xFanNoFeedback` — FALSE), `V1_FLT` — `xFanFault`.
+  следует `xV1_RUN` через `SIM_V1_FB_DELAY` при включении и отключении (катушка пускателя — от силовой
+  сети: при `xPowerLoss` — FALSE; при `xFanNoFeedback` — FALSE), `V1_FLT` — `xFanFault`.
 
 ### 11.3 Параметры по умолчанию (условные, согласованы с 04 §7.2)
 
@@ -2001,14 +2054,16 @@ flowchart LR
 | `rTankArea_m2`, `rLevelOverflow_m`, `rLevelInit_m` | 12 м², 4,60 м, 1,20 м | 04 §1 |
 | `rInflowAvg_m3h` | 70 м³/ч | 04 §6, §11 |
 | `arDailyProfile` (0…23 ч) | 0,55 0,45 0,40 0,38 0,40 0,55 0,92 1,35 1,60 1,50 1,30 1,15 1,10 1,05 1,00 1,00 1,00 1,15 1,35 1,50 1,45 1,20 0,95 0,70 | среднее 1,00; пик 112 м³/ч, минимум 27 м³/ч (06 §5.4) |
-| ливни | до 2 в сутки, 20…90 мин, пик 100…250 м³/ч, `udiSeed` 20261016 | PMI-39 (сутки при k = 50); перелив при неудачном совпадении ливня с утренним пиком возможен — эталон сообщает его для seed по умолчанию |
+| ливни | до 2 в сутки, 20…90 мин, пик 100…250 м³/ч, `udiSeed` 20261016 | PMI-39 (сутки при k = 50); перелив при неудачном совпадении ливня с утренним пиком возможен — эталон сообщает его для seed по умолчанию: в сутки 0 (ливни в 2,76 ч и 4,53 ч, пики 134 и 194 м³/ч) упрощённая станция «ступенчатое + аварийный режим» перелива не даёт, максимум уровня ≈ 3,2 м (сценарий `pmi39.day0_stepped`) |
 | насос | `rH0_m` 34,5 м, `rK_mh2` 6,06·10⁻⁴, `rHgeo_m` 12 м, `rR_mh2` 4,60·10⁻⁴ | подбор: один насос 100 % — 150 м³/ч, 60 % — 41 м³/ч, два по 75 % — 120 м³/ч, один 87 % — 120 м³/ч (при уровне 1,4 м) |
 | двигатель | `rPnom_kW` 15, `rInom_A` 28, `rEta` 0,62, `rImagShare` 0,30, `rLossShare` 0,12 | один насос на 100 % — ≈ 26,4 А; сухой ход на 100 % — ≈ 10,8 А (< 12 А, порог 04 §10.3); засор на 100 % — ≈ 34,3 А (> HH 34 А); запас до порогов мал — эталон проверяет оба числа, при расхождении правится `rLossShare` |
 | ПЧ | `tVfdAccel` 10 с, `tVfdBoot` 5 с; сторожевой таймер 5 с → 50 Гц | |
 | `rTimeScale` | 1 (проверки ПМИ — по 06, приложение А: 1, 10, 20, 50; демонстрация — 20…50) | |
 
 Эталон `tools_project/plant_reference.py` (Python) повторяет уравнения; тесты ST сверяют числа с эталоном
-(строка `// ref: <сценарий>.<ключ>` перед ассертом, как в библиотеке).
+(строка `// ref: <сценарий>.<ключ>` перед ассертом, как в библиотеке). `python tools_project/plant_reference.py`
+печатает все значения; `test_plant_reference.py` (pytest, CI) сверяет их с числами документов (подачи и
+токи этого раздела, давления ASSUMPTIONS T8, T9, время PMI-20/24 раздела 14.4) и с решением в замкнутой форме.
 
 Тесты: `FB_InflowProfile_Test` (`InterpolatesBetweenHours`, `WrapsAtMidnight`, `MeanIsAverage`),
 `FB_StormGenerator_Test` (`SameSeedSameStorms`, `DifferentDaysDiffer`, `TrapezoidShape`),
@@ -2018,7 +2073,20 @@ flowchart LR
 `CommLossFreezesRegisters`, `CommLossWatchdogGoesTo50HzAfter5s`, `CommRestoredFollowsFref`,
 `PowerLossAndBoot`, `NoFeedbackInjection`, `FeedbackStuckInjection`, `LocalRun`), `FB_PlantModel_Test`
 (`ClearFaultsZeroesFaultsOnly`, `StormNowTrapezoid`, `AiFaultCurrents`, `FloatStuckNormalTripped`,
-`FanNoFeedback`, `FaultSeqCountsChanges`).
+`FanNoFeedback`, `FaultSeqCountsChanges`). Сверх списка: уставки по умолчанию и «время назад» у каждого ФБ
+(раздел 14.1), `F_Xorshift32` по известным значениям, ливень через полночь, снятие ливней, предел числа
+ливней, нулевое состояние генератора, приток не зависит от шага вызова; сухой ход, засор и осушенный
+приёмок; ток ПЧ в регистре, сброс ПЧ командой модели; установившийся режим против эталона
+(`SteadyStateOnePump87`), баланс массы, согласованность при разном шаге (`TimeAccelerationConsistency`:
+шаг 100 мс и 1 с), инъекции насосов и станции, кнопки, время суток, предел шага `SIM_DT_MAX`. По итогам
+проверки модели (ASSUMPTIONS M14–M19) и мутационного тестирования: пуск по месту на частоте местного поста
+(`LocalRunAtLocalPreset`), время перелива — обнуление в И0, короткий перелив, нет перелива при равных
+притоке и откачке, разрешение подшагами (`ResetPlantClearsOverflowTime`, `ShortOverflowCounted`,
+`NoOverflowWhenBalanced`, `OverflowTimeResolvedBySubsteps`), засор без подачи
+(`ClogWithDryIntakeKeepsDryCurrent`), NaN в инъекциях (`NanInjectionCountedOnce`), одна граница приёмка
+(`IntakeEdgeOutflowMatchesTank`), баланс массы двух насосов и FT202 (`MassBalanceTwoPumps`), входы ПЛК
+каждого насоса только от своих инъекций и своего ПЧ (`PerPumpSignalsIsolated`). Наборы регистрирует
+`tests/GVLs/GVL_TestsModel.gvl.st` (`linkalways`).
 
 ## 12. Задачи и библиотеки (`tools/codesys/config.json`, К3)
 
