@@ -1,0 +1,24 @@
+// Каждый метод-тест вызывается каждый цикл; coUnit сам отмечает завершённые (TEST_FINISHED)
+StationStsSizeIs72();
+StationDefaultsMatchTypeDefaults();
+PlcStartLogsEventAndDelaysRequests();
+ManualDryRunInterlocksAllPumps();
+CommandPulsesClearedAndCounted();
+ResetButtonEdgeResetsAndLogs();
+LkgRejectsInvalidCfg();
+RevertCfgRestoresLkg();
+ApplyProjectCfgRestoresDefaults();
+EmergencyRequiresAllAtFullSpeed();
+PowerLostSuppressesLackNoresAts();
+LackSuppressesNoReserve();
+StepFallbackSuppressedInEmergency();
+PidControlsLeadSpeed();
+FloatModeStartsAllOnLs102();
+AtsReplacesFaultedLead();
+UnderloadTripInterlocksAndAts();
+ManualToAutoAdoptsRunningPump();
+ExportCommandAndEvents();
+AlarmIdCommandsResultAndClear();
+SimulationAlarmAndFaultEvent();
+FlowAlarmsSuppressedUntilSettled();
+VentilationAndAnnunciatorOutputs();

@@ -1,0 +1,21 @@
+// Каждый метод-тест вызывается каждый цикл; coUnit сам отмечает завершённые (TEST_FINISHED)
+DryRunByFloat();
+DryRunByLtLl();
+DryRunReleaseAboveL();
+DryRunReleaseWithoutLtAfterTDryRelease();
+EmergencyByFloatAndByHh();
+EmergencyReleaseBelowH();
+FalseLs103MaskedAfterTLdev();
+FalseLs102MaskedAfterTLdev();
+Ls102NotTrippedAboveOffMark();
+MaskReleasedWhenFloatReturns();
+MaskReleasedWhenLtInvalid();
+OorLtContradictingFloatMaskedAfterTLdev();
+GoodLtContradictingFloatMasksFloat();
+LtMaskReleasedAfterTLtRecover();
+FloatModeStartsAllOnLs102StopsOnLs103();
+FloatModeEntryWhilePumpingKeepsPumping();
+FloatModeExitAfterTLtRecover();
+DryRunAndEmergencyBothDryRunWins();
+FirstCallDoesNotEnterFloatMode();
+Ls103NotTrippedBelowOffMark();

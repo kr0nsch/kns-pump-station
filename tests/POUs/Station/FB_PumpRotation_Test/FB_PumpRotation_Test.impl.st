@@ -1,0 +1,25 @@
+// Каждый метод-тест вызывается каждый цикл; coUnit сам отмечает завершённые (TEST_FINISHED)
+RunHoursPicksLeastHours();
+TieBreakStartsThenIndex();
+CyclicAdvancesNextLeadRetained();
+FixedOrder();
+ReadyBeforeInhibited();
+RunningKeepRoles();
+ForeignRunningReducesRequests();
+RequestLimitCapsRequests();
+StaggerDelaysSecondStart();
+StopMoreHoursWhenFewerNeeded();
+CyclicStopsAssist();
+RequireCommPicksCommPumpAsLead();
+LeadSwapWithoutStartStop();
+HandoverAfterTMaxContRunWithOverlap();
+HandoverRetryWhenNoStandby();
+HandoverDisabledInEmergency();
+FaultedPumpLosesRequestImmediately();
+ResetPumpBecomesStandby();
+AdoptKeepsRunningPumpsOnAutoEntry();
+AdoptAtPlcStartFromFeedback();
+EmergencyRequiresAllThree();
+DisabledNoRequestsRolesStandby();
+GarbageNextLeadSanitized();
+StaggerSkippedWhenPreviousDropped();
