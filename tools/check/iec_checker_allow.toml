@@ -105,7 +105,7 @@ reason = "Ложное срабатывание iec_checker 0.4: входы — 
 [[allow]]
 id = "UnusedVariable"
 file = "tests/POUs/Station/*"
-match = "variable: (AFB|FB|ST|U)[A-Z0-9]*$"
+match = "variable: ((AFB|FB|ST)[A-Z0-9]*|UBITS)$"
 reason = "Ложное срабатывание iec_checker 0.4: ФБ под тестом и подменные насосы используются вызовом, чтением выходов и параметрами помощников, структуры и объединения (stSts в SIZEOF, uBits) — обращением к полям"
 
 [[allow]]

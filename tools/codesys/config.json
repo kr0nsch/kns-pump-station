@@ -66,12 +66,12 @@
       "install_from": {"env": "COUNIT_LIBRARY", "default": null}
     },
     "plc-process-lib": {
-      "label": "plc-process-lib 1.0.0.0 (PL): устройства, тревоги ISA-18.2, ПИД, время",
+      "label": "plc-process-lib 1.0.0.0 (библиотека портфолио, пространство имён PL)",
       "namespace": "PL",
       "title": "plc-process-lib",
       "company": "plc-portfolio",
       "version": "1.0.0.0",
-      "build_from_repo": {"env": "PL_REPO", "default": ["../plc-process-lib", "../../plc-process-lib"]}
+      "build_from_repo": {"env": "PL_REPO", "default": "../plc-process-lib"}
     },
     "standard": {
       "label": "Standard (плейсхолдер #Standard, версию задаёт профиль CODESYS)",
