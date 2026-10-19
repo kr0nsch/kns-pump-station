@@ -41,7 +41,7 @@
   "modes": {
     "normal": {
       "tasks": [
-        {"name": "MainTask", "interval_ms": 20, "priority": 1,
+        {"name": "MainTask", "interval_ms": 20, "priority": 1, "watchdog": {"time_ms": 100, "sensitivity": 1},
          "pous": ["PRG_FieldIn", "PRG_DeviceList", "PRG_Station", "PRG_Devices", "PRG_FieldOut"]},
         {"name": "PlantModelTask", "interval_ms": 20, "priority": 2, "pous": ["PRG_PlantModel"]},
         {"name": "SlowTask", "interval_ms": 200, "priority": 20, "pous": ["PRG_Slow"]}

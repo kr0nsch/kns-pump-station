@@ -14,6 +14,8 @@ fbDut.xLevelValid := TRUE;
 fbDut.eLevelNe107 := PL.E_Ne107Status.Good;
 fbDut.rLvlL_m := 0.8;
 fbDut.rLvlH_m := 3.5;
+fbDut.rLvlLProject_m := 0.8;
+fbDut.rLvlHProject_m := 3.5;
 fbDut.xPowerOk := TRUE;
 Cycle(fbDut := fbDut, fbTime := fbTime, stCmd := stCmd, stCfgPersist := stCfgPersist, stCfgLkg := stCfgLkg,
       stRetain := stRetain, fbPid := fbPid, stPidCmd := stPidCmd, stPidCfg := stPidCfg,

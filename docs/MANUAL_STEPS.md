@@ -113,7 +113,7 @@ setx CODESYS_PROFILE "CODESYS V3.5 SP17 Patch 3"
 
 | Команда | Что делает |
 |---|---|
-| `python tools/codesys/cds.py import` | `src/` → `build/<имя>.project` (MainTask 20 мс → `PRG_Main`) |
+| `python tools/codesys/cds.py import` | `src/` → `build/<имя>.project`, задачи режима normal из `tools/codesys/config.json`: `MainTask` 20 мс, приоритет 1, сторожевой таймер 100 мс → `PRG_FieldIn`, `PRG_DeviceList`, `PRG_Station`, `PRG_Devices`, `PRG_FieldOut`; `PlantModelTask` 20 мс, приоритет 2 → `PRG_PlantModel`; `SlowTask` 200 мс, приоритет 20 → `PRG_Slow` (DESIGN, раздел 12) |
 | `python tools/codesys/cds.py import --tests` | `src/` и `tests/` → `build/<имя>-tests.project` (TestTask 10 мс → `PRG_Tests`, coUnit) |
 | `python tools/codesys/cds.py build` | импорт и полная сборка: `build/build.log`, `build/build.json` |
 | `python tools/codesys/cds.py build --tests` | то же для тестового проекта |

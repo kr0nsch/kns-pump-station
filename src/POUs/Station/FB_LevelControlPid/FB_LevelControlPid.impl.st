@@ -17,7 +17,9 @@ xTrack := NOT xPidControls;
 
 // 2. Готовность (04 §7.4): ПИД в Auto, уровень годен и есть насос со связью — среди работающих в
 //    Auto, а если насосы стоят — среди доступных. Если насосы есть, но связи нет ни у одного, —
-//    потеря связи: готовность снимается сразу и возвращается через STN_PID_RECOVER (04 §12)
+//    потеря связи: готовность снимается сразу и возвращается через STN_PID_RECOVER (04 §12). Пока нет
+//    напряжения или идёт последовательный пуск, ПЧ без питания или загружаются (VFD-12): связи нет, но это не
+//    потеря — выдержка возврата не перезапускается, готовность — как только связь есть (04 §7.4)
 xAnyRunning := FALSE;
 xCommRunning := FALSE;
 xCommAvailable := FALSE;
@@ -39,7 +41,7 @@ xCommBlock := SEL(xAnyRunning, xAnyAvailable, TRUE) AND NOT xCommPart;
 IF xFirstCall THEN
     fbCommRecover.Preset(xValue := TRUE);           // при старте выдержки возврата нет
 END_IF
-fbCommRecover(xIn := NOT xCommBlock, tOnDelay := GVL_Const.STN_PID_RECOVER, itfTime := itfTime);
+fbCommRecover(xIn := NOT xCommBlock OR xPowerRestore, tOnDelay := GVL_Const.STN_PID_RECOVER, itfTime := itfTime);
 xPidReady := ePidMode = PL.E_DeviceMode.Auto AND xLevelValid AND xCommPart AND fbCommRecover.xOut;
 
 // 3. Вход без рывка: число насосов — по работающим, выдержки — заново

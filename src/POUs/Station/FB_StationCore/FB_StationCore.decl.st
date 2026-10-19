@@ -9,7 +9,7 @@
 //             сгенерированного слоя. Привязку к GVL_Devices, GVL_Hmi, GVL_IO, GVL_Persist, GVL_Log,
 //             GVL_Sim, GVL_Time и GVL_DeviceList выполняет PRG_Station.
 // Автор:      <ИМЯ ФАМИЛИЯ>
-// Версия:     0.2.0
+// Версия:     0.3.0
 // Документ:   docs/DESIGN.md, разделы 6.15 и 7; docs/04_algorithms.md, разделы 4, 15, 16, 18.3, 19
 FUNCTION_BLOCK FB_StationCore
 VAR_INPUT
@@ -31,6 +31,9 @@ VAR_INPUT
     xLevelHH          : BOOL;
     rLvlL_m           : REAL;                 // GVL_Persist.stLT101Cfg: уставка L (порядок отметок)
     rLvlH_m           : REAL;                 // уставка H
+    rLvlLProject_m    : REAL;                 // GVL_CfgProject.stLT101Cfg: уставка L проекта (цикл «Применить уставки
+                                              // проекта»: LT101 восстанавливает PRG_Devices — после станции)
+    rLvlHProject_m    : REAL;                 // уставка H проекта
     xFloatHigh        : BOOL;                 // fbLS102.xValue
     xFloatDry         : BOOL;                 // fbLS103.xValue
     xPowerOk          : BOOL;                 // fbES301.xValue
@@ -114,6 +117,8 @@ VAR_TEMP
     xSilenceNow    : BOOL;                    // «Звук» (HS502 или HMI)
     xCfgCmd        : BOOL;                    // уставки переписаны командой (событие уже записано)
     uiParam        : UINT;                    // номер изменённого параметра (событие 101017)
+    rLvlLChk_m     : REAL;                    // L и H LT101 для проверки уставок станции (команда — уставки проекта)
+    rLvlHChk_m     : REAL;
     wAckMask       : WORD;                    // маски команд тревог станции этого вызова
     wShelveMask    : WORD;
     wUnshelveMask  : WORD;

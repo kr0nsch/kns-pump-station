@@ -28,3 +28,8 @@ DryRunStopSuppressesNoReserve();
 StepAlarmNoFlickerOnStartAndAutoEntry();
 OverheatTripIsAts();
 RestartSequencesEmergencyPumps();
+ApplyProjectCfgChecksProjectLevelLimits();
+ManualToAutoStoppedPumpsNoNoresFlicker();
+DryRunReleaseNoNoresStepFlicker();
+StepAlarmNoFlickerAfterPowerRestorePid();
+ManualFloatModeKeepsEhlDry();

@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 from collections.abc import Mapping
@@ -32,7 +33,7 @@ from conftest import CONFIG_TEMPLATE, LIVE_CONFIG, template_config
 OPEN_SECTIONS = ("modes", "libraries")
 MODES = ("normal", "test")
 MODE_KEYS = {"tasks", "libraries"}
-TASK_KEYS = {"name", "interval_ms", "pous", "priority"}
+TASK_KEYS = {"name", "interval_ms", "pous", "priority", "watchdog"}
 # Ключи описания библиотеки (Settings.library_spec); install_from, build_from_repo — пути
 LIBRARY_SPEC_KEYS = {
     "label",
@@ -123,6 +124,8 @@ def test_modes_and_libraries_are_complete(path: Path, tmp_path: Path) -> None:
             names.add(task["name"].lower())
             assert float(task["interval_ms"]) > 0, f"modes.{mode}.{task['name']}: interval_ms"
             assert task["pous"] and all(isinstance(p, str) and p for p in task["pous"]), f"{task['name']}: pous"
+            if "watchdog" in task:  # сторожевой таймер задачи — как его читает импорт
+                importlib.import_module("import_sources").watchdog_target(task["watchdog"])
         for key in cfg.get("libraries", []):
             assert key in libraries, f"modes.{mode}.libraries: {key} не описана в libraries"
     for key in data["library"].get("libraries", []):

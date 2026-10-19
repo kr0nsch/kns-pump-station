@@ -14,6 +14,6 @@ Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 
 
 AssertTrue(Condition := fbDut.xLdev AND (fbDut.wLdev AND GVL_Const.STN_LDEV_LS103_MISSED) <> 0,
            Message := 'LDEV: LS103 missed');
-AssertTrue(Condition := fbDut.xDryRun AND NOT fbDut.xLtMasked, Message := 'dry run by LL, LT trusted');
+AssertTrue(Condition := fbDut.xDryRun AND fbDut.xLevelUsable, Message := 'dry run by LL, LT trusted');
 
 coUnit.TEST_FINISHED();

@@ -17,9 +17,10 @@ fbDut.rLvlH_m := 3.5;
 fbDut.xPowerOk := TRUE;
 
 stRetain.eMethod := E_ControlMethod.LevelPid;
+// старт ПЛК: последовательный пуск tPlcStart = 10 с (STEP подавлена), затем выдержка STEP 10 с
 Cycle(fbDut := fbDut, fbTime := fbTime, stCmd := stCmd, stCfgPersist := stCfgPersist, stCfgLkg := stCfgLkg,
       stRetain := stRetain, fbPid := fbPid, stPidCmd := stPidCmd, stPidCfg := stPidCfg,
-      stPidRetain := stPidRetain, fbAlarms := fbAlarms, afbPump := afbPump, tStep := T#100MS, uiSteps := 110,
+      stPidRetain := stPidRetain, fbAlarms := fbAlarms, afbPump := afbPump, tStep := T#100MS, uiSteps := 210,
       xPlant := TRUE);
 
 AssertTrue(Condition := fbDut.stSts.eControlAct = E_ControlAct.Stepped, Message := 'PID not ready: Stepped');

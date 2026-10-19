@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Документ | `docs/DESIGN.md`, версия 0.5 (приёмка ПМИ на рантайме), 19.10.2026 |
-| Основание | [ARCHITECTURE.md](ARCHITECTURE.md) (слои, задачи, решения D-xx), [04_algorithms.md](04_algorithms.md) v0.3 (алгоритмы, уставки — раздел 18), [05_alarm_list.csv](05_alarm_list.csv), [06_PMI.md](06_PMI.md) v0.4 (39 проверок), контракт plc-process-lib 1.0.0 |
+| Документ | `docs/DESIGN.md`, версия 0.6 (правки по ревью кода), 19.10.2026 |
+| Основание | [ARCHITECTURE.md](ARCHITECTURE.md) (слои, задачи, решения D-xx), [04_algorithms.md](04_algorithms.md) v0.4 (алгоритмы, уставки — раздел 18), [05_alarm_list.csv](05_alarm_list.csv), [06_PMI.md](06_PMI.md) v0.5 (39 проверок), контракт plc-process-lib 1.0.0 |
 | Согласованность | `python tools_project/check_docs_consistency.py` сверяет объявления этого документа с 01–08, перечнем сигналов, выводом iolistgen и контрактом библиотеки (CI) |
 | Для кого | три команды реализации (раздел 15): интерфейсы этого документа — **контракт** между ними |
 | Изменения | интерфейс, отмеченный «заморожен», меняется только правкой этого документа до правки кода |
@@ -41,6 +41,14 @@
 LT101 по AI-13 (раздел 6.7); исполнитель OPC UA: пакеты до 100 узлов, тип записи по значению, `reset` через
 `sim.py`, курсор журнала до отличий И0, `capture` после ожиданий (раздел 14.3); сертификаты OPC UA — без ручного
 шага (раздел 16, шаг 5); запросы в другие проекты — раздел 17.
+
+Отличия версии 0.6 (ревью кода): «Применить уставки проекта» проверяет уставки по умолчанию по L/H LT101 проекта
+(раздел 6.15); `KNS1.EHL` и `KNS1.DRY` подавляются режимом по поплавкам только в «Автомате», `KNS1.STEP` — и при
+последовательном пуске (раздел 6.11); пока нет напряжения и идёт последовательный пуск, загрузка ПЧ не
+перезапускает выдержку возврата к ПИД (раздел 6.4); мёртвая ветка исключения LT101 по противоречию удалена —
+бит 15 `wState` и бит 4 `wLdev` резерв (раздел 6.7); сторожевой таймер `MainTask` — ключ `watchdog` в
+`config.json` (раздел 12); прогон символов объединённого проекта (раздел 13); сверка уставок LIC101 по умолчанию
+с `GVL_Persist` — pytest (раздел 4.2).
 
 ## 0. Соглашения
 
@@ -208,7 +216,8 @@ VAR_GLOBAL CONSTANT
     STN_ATS_WINDOW : TIME := T#10S;          // окно поиска насоса, введённого АВР (событие 101006)
     STN_LAMP_HALF_PERIOD : TIME := T#500MS;  // HL1 мигает 1 Гц
     STN_FULL_SPEED_PCT : REAL := 100.0;      // аварийный режим и по поплавкам
-    STN_FLOW_SETTLE : TIME := T#20S;         // насос работает дольше — тревоги L/LL PT201 и L FT202 не подавляются (условно)
+    STN_FLOW_SETTLE : TIME := T#20S;         // насос работает дольше — уставки PT201 и FT202 не подавляются (условно;
+                                             // вход подавления AI 1.0.0 общий для HH, H, L, LL — раздел 7, шаг 12)
     // биты stStationSts.wState (04 §19.3)
     STN_ST_DRY_RUN : WORD := 16#0001;
     STN_ST_EMERGENCY : WORD := 16#0002;
@@ -225,7 +234,6 @@ VAR_GLOBAL CONSTANT
     STN_ST_HORN : WORD := 16#1000;
     STN_ST_COMMON_ALARM : WORD := 16#2000;   // K1 обесточено
     STN_ST_UNACK : WORD := 16#4000;
-    STN_ST_LT_MASKED : WORD := 16#8000;      // LT101 исключён по противоречию с поплавком (04 §10.5)
     // биты stStationSts.wCfgErr (F_StationCfgCheck, 04 §18.3)
     STN_CFG_LEVEL_ORDER : WORD := 16#0001;   // нарушен порядок отметок 04 §1
     STN_CFG_LEVEL_RANGE : WORD := 16#0002;   // уровень вне диапазона 04 §18.2
@@ -296,7 +304,6 @@ VAR_GLOBAL CONSTANT
     STN_LDEV_LS102_MISSED : WORD := 16#0002; // LS102 не сработал (уровень выше rLdev102Off_m)
     STN_LDEV_LS103_FALSE : WORD := 16#0004;  // LS103 сработал ложно (уровень выше rLdev103On_m)
     STN_LDEV_LS103_MISSED : WORD := 16#0008; // LS103 не сработал (уровень ниже rLdev103Off_m)
-    STN_LDEV_LT_MASKED : WORD := 16#0010;    // LT101 исключён по противоречию (вне диапазона)
     STN_MS_PER_S : UDINT := 1000;            // мс в секунде: остаток в целых секундах вверх (uiSeqRemain_s)
     // ===== Модель (К2) =====
     SIM_TIME_SCALE_MAX : REAL := 50.0;       // k · T_MainTask ≤ 1 с (ARCHITECTURE, раздел 11)
@@ -770,9 +777,11 @@ END_VAR
 ```
 
 Используются командой «Применить уставки проекта». Имена — как у переменных `GVL_Persist`
-(подавление `// lint:allow STL007` с причиной, как в `GVL_CfgProject`). Если
-инициализатор `GVL_Persist` сможет ссылаться на константу (`:= GVL_StationDefaults.stLIC101Cfg`) —
-проверить компиляцией; иначе тест `StationDefaultsMatchPersistInit` сверяет оба текста.
+(подавление `// lint:allow STL007` с причиной, как в `GVL_CfgProject`). Инициализатор `stLIC101Cfg`
+блока станции `GVL_Persist` (`tools_project/persist_station.txt` и сгенерированный `GVL_Persist.pvl.st`) —
+вторая копия того же текста: ссылку на константу (`:= GVL_StationDefaults.stLIC101Cfg`) в Persistent Variables
+не проверяли. Обе копии поле за полем сверяет pytest `tools_project/test_station_defaults.py`
+(`test_station_defaults_match_persist_init`; что сверка замечает расхождение — `test_drift_is_detected`).
 
 ### 4.3 `GVL_Log` (К3)
 
@@ -1052,6 +1061,7 @@ VAR_INPUT
     uiLead      : UINT;             // ведущий (FB_PumpRotation, прошлый цикл); 0 — нет
     xInit       : BOOL;
     uiInitPumps : UINT;
+    xPowerRestore : BOOL;           // нет напряжения или последовательный пуск: ПЧ без питания или загружаются
     itfTime     : PL.I_TimeSource;
 END_VAR
 VAR_IN_OUT CONSTANT
@@ -1075,7 +1085,10 @@ END_VAR
   работающих в `Auto`, а если насосы стоят — среди доступных (`Available`: пауза `tMinStop` и лимит
   пусков готовность не снимают, иначе `KNS1.STEP` появлялась бы после каждого останова). Потеря связи —
   насосы есть, а связи нет ни у одного: готовность снимается сразу, после восстановления — через
-  `STN_PID_RECOVER`; при старте выдержки нет.
+  `STN_PID_RECOVER`; при старте выдержки нет. При `xPowerRestore` (нет напряжения, последовательный пуск) связи
+  с ПЧ нет потому, что они без питания или загружаются (VFD-12 библиотеки): это не потеря связи, выдержка не
+  перезапускается и ПИД готов, как только связь появилась. Без этого после каждого восстановления питания ПИД
+  ждал бы 30 с, и при выбранном ПИД появлялась `KNS1.STEP` (ревью кода, 04 §7.4).
 - Условия по выходу ПИД (подключение и отключение подпорного) действуют только при `xPidControls`: в
   слежении выход повторяет задание ведущего и о нагрузке не говорит.
 - Задание ПИД ФБ не считает: оно внешнее (`stCfgLkg.rLevelSp_m`, раздел 7).
@@ -1083,7 +1096,8 @@ END_VAR
 Тесты: `StartsLeadAtStartLevel`, `AssistOnOutputHighForTAssistOn`, `AssistOnLevelAboveAssistStart`,
 `AssistOffOutputLowForTAssistOff`, `AssistNotOffAboveAssistStartLevel`, `StopAllAtStopLevel`,
 `TrackWhenLeadNotSpeedAuto`, `TrackWhenLeadCommLost`, `NotReadyWithoutCommPump`,
-`ReadyAfterCommRecoverDelay`, `NotReadyWhenPidManual`, `InitFromRunningPumps`.
+`ReadyAfterCommRecoverDelay`, `NotReadyWhenPidManual`, `InitFromRunningPumps`,
+`CommAbsentDuringPowerRestoreNoRecoverDelay`.
 
 ### 6.5 `FB_PumpRotation` — роли, чередование, передача роли (04 §5, §8)
 
@@ -1223,8 +1237,7 @@ VAR_IN_OUT CONSTANT
     stCfg : ST_StationCfg;          // tDryRelease, rLdev*, tLdev, tLtRecover
 END_VAR
 VAR_OUTPUT
-    xLevelUsable    : BOOL;         // xLevelValid AND NOT xLtMasked — по нему работают ступенчатое, ПИД и LIC101.xPvValid
-    xLtMasked       : BOOL;         // 04 §10.5: LT101 вне диапазона и противоречит поплавку дольше tLdev → уровнемер исключён
+    xLevelUsable    : BOOL;         // = xLevelValid (вне диапазона — FALSE, AI-13): ступенчатое, ПИД, LIC101.xPvValid
     xDryRun         : BOOL;         // 04 §10.1 → KNS_ILK_DRY_RUN всем насосам; KNS1.DRY
     xEmergency      : BOOL;         // 04 §10.2 (взвод LS102 или HH; снятие ниже H)
     xFloatMode      : BOOL;         // 04 §11: NOT xLevelUsable; выход — tLtRecover годного сигнала
@@ -1232,32 +1245,31 @@ VAR_OUTPUT
     xLs102Masked    : BOOL;         // 04 §10.5
     xLs103Masked    : BOOL;
     xLdev           : BOOL;         // любое противоречие дольше tLdev (KNS1.LDEV)
-    wLdev           : WORD;         // бит 0 LS102 ложно, 1 LS102 не сработал, 2 LS103 ложно, 3 LS103 не сработал, 4 LT101 исключён
+    wLdev           : WORD;         // бит 0 LS102 ложно, 1 LS102 не сработал, 2 LS103 ложно, 3 LS103 не сработал
 END_VAR
 ```
 
 Формулы взвода и снятия — 04 §10.1, §10.2 и таблица §10.5 без изменений, во всех формулах вместо
-`fbLT101.xValid` — `xLevelUsable`. Кому доверять (04 §10.5): при `eLevelNe107 = Good` виноват
-поплавок (маска поплавка), при `OutOfSpecification` и противоречии с любым поплавком дольше `tLdev`
-исключается уровнемер (`xLtMasked`, бит `STN_ST_LT_MASKED`); маска уровнемера снимается, когда сигнал
-вернулся в норму (`Good`) и противоречия нет дольше `tLtRecover`. Маски поплавков снимаются сами,
-когда поплавок вернулся, и сразу при `xLevelUsable = FALSE`. Режим по поплавкам — диаграмма 04 §11:
-вход при работающих насосах — сразу «откачка». События 101011…101014 (101011/101012 — значение
-102 или 103; исключение уровнемера отмечается событием 101013). Снятие сухого хода без уровнемера —
-`LS103` снят дольше `tDryRelease`, отсчёт идёт, пока защита действует при негодном уровнемере (PMI-26:
-через `tDryRelease` после исключения LT101). В первом вызове (выходы устройств ещё не посчитаны,
-`xValid = FALSE`) режим по поплавкам не включается. С plc-process-lib 1.0.0 (решение AI-13) подтверждённый за
-`tFailDelay` выход за диапазон сам даёт `xValid = FALSE`: станция переходит на поплавки сразу, без LL → «сухой ход»
-по уровнемеру и без противоречий; ветка «`OutOfSpecification` и противоречие дольше `tLdev`» остаётся только для
-неподтверждённого выхода за диапазон и на практике не наступает (`tLdev` 30 с > `tFailDelay` 2 с). Проверено
-приёмкой ПМИ (PMI-26, 06 v0.4).
+`fbLT101.xValid` — `xLevelUsable`. Кому доверять (04 §10.5): при годном уровнемере (`eLevelNe107 = Good`)
+виноват поплавок (маска поплавка). Выход LT101 за диапазон с plc-process-lib 1.0.0 (решение AI-13) после
+подтверждения за `tFailDelay` сам даёт `xValid = FALSE`: станция переходит на поплавки сразу, без LL → «сухой
+ход» по уровнемеру и без противоречий (они считаются только при `xValid`). Поэтому `xLevelUsable = xLevelValid`,
+а отдельного исключения уровнемера по противоречию нет: пара «`xValid = TRUE` и `OutOfSpecification`», на
+которой оно было построено (выход `xLtMasked`, бит 15 слова `wState` 16#8000, бит 4 `wLdev`),
+от библиотеки 1.0.0 прийти не может — эта ветка была мёртвой и удалена (ревью кода; проверено интеграционным
+тестом с настоящим `PL.FB_AnalogInput` и приёмкой PMI-26). Маски поплавков снимаются сами, когда поплавок
+вернулся, и сразу при `xLevelUsable = FALSE`. Режим по поплавкам — диаграмма 04 §11: вход при работающих насосах
+— сразу «откачка». События 101011…101014 (101011/101012 — значение 102 или 103). Снятие сухого хода без
+уровнемера — `LS103` снят дольше `tDryRelease`, отсчёт идёт, пока защита действует при негодном уровнемере. В
+первом вызове (выходы устройств ещё не посчитаны, `xValid = FALSE`) режим по поплавкам не включается.
 
 Тесты: `DryRunByFloat`, `DryRunByLtLl`, `DryRunReleaseAboveL`, `DryRunReleaseWithoutLtAfterTDryRelease`,
 `EmergencyByFloatAndByHh`, `EmergencyReleaseBelowH`, `FalseLs103MaskedAfterTLdev`,
 `FalseLs102MaskedAfterTLdev`, `Ls102NotTrippedAboveOffMark`, `MaskReleasedWhenFloatReturns`,
-`MaskReleasedWhenLtInvalid`, `OorLtContradictingFloatMaskedAfterTLdev`, `GoodLtContradictingFloatMasksFloat`,
-`LtMaskReleasedAfterTLtRecover`, `FloatModeStartsAllOnLs102StopsOnLs103`,
-`FloatModeEntryWhilePumpingKeepsPumping`, `FloatModeExitAfterTLtRecover`, `DryRunAndEmergencyBothDryRunWins`.
+`MaskReleasedWhenLtInvalid`, `OorLtInvalidFloatsAtOnce` (настоящий `PL.FB_AnalogInput` с уставками LT101
+проекта: 3,7 мА — сразу поплавки, LL уровнемера есть, сухого хода и LDEV нет), `GoodLtContradictingFloatMasksFloat`,
+`FloatModeStartsAllOnLs102StopsOnLs103`, `FloatModeEntryWhilePumpingKeepsPumping`, `FloatModeExitAfterTLtRecover`,
+`DryRunAndEmergencyBothDryRunWins`.
 
 ### 6.8 `FB_PumpProtection` — недогрузка и перегрев одного насоса (04 §10.3, 10.4)
 
@@ -1374,13 +1386,15 @@ END_VAR
 // AckAll : BOOL; GetAlarm(uiIndex) : PL.I_Alarm (индекс 0 → slot 1); AlarmCount : UINT = 13
 ```
 
-Условия и подавления (04 §15) задаёт `PRG_Station`: EHL — `xEmergency`, подавление `xFloatMode`;
-DRY — `xDryRun`, подавление `xFloatMode`; LACK — `xLack`, подавление `xPowerLost` или «Ручной»;
+Условия и подавления (04 §15) задаёт `PRG_Station`: EHL — `xEmergency`, подавление `xFloatMode` в «Автомате»;
+DRY — `xDryRun`, подавление `xFloatMode` в «Автомате» (в «Ручном» управления по поплавкам нет — тревоги нужны
+оператору, 04 §3.1, §10.2); LACK — `xLack`, подавление `xPowerLost` или «Ручной»;
 NORES — `xNoReserve`, подавление LACK активна, `xPowerLost`, «Ручной», `xDryRun` (насосы заблокированы
 защитой станции, дубль DRY); ATS — `xAtsActive`,
 подавление `xPowerLost`; FLOAT — `xFloatMode`; LDEV — `xLdev`; STEP — `xStepFallback` (задержка 10 с в Cfg: переходные циклы старта и входа в
 «Автомат»), подавление при
-`eControlAct` ∈ {Emergency, Float, DryRunStop, PowerLost}; NOAUTO — `eMode = Manual` (задержка 600 с в
+`eControlAct` ∈ {Emergency, Float, DryRunStop, PowerLost, Restart} (последовательный пуск идёт по ступенчатому
+автомату при любой готовности ПИД); NOAUTO — `eMode = Manual` (задержка 600 с в
 Cfg); UL1…UL3 — `xUnderloadTrip`; SIM — `GVL_Sim.xSimulation`. Вход тревоги — `axCond AND NOT axSuppress`: при
 подавлении выдержка появления не копится и после снятия подавления отсчитывается заново. Без этого условие,
 которое держится ещё цикл после снятия подавления (станция видит выходы устройств циклом позже: после «сухого
@@ -1476,6 +1490,9 @@ VAR_INPUT
     xLevelHH          : BOOL;
     rLvlL_m           : REAL;                 // GVL_Persist.stLT101Cfg: уставка L (порядок отметок)
     rLvlH_m           : REAL;                 // уставка H
+    rLvlLProject_m    : REAL;                 // GVL_CfgProject.stLT101Cfg: уставка L проекта (цикл «Применить уставки
+                                              // проекта»: LT101 восстанавливает PRG_Devices — после станции)
+    rLvlHProject_m    : REAL;                 // уставка H проекта
     xFloatHigh        : BOOL;                 // fbLS102.xValue
     xFloatDry         : BOOL;                 // fbLS103.xValue
     xPowerOk          : BOOL;                 // fbES301.xValue
@@ -1540,6 +1557,12 @@ END_VAR
   (`xSetAuto` и `xSetManual` в одном цикле — две).
 - Событие 101017: номер параметра № 2–31, таблица тревог или резерв — `STN_CFG_PARAM_ALARMS`, команда
   («Применить уставки проекта», откат) — 0; при старте записанные уставки принимаются без события.
+  «Применить уставки проекта» выполняется в одном цикле двумя программами: ядро переписывает уставки станции
+  и LIC101, а L/H LT101 уставок проекта `PRG_Devices` восстанавливает после станции. Поэтому в цикле команды
+  ядро проверяет уставки по умолчанию по L/H проекта (`rLvlLProject_m`, `rLvlHProject_m`), а не по прежним:
+  иначе после перенастройки L/H LT101 цикл команды давал ложную ошибку уставок (`wCfgErr`, NE 107
+  «функциональная проверка»), а следующий — второе событие 101017 с номером параметра (ревью кода, тест
+  `ApplyProjectCfgChecksProjectLevelLimits`).
   Событие 101021 — значение `udiFaultSeq` (номер поля инъекции станции неизвестен).
 - Последовательный пуск охватывает все насосы состояния под ним (04 §13.2): при сухом ходе — 0, по
   поплавкам — `fbProt.uiFloatRequired`, при аварийном уровне — `STN_PUMP_COUNT` (частота в обоих —
@@ -1549,6 +1572,9 @@ END_VAR
   ведущего, 04 §3.2); сухой ход и нет напряжения — прежнее.
 - NE 107 станции — по тревогам после их задержек и без подавления по условию; биты `NO_RESERVE`,
   `LACK`, `STEP_FALLBACK` `wState` — условие тревоги без подавления.
+- Готовность ПИД: пока нет напряжения или идёт последовательный пуск (`fbPower.xPowerLost OR xRestart` →
+  `FB_LevelControlPid.xPowerRestore`), отсутствие связи с ПЧ (ПЧ без питания или загружаются, VFD-12) не
+  перезапускает выдержку `STN_PID_RECOVER` (раздел 6.4).
 - `FB_Annunciator` берёт счётчики сводки прошлого цикла (сводка вызывается после ядра): задержка
   сирены, лампы и K1 — один цикл `MainTask`.
 - Уставки при старте ПЛК: действующая копия `stCfgLkg` := сохранённая `stCfgLkgRetain`, если она проходит
@@ -1565,7 +1591,10 @@ END_VAR
 `AtsReplacesFaultedLead`, `UnderloadTripInterlocksAndAts`, `ManualToAutoAdoptsRunningPump`,
 `ExportCommandAndEvents`, `AlarmIdCommandsResultAndClear`, `SimulationAlarmAndFaultEvent`,
 `FlowAlarmsSuppressedUntilSettled`, `VentilationAndAnnunciatorOutputs`, `DryRunStopSuppressesNoReserve`,
-`OverheatTripIsAts`, `RestartSequencesEmergencyPumps`, `StepAlarmNoFlickerOnStartAndAutoEntry`.
+`OverheatTripIsAts`, `RestartSequencesEmergencyPumps`, `StepAlarmNoFlickerOnStartAndAutoEntry`; по ревью кода
+(написаны до исправлений и падали) — `ApplyProjectCfgChecksProjectLevelLimits`, `ManualToAutoStoppedPumpsNoNoresFlicker`
+и `DryRunReleaseNoNoresStepFlicker` (запрос режима и снятие блокировки насос выполняет циклом позже станции),
+`StepAlarmNoFlickerAfterPowerRestorePid`, `ManualFloatModeKeepsEhlDry`.
 
 ## 7. `PRG_Station` — порядок цикла (К1)
 
@@ -1582,7 +1611,9 @@ END_VAR
 1. **Ссылки и приёмник:** `PL.GVL_Lib.itfAlarmSink := GVL_Log.fbEventLog`,
    `GVL_Log.fbEventLog.itfTime := GVL_Time.fbClockMain`; `aitfPump[i] := GVL_Devices.fbP101…fbP103`.
 2. **Уставки (LKG):** `GVL_Hmi.xApplyProjectCfg` → `GVL_Persist.stStationCfg := GVL_StationDefaults.stStationCfg`,
-   то же для `stLIC101Cfg`, событие 101017 (флаг не сбрасывать — его сбросит `PRG_Devices`).
+   то же для `stLIC101Cfg`, событие 101017 (флаг не сбрасывать — его сбросит `PRG_Devices`). В цикле команды
+   уставки проверяются по L/H LT101 уставок проекта (`GVL_CfgProject.stLT101Cfg`): `GVL_Persist.stLT101Cfg`
+   восстановит `PRG_Devices` после станции (раздел 6.15).
    `wCfgErr := F_StationCfgCheck(...)`; при 0 — `GVL_Station.stCfgLkg := GVL_Persist.stStationCfg` и
    `GVL_Persist.stStationCfgLkg` (энергонезависимая копия); изменение корректной уставки — событие 101017.
    При старте действующая копия — `GVL_Persist.stStationCfgLkg`, если она корректна (раздел 6.15).
@@ -1600,8 +1631,9 @@ END_VAR
    ток `fbIT1n1`, перегрев `fbTS1n2`, импульс сброса `GVL_Hmi.stP10nCmd.stCommon.xReset`
    (до того, как его сбросит устройство).
 5. `fbMode` (6.1) → `fbPower` (6.9, `uiRequired` прошлого цикла) → `fbProt` (6.7) → `afbPumpProt[i]` (6.8).
-   Дальше уровень считается годным по `fbProt.xLevelUsable` (а не по `fbLT101.xValid`): исключённый
-   по противоречию уровнемер (04 §10.5) не управляет ни ступенчатым, ни ПИД.
+   Дальше уровень считается годным по `fbProt.xLevelUsable` — единая точка решения о годности уровня для
+   ступенчатого, ПИД и LIC101 (с библиотекой 1.0.0 совпадает с `fbLT101.xValid`: выход за диапазон уже даёт
+   `xValid = FALSE`, раздел 6.7).
 6. `fbSelect` (6.2, `xPidReady` прошлого цикла); при `xChanged` или `fbMode.xEnteredAuto` —
    `xInit` уровням и `xAdopt` чередованию (вход без рывка).
 7. `fbStepped` (6.3) и `fbPidCtl` (6.4) вызываются всегда (таймеры непрерывны), `xEnable` — по
@@ -1719,6 +1751,8 @@ fbCore(itfTime := GVL_Time.fbClockMain, itfEvents := GVL_Log.fbEventLog, aitfPum
        xLevelLL := GVL_Devices.fbLT101.xLL, xLevelH := GVL_Devices.fbLT101.xH, xLevelHH := GVL_Devices.fbLT101.xHH,
        rLvlL_m := GVL_Persist.stLT101Cfg.astLimit[PL.E_AiAlarm.L].rSetpoint_eu,
        rLvlH_m := GVL_Persist.stLT101Cfg.astLimit[PL.E_AiAlarm.H].rSetpoint_eu,
+       rLvlLProject_m := GVL_CfgProject.stLT101Cfg.astLimit[PL.E_AiAlarm.L].rSetpoint_eu,
+       rLvlHProject_m := GVL_CfgProject.stLT101Cfg.astLimit[PL.E_AiAlarm.H].rSetpoint_eu,
        xFloatHigh := GVL_Devices.fbLS102.xValue, xFloatDry := GVL_Devices.fbLS103.xValue,
        xPowerOk := GVL_Devices.fbES301.xValue, xResetButton := GVL_Devices.fbHS501.xValue,
        xSilenceButton := GVL_Devices.fbHS502.xValue, xGasHigh := GVL_Devices.fbAT401.xH OR GVL_Devices.fbAT402.xH,
@@ -2187,7 +2221,7 @@ flowchart LR
 "modes": {
   "normal": {
     "tasks": [
-      {"name": "MainTask", "interval_ms": 20, "priority": 1,
+      {"name": "MainTask", "interval_ms": 20, "priority": 1, "watchdog": {"time_ms": 100, "sensitivity": 1},
        "pous": ["PRG_FieldIn", "PRG_DeviceList", "PRG_Station", "PRG_Devices", "PRG_FieldOut"]},
       {"name": "PlantModelTask", "interval_ms": 20, "priority": 2, "pous": ["PRG_PlantModel"]},
       {"name": "SlowTask", "interval_ms": 200, "priority": 20, "pous": ["PRG_Slow"]}
@@ -2204,8 +2238,13 @@ flowchart LR
 Библиотеки: `plc-process-lib` (`namespace` `PL`, `title_contains` `plc-process-lib`, версия 1.0.0.0,
 `build_from_repo` `../plc-process-lib`), `caa_file` (`title` `CAA File`, `company`
 `CAA Technical Workgroup`, `version` `*`, `namespace` `FILE` — так в зонде Z1), `systimertc`
-(плейсхолдер `SysTimeRtc`, как в проекте 06), `standard`. Сторожевой таймер задач (`watchdog`) —
-дополнить `import_sources.py` по API `ScriptTaskObject.watchdog` или ручной шаг (MainTask: 100 мс).
+(плейсхолдер `SysTimeRtc`, как в проекте 06), `standard`. Сторожевой таймер задачи — ключ `watchdog` задачи
+`config.json`: `{"time_ms": 100, "sensitivity": 1}` у `MainTask` (`false` — выключить, ключа нет — не трогать;
+у созданной скриптом задачи CODESYS он выключен). `import_sources.py` выставляет его через `ScriptTaskObject.watchdog`
+(`ScriptWatchdog`: `enabled`, `time`, `time_unit`, `sensitivity` — зонд на 3.5.17.30), в отчёте импорта —
+«TASK MainTask (watchdog=100ms/1)». Задача модели и `SlowTask` (запись CSV через CAA File) — без сторожевого
+таймера: первая есть только в имитации, вторая может ждать файловую систему. Тест разбора ключа —
+`tools/tests/test_import_tasks.py`.
 `TestTask` — с запасом по времени цикла: интеграционные тесты выполняют много шагов за цикл.
 Persistent Variables в проекте тестов — тот же объект, что в приложении (создаёт
 `tools_project/codesys/codesys_pvl.py --tests`), а не заменитель GVL: так проверено в iolistgen 0.2.0 и здесь.
@@ -2247,12 +2286,14 @@ Persistent Variables в проекте тестов — тот же объект
 или нового `.project` выполняется снова автоматически. Результат проверяется по файлу символов
 `<проект>.Device.Application.xml`, который пишет генерация кода (так проверено в проекте 06): скрипт сверяет
 доступ каждой выгруженной переменной с правилами (код выхода 1 при расхождении), pytest
-`test_symbol_config.py` — правила обеих сборок и разбор файла символов. Прогон 19.10.2026 (сборка `sim`):
-`GVL_Devices` — 29 Read, `GVL_Hmi` — 30 ReadWrite, `GVL_IO` — 86 Read, `GVL_Log` — 4 Read и 2 ReadWrite,
-`GVL_Persist` — 37 ReadWrite, `GVL_Sim` — 3 Read и 3 ReadWrite, `GVL_Time` — 1 Read; повторный запуск —
-0 изменений. Прогон с правилами полей (19.10.2026, обе сборки): поля `ST_EventView`, `ST_EventFeed`,
-`ST_EventRecord` в файле символов — как в правилах; сборка `site` — `GVL_Persist` 37 Read, `GVL_Sim` —
-3 Read (команды и инъекции модели не выгружаются). Запись в Cfg и Retain по OPC UA
+`test_symbol_config.py` — правила обеих сборок и разбор файла символов. Прогон объединённого проекта
+(19.10.2026, после правок по ревью кода; те же числа — TEST_REPORT, раздел «Сборка контура»): сборка `sim` —
+`GVL_Devices` 29 Read, `GVL_Hmi` 30 ReadWrite, `GVL_IO` 86 Read, `GVL_Log` 4 Read и 2 ReadWrite, `GVL_Persist`
+1 Read (`stStationCfgLkg`) и 37 ReadWrite, `GVL_Sim` 4 Read (с `xIoReady`) и 3 ReadWrite, `GVL_Station` 7 Read и
+2 ReadWrite, `GVL_Time` 1 Read, повторный запуск — 0 изменений; сборка `site` — то же, кроме `GVL_Persist`
+38 Read и `GVL_Sim` 4 Read (команды и инъекции модели не выгружаются). Поля `ST_EventView`, `ST_EventFeed`,
+`ST_EventRecord` в файле символов обеих сборок — как в правилах. Прогон ветки К3 до слияния (без `GVL_Station`,
+`stStationCfgLkg`, `xIoReady`) — TEST_REPORT, раздел «Ветка К3 до слияния». Запись в Cfg и Retain по OPC UA
 в сборке `site` закрыта и на уровне символов, и правами группы пользователей рантайма (MANUAL_STEPS).
 
 ## 14. Тесты
@@ -2287,7 +2328,7 @@ Persistent Variables в проекте тестов — тот же объект
 | `PowerLossRestoreSequential` | пропадание и восстановление | пуски по одному с `tSeqStep` |
 | `CommLossAllFallsBackToStepped` | `axVfdCommLoss[1..3]` | `Stepped`, `KNS1.STEP`, частота ПЧ 50 Гц через 5 с |
 | `StuckDryFloatMasked` | `eLs103Stuck = StuckTripped` | останов на `tLdev`, маска, работа по LT101 |
-| `OorLevelMaskedFloatsTakeOver` | `aeAiFault[1] = UnderRange` | LL и сухой ход, через `tLdev` LT101 исключён, `Float`, снятие блокировки через `tDryRelease` |
+| `OorLevelInvalidFloatsTakeOver` | `aeAiFault[1] = UnderRange` | через `tFailDelay` LT101 недостоверен (AI-13), сразу `Float`; LL уровнемера без сухого хода, защиту держит LS103 |
 | `HighInflowReachesEmergency` | приток 250 м³/ч | `Emergency` выше 4,0 м, три насоса, возврат после снижения притока |
 
 Энергонезависимость в проекте тестов не нужна: `GVL_Persist` — заменитель GVL (ARCHITECTURE, раздел 10).
@@ -2633,7 +2674,7 @@ k, время контура и реальное. Здесь — только т
 | 07 iolistgen | выполнено в 0.2.0: переменные приложения в `GVL_Persist` (`persist_extra`) с учётом в `persist_check`, тип устройства `Pid`. Осталось: генерация `GVL_DeviceList` (пока `generate.py`); тексты `TL_Reason` для битов, заданных проектом; многострочное объявление в `persist_extra`; значение `none` опции `templates` из `iolistgen.toml` (сейчас читается как путь) | убрать генератор проекта и обходы |
 | 01 plc-process-lib | вход подавления тревоги состояния `FB_DigitalInput` (1.1) | режим по поплавкам без повторных тревог (R-04) |
 | 01 plc-process-lib | раздельное подавление нижних уставок `FB_AnalogInput` (1.1): `xSuppressLimitAlarms` подавляет все четыре | PT201 HH/H при остановленных насосах (гидроудар при останове), 06 v0.4 PMI-38 |
-| 07 iolistgen | слоты тревог выключенных уставок AI — приоритет `None` (сейчас — из колонки `alarm_priority`, и `params` его не переопределяет, IOL505); `delay_s` тревоги DI при `xAlarmOnTrue = FALSE` — `tOffDelay`, а не `tOnDelay` | лишние строки `SuppressedByDesign` без текста в списке тревог (FT202 2020/2021/2023); `ES301.ALM` в 05 — «3 с», а появляется сразу (ASSUMPTIONS П10, П11) |
+| 07 iolistgen | слоты тревог выключенных уставок AI — приоритет `None` (сейчас — из колонки `alarm_priority`, и `params` его не переопределяет, IOL505); `delay_s` тревоги DI при `xAlarmOnTrue = FALSE` — `tOffDelay`, а не `tOnDelay` | лишние строки `SuppressedByDesign` без текста в списке тревог (FT202 2020/2021/2023); `ES301.ALM` в `alarms.csv` — «3 с», а появляется сразу (в 05 исправлено, сверка C03 знает правило; ASSUMPTIONS П10, П11) |
 | шаблон | `sim.py` и `opcua_pki.py` проекта (приложение имитации в рантайме, сброс, сертификаты OPC UA файлами хранилища) — как `cds.py sim` и шаг подготовки OPC UA | общий для проектов с OPC UA; ручной шаг экрана безопасности не нужен |
-| шаблон | создание Persistent Variables через PLCopenXML при импорте (сделано в `tools/codesys/import_sources.py` проекта при сборке контура — перенести в шаблон, иначе синхронизация его сотрёт); заменитель GVL в проекте тестов; онлайн-мост `online_bridge.py` и символьная конфигурация `symbol_config.py` как общие инструменты; команды `cds.py scenarios` и `cds.py sim` | общий ручной шаг всех проектов; сценарии без OPC UA; `tools/` принадлежит шаблону (раздел 1) |
+| шаблон | создание Persistent Variables через PLCopenXML при импорте (сделано в `tools/codesys/import_sources.py` проекта при сборке контура — перенести в шаблон, иначе синхронизация его сотрёт); сторожевой таймер задач — ключ `watchdog` задачи `config.json` (`import_sources.py`, `test_cds_config.py`, `test_import_tasks.py`, раздел 12); заменитель GVL в проекте тестов; онлайн-мост `online_bridge.py` и символьная конфигурация `symbol_config.py` как общие инструменты; команды `cds.py scenarios` и `cds.py sim` | общий ручной шаг всех проектов; сценарии без OPC UA; `tools/` принадлежит шаблону (раздел 1) |
 | `04_algorithms.md`, `06_PMI.md`, `08_hmi_spec.md` | правки этого раздела версии 0.2 внесены (04 v0.3, 06 v0.3, 08 v0.2); вопросы 1 и 2 раздела 14 документа 08 решены полями `ST_StationCmd` (раздел 3.1); согласованность документов проверяет `tools_project/check_docs_consistency.py` в CI | — |

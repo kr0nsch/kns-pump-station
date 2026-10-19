@@ -17,7 +17,7 @@ Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 
 
 AssertTrue(Condition := fbDut.xLs103Masked AND fbDut.xLdev, Message := 'masked after tLdev, LDEV');
 AssertTrue(Condition := (fbDut.wLdev AND GVL_Const.STN_LDEV_LS103_FALSE) <> 0, Message := 'LDEV bit LS103 false');
-AssertFalse(Condition := fbDut.xDryRun OR fbDut.xLtMasked, Message := 'dry run released, LT101 trusted');
+AssertFalse(Condition := fbDut.xDryRun OR NOT fbDut.xLevelUsable, Message := 'dry run released, LT101 trusted');
 AssertEquals_REAL(Expected := 103.0, Actual := fbSink.ValueOf(eFind := E_StationEvent.FloatMasked), Delta := 0.0,
                   Message := 'event 101011 with 103');
 

@@ -65,7 +65,7 @@ note = "40 с: противоречие с LS103 не считается (уро
 hold_s = 40
 during = [
   "GVL_Station.stStationSts.eControlAct = E_ControlAct.Float",
-  "GVL_Station.stStationSts.wState !& 16#8000",          # STN_ST_LT_MASKED — нет
+  "GVL_Station.stStationSts.wState !& 16#8000",          # бит 15 (резерв; прежде «LT101 исключён») — нет
   "GVL_Devices.fbLS103.xValue = FALSE",
 ]
 expect_absent = [

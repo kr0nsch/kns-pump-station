@@ -5,7 +5,9 @@
 # сразу: задержка 3 с входа ES301 — задержка включения (подтверждение восстановления, 04 §13.2), тревога — по
 # значению FALSE (06 v0.4; редакция 0.3 ждала её через 3 с — по delay_s перечня тревог, где для тревоги по FALSE
 # задержка указана неверно, запрос в iolistgen). Задержки YS302.ALM, YS303.ALM (5 с) — от события 101021. «ПЛК и HMI работают» — время MainTask идёт,
-# журнал ведётся (WebVisu — та же задача рантайма от ИБП).
+# журнал ведётся (WebVisu — та же задача рантайма от ИБП). Следствие пропадания (06 v0.5, 04 §13.1): ПЧ без питания
+# не отвечают — IT111.FAIL, IT121.FAIL, IT131.FAIL через tFailDelay = 2 с от события 101021 (при k = 20 — до +1 цикла
+# MainTask, 0,4 с контура), тревог связи P10n.COM нет (VFD-12 библиотеки).
 id = "PMI-33"
 title = "Пропадание напряжения на вводе"
 time_scale = 20.0
@@ -73,7 +75,21 @@ expect = [
 ]
 
 [[step]]
-note = "без напряжения 2 мин: ПЛК работает, журнал ведётся; нет P10n.FBL, KNS1.ATS, KNS1.LACK"
+note = "следствие: ПЧ без питания не отвечают — IT111.FAIL, IT121.FAIL, IT131.FAIL (Medium, 04 §13.1)"
+wait_alarm = [
+  { code = "IT111.FAIL", state = "ActiveUnack" },
+  { code = "IT121.FAIL", state = "ActiveUnack" },
+  { code = "IT131.FAIL", state = "ActiveUnack" },
+]
+timeout_s = 15
+expect_delay = [
+  { since = "t1", from_event = "KNS1.E21", alarm = "IT111.FAIL", state = "ActiveUnack", min_s = 1.9, max_s = 2.8 },
+  { since = "t1", from_event = "KNS1.E21", alarm = "IT121.FAIL", state = "ActiveUnack", min_s = 1.9, max_s = 2.8 },
+  { since = "t1", from_event = "KNS1.E21", alarm = "IT131.FAIL", state = "ActiveUnack", min_s = 1.9, max_s = 2.8 },
+]
+
+[[step]]
+note = "без напряжения 2 мин: ПЛК работает, журнал ведётся; нет P10n.FBL, P10n.COM, KNS1.ATS, KNS1.LACK"
 hold_s = 110
 during = [
   "GVL_Station.stStationSts.eControlAct = E_ControlAct.PowerLost",
@@ -88,6 +104,9 @@ expect_absent = [
   { alarm = "P101.FBL", since = "t1" },
   { alarm = "P102.FBL", since = "t1" },
   { alarm = "P103.FBL", since = "t1" },
+  { alarm = "P101.COM", since = "t1" },
+  { alarm = "P102.COM", since = "t1" },
+  { alarm = "P103.COM", since = "t1" },
   { alarm = "KNS1.ATS", since = "t1" },
   { alarm = "KNS1.LACK", since = "t1" },
 ]

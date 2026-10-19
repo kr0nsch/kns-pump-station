@@ -12,10 +12,11 @@ HMI → испытания на модели объекта → документ
 входы ПЛК подменяет модель резервуара, насосов и сети с инъекцией отказов.
 
 > **Статус: приёмка ПМИ на имитаторе.** Логика станции, слой устройств из перечня сигналов, журнал событий и
-> модель объекта собраны в одно приложение CODESYS: компиляция без ошибок и предупреждений, 328 юнит-тестов
+> модель объекта собраны в одно приложение CODESYS: компиляция без ошибок и предупреждений, 333 юнит-теста
 > coUnit проходят в CODESYS Control Win V3 ([docs/TEST_REPORT.md](docs/TEST_REPORT.md)). Все 39 проверок
 > программы испытаний выполнены сценариями на рантайме через OPC UA и соответствуют по автоматической части;
-> испытания нашли и закрыли три дефекта логики (протокол № 1 — [docs/07_test_protocol.md](docs/07_test_protocol.md)).
+> испытания нашли и закрыли три дефекта логики, ревью кода — ещё несколько; затронутые проверки прогнаны повторно
+> (протокол № 1 — [docs/07_test_protocol.md](docs/07_test_protocol.md)).
 > HMI WebVisu и интеграционные тесты замкнутого контура — следующие этапы ([docs/DESIGN.md](docs/DESIGN.md),
 > раздел 15).
 
@@ -132,7 +133,7 @@ python tools_project/codesys/sim.py stop                  # остановить
 | Сверка документов (`tools_project/check_docs_consistency.py`, 20 проверок) | CI, pytest | позиции из перечня, коды, номера и тексты тревог (05 ↔ вывод iolistgen), уставки 04 ↔ перечень ↔ DESIGN, пути переменных HMI и ПМИ ↔ DESIGN, генератор и контракт plc-process-lib, события журнала, номера ПМИ ↔ протокол, разложение алгоритмов на ФБ |
 | ruff, mypy, pytest | CI | инструменты на Python (`tools/`, `tools_project/`) |
 | `st_lint --strict`, iec_checker, RuSTy | CI | статанализ ST: находки исправлены или обоснованы ([STATIC_ANALYSIS.md](docs/STATIC_ANALYSIS.md)) |
-| coUnit 1.2.0.0 | CODESYS Control Win V3: `cds.py test` | 328 юнит-тестов: ФБ станции и ядро цикла, слой устройств и журнал, модель объекта; интеграционные тесты замкнутого контура — план (DESIGN, раздел 14) |
+| coUnit 1.2.0.0 | CODESYS Control Win V3: `cds.py test` | 333 юнит-теста: ФБ станции и ядро цикла, слой устройств и журнал, модель объекта; интеграционные тесты замкнутого контура — план (DESIGN, раздел 14) |
 | Сценарии ПМИ | `sim.py start`, затем `PMI_LIVE=1 pytest scenarios/test_pmi.py` (OPC UA) | 39 проверок [06_PMI.md](docs/06_PMI.md) на модели: протокол № 1 — [07](docs/07_test_protocol.md), отчёт обвязки — [07_pmi_report.md](docs/07_pmi_report.md) |
 
 ## Документация
@@ -170,7 +171,7 @@ submersible pumps (two duty, one standby) driven by VFDs over Modbus RTU, and a 
 The project covers the full cycle — process, algorithms, CODESYS V3.5 Structured Text for an OWEN PLC210,
 an ISA-101 WebVisu HMI, a plant model with fault injection for testing in CODESYS Control Win, and
 GOST-style documents (requirements, functional diagram, I/O list, algorithms, ISA-18.2 alarm list,
-39-check test procedure, HMI spec). The application builds without errors or warnings, 328 coUnit tests
+39-check test procedure, HMI spec). The application builds without errors or warnings, 333 coUnit tests
 pass on CODESYS Control Win V3, and all 39 test-procedure checks run live as scenarios over OPC UA against
 the simulated plant (automated parts pass, test protocol No. 1); a Python checker in CI keeps tags,
 setpoints and alarm texts consistent across all documents. Docs are in Russian.

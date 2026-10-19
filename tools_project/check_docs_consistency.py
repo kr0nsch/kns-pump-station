@@ -137,7 +137,6 @@ WSTATE_KEYWORDS = {
     "STN_ST_HORN": "сирен",
     "STN_ST_COMMON_ALARM": "общая авария",
     "STN_ST_UNACK": "неквитирован",
-    "STN_ST_LT_MASKED": "LT101",
 }
 
 ELEMENTARY = frozenset(
@@ -1303,6 +1302,20 @@ def check_alarm_codes(src: Sources) -> list[Finding]:
     return out
 
 
+def appear_delay_s(src: Sources, gen: dict[str, str]) -> float | None:
+    """Задержка появления тревоги устройства для 05: как ``delay_s`` генератора, кроме тревоги дискретного входа по
+    значению FALSE (``xAlarmOnTrue=FALSE``). Её даёт спад входа, а у спада задержка — ``delay_off_s`` (``FB_Delay``
+    выбирает задержку по направлению фронта): iolistgen 0.2.0 пишет туда задержку включения ``delay_on_s``
+    (ASSUMPTIONS П11, запрос в генератор — DESIGN, раздел 17). None — не дискретный вход по FALSE."""
+    row = src.io.by_tag.get(gen["tag"])
+    if row is None or row["device_type"] != "DigitalInput" or gen["slot"].strip() != "0":
+        return None
+    if src.io.params(gen["tag"]).get("xAlarmOnTrue", "TRUE").upper() != "FALSE":
+        return None
+    g = doc_number(gen["delay_s"]) or 0.0
+    return g - (doc_number(row["delay_on_s"]) or 0.0) + (doc_number(row["delay_off_s"]) or 0.0)
+
+
 @check("C03", "тревоги устройств в 05 совпадают со списком генератора iolistgen (docs/alarms.csv)")
 def check_alarms_vs_generator(src: Sources) -> list[Finding]:
     out = []
@@ -1333,6 +1346,18 @@ def check_alarms_vs_generator(src: Sources) -> list[Finding]:
     for code in sorted(set(gen) & set(dev_rows)):
         g, r = gen[code], dev_rows[code]
         for col in ("id", "tag", "slot", "priority", "text_ru", "delay_s"):
+            if col == "delay_s" and (falling := appear_delay_s(src, g)) is not None:
+                got = doc_number(r[col])
+                if got is None or not same_value(got, falling):
+                    out.append(
+                        Finding(
+                            "C03",
+                            "05_alarm_list.csv",
+                            0,
+                            f"{code}.delay_s: «{r[col]}», тревога по FALSE — задержка спада входа {falling:g}",
+                        )
+                    )
+                continue
             if g[col].strip() != r[col].strip():
                 out.append(Finding("C03", "05_alarm_list.csv", 0, f"{code}.{col}: «{r[col]}», генератор — «{g[col]}»"))
         if g["setpoint"].strip():

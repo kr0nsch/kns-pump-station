@@ -3,7 +3,7 @@
 //             связи с ПЧ (04 §12), слежение ПИД за заданием ведущего, когда ПИД не управляет (04 §7.3).
 //             Задание ПИД ФБ не считает: оно внешнее (stCfgLkg.rLevelSp_m, PRG_Station).
 // Автор:      <ИМЯ ФАМИЛИЯ>
-// Версия:     0.1.0
+// Версия:     0.2.0
 // Документ:   docs/DESIGN.md, раздел 6.4; docs/04_algorithms.md, разделы 7, 12
 FUNCTION_BLOCK FB_LevelControlPid
 VAR_INPUT
@@ -17,6 +17,8 @@ VAR_INPUT
     uiLead      : UINT;             // ведущий (FB_PumpRotation, прошлый цикл); 0 — нет
     xInit       : BOOL;
     uiInitPumps : UINT;
+    xPowerRestore : BOOL;           // нет напряжения или последовательный пуск (FB_PowerRestore): ПЧ без питания
+                                    // или загружаются — нет связи, но это не потеря связи (VFD-12)
     itfTime     : PL.I_TimeSource;
 END_VAR
 VAR_IN_OUT CONSTANT

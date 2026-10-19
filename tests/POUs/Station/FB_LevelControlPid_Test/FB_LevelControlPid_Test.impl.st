@@ -14,3 +14,4 @@ InitFromRunningPumps();
 OutputStagingOnlyWhenPidControls();
 NanOutputNoStaging();
 TimeBackwardsRestartsConfirm();
+CommAbsentDuringPowerRestoreNoRecoverDelay();

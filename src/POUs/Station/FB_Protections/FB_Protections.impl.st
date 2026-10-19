@@ -8,23 +8,12 @@ fbLs103False(xIn := xLevelValid AND xFloatDry AND rLevel_m > stCfg.rLdev103On_m,
              tOnDelay := stCfg.tLdev, itfTime := itfTime);
 fbLs103Missed(xIn := xLevelValid AND NOT xFloatDry AND rLevel_m < stCfg.rLdev103Off_m,
               tOnDelay := stCfg.tLdev, itfTime := itfTime);
-xContrRaw := fbLs102False.xTimingOn OR fbLs102False.xOut OR fbLs102Missed.xTimingOn OR fbLs102Missed.xOut
-             OR fbLs103False.xTimingOn OR fbLs103False.xOut OR fbLs103Missed.xTimingOn OR fbLs103Missed.xOut;
 
-// 2. Кому доверять — по статусу уровнемера (NE 43, 04 §10.5). Вне диапазона (OutOfSpecification) и
-//    противоречит любому поплавку дольше tLdev — уровнемер исключается: «уплывший» к краю шкалы
-//    датчик не держит насосы заблокированными. Маска уровнемера снимается, когда сигнал вернулся в
-//    норму (Good) и противоречия нет дольше tLtRecover
-IF xLevelValid AND eLevelNe107 = PL.E_Ne107Status.OutOfSpecification
-   AND (fbLs102False.xOut OR fbLs102Missed.xOut OR fbLs103False.xOut OR fbLs103Missed.xOut) THEN
-    xLtMasked := TRUE;
-END_IF
-fbLtRecover(xIn := xLtMasked AND xLevelValid AND eLevelNe107 = PL.E_Ne107Status.Good AND NOT xContrRaw,
-            tOnDelay := stCfg.tLtRecover, itfTime := itfTime);
-IF fbLtRecover.xOut THEN
-    xLtMasked := FALSE;
-END_IF
-xLevelUsable := xLevelValid AND NOT xLtMasked;
+// 2. Уровень для управления (04 §10.5, §11). plc-process-lib 1.0.0 (решение AI-13): подтверждённый за
+//    tFailDelay выход тока LT101 за диапазон (NE 107 OutOfSpecification) сам даёт xValid = FALSE, поэтому
+//    «уплывший» к краю шкалы уровнемер в логику не попадает: станция сразу на поплавках, без LL → сухой
+//    ход по уровнемеру и без противоречий. Отдельного исключения уровнемера по противоречию нет
+xLevelUsable := xLevelValid;
 
 // 3. Маски поплавков: уровнемер годен и не вне спецификации — виноват поплавок, сработавший ложно.
 //    Маска снимается сама, когда поплавок вернулся, и сразу, когда уровнемер негоден: без него
@@ -72,9 +61,6 @@ IF fbLs103False.xOut THEN
 END_IF
 IF fbLs103Missed.xOut THEN
     wLdev := wLdev OR GVL_Const.STN_LDEV_LS103_MISSED;
-END_IF
-IF xLtMasked THEN
-    wLdev := wLdev OR GVL_Const.STN_LDEV_LT_MASKED;
 END_IF
 xLdev := wLdev <> 0;
 

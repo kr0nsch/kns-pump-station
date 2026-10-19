@@ -11,7 +11,7 @@ fbDut.xFloatDry := TRUE;
 Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#100MS, uiSteps := 1);
 Run(fbDut := fbDut, fbTime := fbTime, stCfg := stCfg, tStep := T#1S, uiSteps := 30);
 
-AssertTrue(Condition := fbDut.xLs103Masked AND NOT fbDut.xLtMasked AND fbDut.xLevelUsable,
+AssertTrue(Condition := fbDut.xLs103Masked AND fbDut.xLevelUsable,
            Message := 'Good LT: float masked, LT kept');
 AssertFalse(Condition := fbDut.xFloatMode, Message := 'no float mode');
 

@@ -61,7 +61,8 @@ VAR_GLOBAL CONSTANT
     STN_ATS_WINDOW : TIME := T#10S;          // окно поиска насоса, введённого АВР (событие 101006)
     STN_LAMP_HALF_PERIOD : TIME := T#500MS;  // HL1 мигает 1 Гц
     STN_FULL_SPEED_PCT : REAL := 100.0;      // аварийный режим и по поплавкам
-    STN_FLOW_SETTLE : TIME := T#20S;         // насос работает дольше — L/LL PT201, L FT202 не подавляются (условно)
+    STN_FLOW_SETTLE : TIME := T#20S;         // насос работает дольше — уставки PT201 и FT202 не подавляются (условно;
+                                             // вход подавления AI 1.0.0 общий для HH, H, L, LL — DESIGN 7, шаг 12)
     // биты stStationSts.wState (04 §19.3)
     STN_ST_DRY_RUN : WORD := 16#0001;
     STN_ST_EMERGENCY : WORD := 16#0002;
@@ -78,7 +79,6 @@ VAR_GLOBAL CONSTANT
     STN_ST_HORN : WORD := 16#1000;
     STN_ST_COMMON_ALARM : WORD := 16#2000;   // K1 обесточено
     STN_ST_UNACK : WORD := 16#4000;
-    STN_ST_LT_MASKED : WORD := 16#8000;      // LT101 исключён по противоречию с поплавком (04 §10.5)
     // биты stStationSts.wCfgErr (F_StationCfgCheck, 04 §18.3)
     STN_CFG_LEVEL_ORDER : WORD := 16#0001;   // нарушен порядок отметок 04 §1
     STN_CFG_LEVEL_RANGE : WORD := 16#0002;   // уровень вне диапазона 04 §18.2
@@ -149,7 +149,6 @@ VAR_GLOBAL CONSTANT
     STN_LDEV_LS102_MISSED : WORD := 16#0002; // LS102 не сработал (уровень выше rLdev102Off_m)
     STN_LDEV_LS103_FALSE : WORD := 16#0004;  // LS103 сработал ложно (уровень выше rLdev103On_m)
     STN_LDEV_LS103_MISSED : WORD := 16#0008; // LS103 не сработал (уровень ниже rLdev103Off_m)
-    STN_LDEV_LT_MASKED : WORD := 16#0010;    // LT101 исключён по противоречию (вне диапазона)
     STN_MS_PER_S : UDINT := 1000;            // мс в секунде: остаток в целых секундах вверх (uiSeqRemain_s)
     // ===== Модель (К2) =====
     SIM_TIME_SCALE_MAX : REAL := 50.0;       // k · T_MainTask ≤ 1 с (ARCHITECTURE, раздел 11)

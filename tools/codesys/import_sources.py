@@ -611,6 +611,41 @@ def _task_pou_names(task):
     return names
 
 
+def watchdog_target(cfg):
+    # type: (Any) -> Optional[Tuple[bool, str, str]]
+    """Сторожевой таймер задачи по ключу watchdog задачи config.json: false — выключен; {"time_ms": N,
+    "sensitivity": K} — включён, время N мс, чувствительность K (по умолчанию 1). Неверное значение — ValueError."""
+    if cfg is False:
+        return (False, '', '')
+    if not isinstance(cfg, dict) or set(cfg) - set(['time_ms', 'sensitivity']):
+        raise ValueError('watchdog: false или {"time_ms": N, "sensitivity": K}, а не %r' % (cfg,))
+    time_ms = cfg.get('time_ms')
+    sensitivity = cfg.get('sensitivity', 1)
+    for key, value in (('time_ms', time_ms), ('sensitivity', sensitivity)):
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise ValueError('watchdog.%s: целое число >= 1, а не %r' % (key, value))
+    return (True, '%d' % time_ms, '%d' % sensitivity)
+
+
+def sync_watchdog(wd, want):
+    # type: (Any, Tuple[bool, str, str]) -> Optional[str]
+    """Привести ScriptWatchdog задачи (enabled, time, time_unit, sensitivity) к want; описание изменения или None."""
+    enabled, time_ms, sensitivity = want
+    if not enabled:
+        if not bool(wd.enabled):
+            return None
+        wd.enabled = False
+        return 'watchdog=off'
+    if (bool(wd.enabled) and C._text(wd.time) == time_ms and C._text(wd.time_unit) == 'ms'
+            and C._text(wd.sensitivity) == sensitivity):
+        return None
+    wd.time = time_ms
+    wd.time_unit = 'ms'
+    wd.sensitivity = sensitivity
+    wd.enabled = True
+    return 'watchdog=%sms/%s' % (time_ms, sensitivity)
+
+
 def sync_tasks(app, tasks_cfg, log, report):
     # type: (Any, List[Dict[str, Any]], C.Log, Report) -> None
     tc = None
@@ -663,6 +698,11 @@ def sync_tasks(app, tasks_cfg, log, report):
             for pou in want_pous:
                 task.pous.add(pou)
             parts.append('pous=%s' % ','.join(want_pous))
+        if 'watchdog' in cfg:
+            # ключа нет — сторожевой таймер не трогается (у новой задачи CODESYS он выключен)
+            change = sync_watchdog(task.watchdog, watchdog_target(cfg['watchdog']))
+            if change:
+                parts.append(change)
         if parts and not created:
             report.add('updated', 'TASK %s (%s)' % (name, '; '.join(parts)))
         elif parts:

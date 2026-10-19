@@ -21,10 +21,16 @@ IF xFirstCall THEN
     END_IF
 END_IF
 xCfgCmd := FALSE;
+rLvlLChk_m := rLvlL_m;
+rLvlHChk_m := rLvlH_m;
 IF xApplyProjectCfg THEN
     stCfgPersist := GVL_StationDefaults.stStationCfg;
     stLIC101Cfg := GVL_StationDefaults.stLIC101Cfg;
     xCfgCmd := TRUE;
+    // L/H LT101 уставок проекта восстанавливает PRG_Devices в этом же цикле, но после станции: уставки по умолчанию
+    // проверяются по ним, а не по прежним (иначе ложная ошибка уставок на цикл и второе событие 101017)
+    rLvlLChk_m := rLvlLProject_m;
+    rLvlHChk_m := rLvlHProject_m;
 END_IF
 IF stCmd.xRevertCfg THEN
     stCfgPersist := stCfgLkg;
@@ -36,7 +42,8 @@ END_IF
 IF xCfgCmd AND itfEvents <> 0 THEN
     itfEvents.LogEvent(eEvent := E_StationEvent.CfgChanged, rValue := 0.0);
 END_IF
-wCfgErr := F_StationCfgCheck(stCfg := stCfgPersist, stPidCfg := stLIC101Cfg, rLvlL_m := rLvlL_m, rLvlH_m := rLvlH_m);
+wCfgErr := F_StationCfgCheck(stCfg := stCfgPersist, stPidCfg := stLIC101Cfg, rLvlL_m := rLvlLChk_m,
+                             rLvlH_m := rLvlHChk_m);
 IF wCfgErr = 0 THEN
     uiParam := ChangedParam(stOld := stCfgLkg, stNew := stCfgPersist);
     IF uiParam <> 0 THEN
@@ -217,8 +224,8 @@ fbStepped(xEnable := eAct = E_ControlAct.Stepped OR eAct = E_ControlAct.Restart,
           itfTime := itfTime, stCfg := stCfgLkg);
 fbPidCtl(xEnable := eAct = E_ControlAct.LevelPid, rLevel_m := rLevel_m, xLevelValid := fbProt.xLevelUsable,
          rPidOut_pct := fbLIC101.rOut_pct, ePidMode := fbLIC101.Mode, aitfPump := aitfPump, axCommOk := axCommOk,
-         uiLead := fbRotation.uiLead, xInit := xInitReq, uiInitPumps := uiRunningNow, itfTime := itfTime,
-         stCfg := stCfgLkg);
+         uiLead := fbRotation.uiLead, xInit := xInitReq, uiInitPumps := uiRunningNow,
+         xPowerRestore := fbPower.xPowerLost OR fbPower.xRestart, itfTime := itfTime, stCfg := stCfgLkg);
 CASE eAct OF
     E_ControlAct.Stepped:
         uiRequired := fbStepped.uiRequired;
@@ -316,11 +323,13 @@ FOR uiSlot := 1 TO GVL_Const.STN_ALARM_COUNT DO
     axSuppress[uiSlot] := FALSE;
     arValue[uiSlot] := 0.0;
 END_FOR
+// режим по поплавкам — управление только в «Автомате»: там срабатывания поплавков — штатные точки управления; в
+// «Ручном» автоматика по поплавкам насосы не пускает, EHL (Critical) и DRY нужны оператору (04 §3.1, §10.2)
 axCond[E_StationAlarm.EHL] := fbProt.xEmergency;
-axSuppress[E_StationAlarm.EHL] := fbProt.xFloatMode;
+axSuppress[E_StationAlarm.EHL] := fbProt.xFloatMode AND NOT xManual;
 arValue[E_StationAlarm.EHL] := rLevel_m;
 axCond[E_StationAlarm.DRY] := fbProt.xDryRun;
-axSuppress[E_StationAlarm.DRY] := fbProt.xFloatMode;
+axSuppress[E_StationAlarm.DRY] := fbProt.xFloatMode AND NOT xManual;
 arValue[E_StationAlarm.DRY] := rLevel_m;
 axCond[E_StationAlarm.LACK] := fbAts.xLack;
 axSuppress[E_StationAlarm.LACK] := fbPower.xPowerLost OR xManual;
@@ -336,8 +345,10 @@ axCond[E_StationAlarm.FLOAT] := fbProt.xFloatMode;
 axCond[E_StationAlarm.LDEV] := fbProt.xLdev;
 arValue[E_StationAlarm.LDEV] := WORD_TO_REAL(fbProt.wLdev);
 axCond[E_StationAlarm.STEP] := fbSelect.xStepFallback;
+// последовательный пуск идёт по ступенчатому автомату при любой готовности ПИД (04 §4) — не деградация
 axSuppress[E_StationAlarm.STEP] := eAct = E_ControlAct.Emergency OR eAct = E_ControlAct.Float
-                                   OR eAct = E_ControlAct.DryRunStop OR eAct = E_ControlAct.PowerLost;
+                                   OR eAct = E_ControlAct.DryRunStop OR eAct = E_ControlAct.PowerLost
+                                   OR eAct = E_ControlAct.Restart;
 axCond[E_StationAlarm.NOAUTO] := xManual;
 FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
     axCond[E_StationAlarm.UL1 + uiPump - 1] := axTrip[uiPump];
@@ -413,9 +424,6 @@ IF NOT xK1 THEN
 END_IF
 IF ePrioUnack <> PL.E_AlarmPriority.None THEN
     wState := wState OR GVL_Const.STN_ST_UNACK;
-END_IF
-IF fbProt.xLtMasked THEN
-    wState := wState OR GVL_Const.STN_ST_LT_MASKED;
 END_IF
 
 // NE 107 станции: F — LACK; C — «Ручной», имитация, ошибка уставок; S — FLOAT, STEP, LDEV, NORES;

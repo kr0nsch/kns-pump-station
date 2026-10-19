@@ -55,6 +55,8 @@ fbCore(itfTime := GVL_Time.fbClockMain, itfEvents := GVL_Log.fbEventLog, aitfPum
        xLevelLL := GVL_Devices.fbLT101.xLL, xLevelH := GVL_Devices.fbLT101.xH, xLevelHH := GVL_Devices.fbLT101.xHH,
        rLvlL_m := GVL_Persist.stLT101Cfg.astLimit[PL.E_AiAlarm.L].rSetpoint_eu,
        rLvlH_m := GVL_Persist.stLT101Cfg.astLimit[PL.E_AiAlarm.H].rSetpoint_eu,
+       rLvlLProject_m := GVL_CfgProject.stLT101Cfg.astLimit[PL.E_AiAlarm.L].rSetpoint_eu,
+       rLvlHProject_m := GVL_CfgProject.stLT101Cfg.astLimit[PL.E_AiAlarm.H].rSetpoint_eu,
        xFloatHigh := GVL_Devices.fbLS102.xValue, xFloatDry := GVL_Devices.fbLS103.xValue,
        xPowerOk := GVL_Devices.fbES301.xValue, xResetButton := GVL_Devices.fbHS501.xValue,
        xSilenceButton := GVL_Devices.fbHS502.xValue, xGasHigh := GVL_Devices.fbAT401.xH OR GVL_Devices.fbAT402.xH,
