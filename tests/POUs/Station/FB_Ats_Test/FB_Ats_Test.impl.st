@@ -9,3 +9,4 @@ LackWhenRequiredExceedsAvailable();
 NoReserveWhenOnePumpUnavailable();
 ForeignRunningCountsAgainstLack();
 UnrequestedOrManualFaultIsNotAts();
+TimeBackwardsWindowRestarts();

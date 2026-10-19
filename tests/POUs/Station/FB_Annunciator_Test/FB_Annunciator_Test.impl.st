@@ -5,3 +5,4 @@ HornOffWhenAllAcked();
 LampBlinksAt1Hz();
 LampSteadyWhenActiveAcked();
 K1DeenergizedOnActiveHigh();
+TimeBackwardsRestartsBlink();

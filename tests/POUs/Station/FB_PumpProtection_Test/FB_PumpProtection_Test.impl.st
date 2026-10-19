@@ -7,3 +7,4 @@ ResetClearsLatch();
 DisabledWhenThresholdZero();
 OverheatInterlockWhileActive();
 CurrentAtThresholdIsNotUnderload();
+TimeBackwardsRestartsUnderload();

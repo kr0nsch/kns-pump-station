@@ -19,3 +19,4 @@ FloatModeExitAfterTLtRecover();
 DryRunAndEmergencyBothDryRunWins();
 FirstCallDoesNotEnterFloatMode();
 Ls103NotTrippedBelowOffMark();
+TimeBackwardsRestartsLdev();

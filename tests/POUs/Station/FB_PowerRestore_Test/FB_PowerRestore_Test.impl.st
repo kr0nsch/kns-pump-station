@@ -8,3 +8,4 @@ PowerLossDuringSequenceRestarts();
 NothingRequiredFinishesImmediately();
 SeqRemainCountsDown();
 FirstCallIgnoresPowerInput();
+TimeBackwardsRestartsDelay();
