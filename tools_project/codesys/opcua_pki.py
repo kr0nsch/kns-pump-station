@@ -23,7 +23,7 @@ import os
 import socket
 import warnings
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from urllib.parse import quote
 
 from cryptography import x509
@@ -62,8 +62,9 @@ def pki_candidates(runtime_exe: Path, work_dir: Path, local_appdata: Path | None
     """Возможные каталоги ``.pki`` по порядку предпочтения: виртуальное хранилище UAC, каталог программы, рабочий."""
     out: list[Path] = []
     exe_dir = runtime_exe.parent
-    if local_appdata is not None and exe_dir.drive:
-        relative = Path(*exe_dir.parts[1:])  # без диска: Program Files (x86)\CODESYS ...\GatewayPLC
+    win_dir = PureWindowsPath(runtime_exe).parent  # рантайм — только Windows; путь разбирается одинаково в любой ОС
+    if local_appdata is not None and win_dir.drive:
+        relative = Path(*win_dir.parts[1:])  # без диска: Program Files (x86)\CODESYS ...\GatewayPLC
         out.append(local_appdata / "VirtualStore" / relative / ".pki")
     out += [exe_dir / ".pki", work_dir / ".pki"]
     return out
