@@ -37,8 +37,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import generate
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LIB_SNAPSHOT = Path(__file__).resolve().parent / "data" / "plc_process_lib.json"
+# Блок станции в GVL_Persist (persist_extra iolistgen, DESIGN, раздел 4.7)
+PERSIST_EXTRA = Path(__file__).resolve().parent / "persist_station.txt"
 
 # Документы, которые сверяются (порядок — порядок отчёта)
 MD_DOCS = (
@@ -954,6 +958,11 @@ def derive_generator_index(io: IoList, io_md: Doc) -> StIndex:
         persist[f"st{d.name}Cfg"] = Var(f"st{d.name}Cfg", f"PL.ST_{TYPE_SHORT[d.dev_type]}Cfg")
         if d.dev_type not in ("AnalogInput", "DigitalInput"):
             persist[f"st{d.name}Retain"] = Var(f"st{d.name}Retain", "PL.ST_DeviceRetain")
+    # блок станции (DESIGN, раздел 4.7) — данные приложения persist_extra после устройств
+    for line in PERSIST_EXTRA.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\s*([A-Za-z_]\w*)\s*:\s*([A-Za-z_][\w.]*)", line)
+        if m and not line.lstrip().startswith("//"):
+            persist[m.group(1)] = Var(m.group(1), m.group(2))
     idx.gvls["GVL_Persist"] = persist
     idx.gvls["GVL_CfgProject"] = {
         f"st{d.name}Cfg": Var(f"st{d.name}Cfg", f"PL.ST_{TYPE_SHORT[d.dev_type]}Cfg", None, "const") for d in devs
@@ -971,16 +980,21 @@ def generated_gvl_index(gvl_dir: Path) -> StIndex:
     return idx
 
 
-# Настройки генератора проекта (DESIGN, раздел 4.6, iolistgen.toml): таблица перечня — docs/03_io_list.md
-IOLISTGEN_SETS = ("docs-table.filename=docs/03_io_list.md", "docs-table.title=КНС-1. Перечень сигналов")
+# Настройки генератора проекта (DESIGN, раздел 4.6): iolistgen.toml корня репозитория и опции, которые
+# tools_project/generate.py передаёт через --set (тексты тревог «смысл слота», как в 05)
+IOLISTGEN_SETS = generate.IOLISTGEN_SETS
 
 
 def run_iolistgen(repo: Path, io_csv: Path, out: Path, sets: Sequence[str] = IOLISTGEN_SETS) -> None:
     """Перегенерация перечня во временный каталог (сверка снимков с настоящим генератором)."""
+    root = io_csv.resolve().parent.parent
     cmd = [sys.executable, "-m", "iolistgen", "generate", str(io_csv), "--out", str(out)]
+    cmd += ["--config", str(root / "iolistgen.toml")]
     for item in sets:
         cmd += ["--set", item]
-    subprocess.run(cmd, cwd=repo, check=True, capture_output=True)
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(p for p in (str(repo), env.get("PYTHONPATH", "")) if p)
+    subprocess.run(cmd, cwd=root, env=env, check=True, capture_output=True)
 
 
 def load_sources(root: Path = REPO_ROOT) -> Sources:

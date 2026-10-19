@@ -1,5 +1,5 @@
 {
- "source": "plc-process-lib 1.0.0 (ветка integrate, коммит 4b0541c)",
+ "source": "plc-process-lib 1.0.0 (выпуск 1.0.0.0, коммит cbf1d89)",
  "types": {
   "E_AiAlarm": {
    "kind": "enum",
@@ -57,6 +57,7 @@
     "Acked": 3,
     "Activated": 1,
     "Cleared": 2,
+    "Disabled": 11,
     "None": 0,
     "OosOff": 10,
     "OosOn": 9,
@@ -1247,6 +1248,38 @@
    },
    "values": {}
   },
+  "F_RateLimitLr": {
+   "kind": "function",
+   "base": null,
+   "members": {
+    "lrCurrent": [
+     "LREAL",
+     null,
+     "input"
+    ],
+    "lrDt_s": [
+     "LREAL",
+     null,
+     "input"
+    ],
+    "rRateDown_ups": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rRateUp_ups": [
+     "REAL",
+     null,
+     "input"
+    ],
+    "rTarget": [
+     "REAL",
+     null,
+     "input"
+    ]
+   },
+   "values": {}
+  },
   "F_TimeToSec": {
    "kind": "function",
    "base": null,
@@ -1974,6 +2007,11 @@
      null,
      "var"
     ],
+    "wAlmSuppressed": [
+     "WORD",
+     null,
+     "var"
+    ],
     "wAlmUnack": [
      "WORD",
      null,
@@ -1985,11 +2023,6 @@
      "var"
     ],
     "wFault": [
-     "WORD",
-     null,
-     "var"
-    ],
-    "wReserve": [
      "WORD",
      null,
      "var"
@@ -2947,6 +2980,11 @@
     "16#0020",
     "const"
    ],
+   "CV_TIGHT_HYST_PCT": [
+    "REAL",
+    "1.0",
+    "const"
+   ],
    "CV_WRN_DEVIATION": [
     "WORD",
     "16#0001",
@@ -3442,6 +3480,11 @@
     "65535",
     "const"
    ],
+   "VFD_POWER_UP_DELAY": [
+    "TIME",
+    "T#10S",
+    "const"
+   ],
    "VLV_ALARM_COUNT": [
     "UINT",
     "7",
@@ -3550,6 +3593,11 @@
    "VLV_STS_TORQUE": [
     "WORD",
     "16#0040",
+    "const"
+   ],
+   "VLV_UNSEAT_BYPASS": [
+    "TIME",
+    "T#2S",
     "const"
    ],
    "VLV_WRN_INTERLOCK_IN_LOCAL": [

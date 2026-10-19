@@ -1,0 +1,8 @@
+// Блок станции в GVL_Persist (docs/DESIGN.md, раздел 4.7, заморожен): данные приложения, которых нет в
+// перечне сигналов. Опция persist_extra iolistgen 0.2.0 (iolistgen.toml): по объявлению на строку,
+// комментарий в конце строки переносится в GVL_Persist. Новые переменные — только в конец файла:
+// переставлять и переименовывать прежние нельзя, их сохранённые значения пропадут.
+stStationCfg : ST_StationCfg;   // уставки станции (04 §18.2, № 2–31)
+stStationRetain : ST_StationRetain;   // режим, способ, следующий ведущий
+stLIC101Cfg : PL.ST_PidCfg := (eAction := PL.E_PidAction.Direct, rKp := 6.0, rTi_s := 600.0, rTd_s := 0.0, rPvMin_eu := 0.0, rPvMax_eu := 5.0, rSpMin_eu := 1.2, rSpMax_eu := 2.2, rOutMin_pct := 0.0, rOutMax_pct := 100.0, tSample := T#500MS, ePvFailAction := PL.E_PidPvFailAction.Hold, rSafeOut_pct := 100.0, xUseOutAct := TRUE, udiAlarmIdBase := 100100, astAlarm := [(ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None)]);   // LIC101 (04 §18.2, № 32–43)
+stLIC101Retain : PL.ST_DeviceRetain;   // режим регулятора

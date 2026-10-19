@@ -100,3 +100,8 @@ exclude = ["tests/*"]           # в тестах ожидаемые значе�
 name_pattern = "(?i)(cycle|cyc|scan|tick)"                  # счётчик с таким именем
 time_name_pattern = "(?i)(time|delay|timeout|_ms$|_s$|sec)" # сравнение счётчика с «временем»
 exclude = []
+
+[rules.STL003]
+# GVL_Persist генерирует iolistgen: данные приложения (persist_extra) — по объявлению на строку, и
+# инициализатор LIC101 блока станции (docs/DESIGN.md, раздел 4.7) длиннее 120 символов
+exclude = ["src/GVLs/Generated/GVL_Persist.pvl.st"]
