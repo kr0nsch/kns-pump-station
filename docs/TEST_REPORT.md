@@ -100,7 +100,30 @@ _Нет._
 Машиночитаемые результаты: `build/test-results.json`, `build/junit.xml` (не в git).
 <!-- cds:test-report:end -->
 
-## Сборка и полная проверка компиляции в CODESYS
+## Сборка контура в CODESYS (объединённый проект)
+
+CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, CODESYS Control Win V3 (пользовательский процесс),
+локально, 19.10.2026 — ветка `main` после слияния веток команд (`feat/io`, затем `feat/model`) и
+интеграционных правок (DESIGN 0.4, ASSUMPTIONS И1–И11). Проекты созданы заново (`cds.py import --clean`,
+`cds.py import --tests --clean`): объект Persistent Variables `GVL_Persist` создаёт сам импорт (И7).
+
+| Команда | Итог | Примечание |
+|---|---|---|
+| `cds.py deps --check` | все есть | plc-process-lib 1.0.0.0, CAA File 3.5.17.0, SysTimeRtc 3.5.17.0, coUnit 1.2.0.0, Standard 3.5.17.0 |
+| `cds.py check` | 0 ошибок, 0 предупреждений | 85 объектов `src/` |
+| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 121 объект `src/` и `tests/` |
+| `cds.py build` | 0 ошибок, 0 предупреждений | `MainTask` (`PRG_FieldIn`, `PRG_DeviceList`, `PRG_Station`, `PRG_Devices`, `PRG_FieldOut`), `PlantModelTask` (`PRG_PlantModel`), `SlowTask` (`PRG_Slow`) |
+| `cds.py build --tests` | 0 ошибок, 0 предупреждений | — |
+| `cds.py test` | 324 из 324 | 29 наборов: станция — 184, слой К3 и подхват насоса — 58, модель и часы — 82 (раздел выше) |
+| `cds.py roundtrip` | экспорт совпал побайтно (1003 файла), повторный импорт — 0 изменений | с объектом `GVL_Persist` |
+| `symbol_config.py` (сборки `sim` и `site`) | файл символов совпал с правилами | `sim`: `GVL_Persist` 1 Read (`stStationCfgLkg`) и 37 ReadWrite, `GVL_Sim` 4 Read (с `xIoReady`) и 3 ReadWrite, `GVL_Station` 7 Read и 2 ReadWrite; `site`: `GVL_Persist` 38 Read, `GVL_Sim` 4 Read |
+
+Новые тесты сборки контура: `StationCore_LkgRestoredAfterRestart_A18_PMI35`,
+`StationCore_RestoredInvalidLkgFallsBackToDefaults_A18` (написаны до исправления: на ядре без
+восстановления копии LKG прогон дал 324 теста, 2 упали — эти два), `PlcStartAdoption_AdoptedInGeneratedOrder_A13`,
+`PlcStartAdoption_PowerDeviceAfterPumpStopsRunningPump_A13`.
+
+### Ветка К3 до слияния (история)
 
 CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 19.10.2026 — ветка команды К3
 (сгенерированный слой, полевой слой, журнал). Объекты логики станции и модели (К1, К2), на которые
@@ -117,9 +140,30 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 | `cds.py build --tests` | 0 ошибок, 0 предупреждений | — |
 | `cds.py test` | 56 из 56 | раздел выше; мутационное тестирование — раздел ниже |
 | `symbol_config.py` (сборки `sim` и `site`) | файл символов совпал с правилами | `sim`: `GVL_Devices` 29 Read, `GVL_Hmi` 30 ReadWrite, `GVL_IO` 86 Read, `GVL_Log` 4 Read + 2 ReadWrite, `GVL_Persist` 37 ReadWrite, `GVL_Sim` 3 + 3, `GVL_Time` 1; поля типов: `ST_EventView` — запись только `uiPage`, `ST_EventFeed` — только `udiFromSeq`, `ST_EventRecord` — только чтение; `site`: `GVL_Persist` 37 Read, `GVL_Sim` 3 Read; повтор — 0 изменений |
-| `cds.py roundtrip` | не запускался | в чистом проекте нет объекта Persistent Variables (создаёт только `codesys_pvl.py`), экспорт без `GVL_Persist` дал бы дифф |
+| `cds.py roundtrip` | не запускался | в чистом проекте не было объекта Persistent Variables; после сборки контура его создаёт импорт — `roundtrip` проходит (выше) |
 
-## Мутационное тестирование (19.10.2026)
+
+## Прогон приложения имитации на Control Win (сборка контура)
+
+Приложение рабочего режима (имитация) загружено в Control Win V3 и запущено вспомогательным онлайн-скриптом
+CODESYS (не в репозитории: вход и загрузка — как у `cds.py test`, чтение — `read_values`, запись —
+подготовленные значения, сброс — `ScriptOnlineApplication.reset`). Записи журнала читались курсором
+`GVL_Log.stEventFeed`, тревоги — списком `GVL_Log.stAlarmView`. Станция — в «Ручном» (пустой retain).
+
+| Проверка | До исправления | После |
+|---|---|---|
+| Старт имитации: журнал и тревоги за первые 12 с | тревоги ES301 (3010), LS102 (1020), LS103 (1030), TS112, TS122, TS132 (1120, 1220, 1320) — ActiveUnack, затем RtnUnack; события 101008 «нет напряжения», 101013 «переход на поплавки», `KNS1.FLOAT` (100006) ActiveUnack; 101018 по каждому AI и DI | 101015 «старт», 101009 «последовательный пуск», `KNS1.SIM` (100013) ActiveUnack, подавленные по условию `KNS1.LACK`, `KNS1.NORES` и пределы PT201, FT202 (насосы не работают); ложных тревог и событий нет (ASSUMPTIONS И2, И4) |
+| `GVL_Sim.xIoReady` | — | TRUE с первого чтения (0,2 с после «Старт») |
+| Уставки: правка задания 1,8 м, затем 2,5 м (вне 1,2…2,2 LIC101) | — | 1,8 м принята (`stCfgLkg` и `GVL_Persist.stStationCfgLkg` = 1,8, событие 101017), 2,5 м отклонена (`wCfgErr = 16#0400`, копия 1,8) |
+| Тёплый сброс и «Старт» с неверной правкой в `GVL_Persist.stStationCfg` | — | действующая копия 1,8 м (сохранённая), а не 1,4 м уставок проекта; `wCfgErr = 16#0400`; журнал после сброса — те же 13 записей старта (ASSUMPTIONS И6, И11) |
+
+Перезапуск процесса рантайма и загрузка изменённой программы с сохранением энергонезависимых данных
+(PMI-35) не проверялись: это сценарий ПМИ с ручным шагом (R-02 архитектуры).
+
+## Мутационное тестирование слоя К3 (19.10.2026)
+
+Мутационная проверка логики станции — ASSUMPTIONS S21, S29 (26 мутаций, все убиты после усиления
+тестов); модели — тесты по итогам проверки M14–M18 (ASSUMPTIONS, раздел К2).
 
 Копия рабочей копии с объектами К1 и К2 (вне репозитория), по одному изменению поведения на мутант (у ST —
 группами по непересекающимся наборам тестов), `cds.py test` в CODESYS Control Win и `pytest` для Python.
@@ -152,13 +196,18 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 | `FB_F_AlarmCode_Test` | 5 | коды устройств по типу и слоту (слот без суффикса — номер слота), тревоги станции, LIC101.PVF, KNS1.E<код>, неизвестные номера |
 | `FB_AlarmSummary_Test` | 15 | счётчики по приоритетам, высший неквитированный (независимо от порядка обхода), новые High/Critical, порядок списка (группа, приоритет, новые выше) и его предел, период и «время назад», квитирование и откладывание по номеру с `tShelveMax` (весь срок тревоги), соответствие `ALM_SLOT_MAX` библиотеке |
 | `FB_DeviceAudit_Test` | 4 | событие 101018 со значением dev_no · 10 + режим (dev_no 9999 — без переполнения), без события при старте и без журнала |
+| `FB_PlcStartAdoption_Test` | 2 | подхват работающего насоса при старте ПЛК настоящими `PL.FB_DigitalInput` и `PL.FB_MotorVfd` с параметрами проекта: в порядке `PRG_Devices` (ES301 раньше P101) — Running с командой, пуск не засчитан, 5 с без отказов; в обратном порядке — останов «нет напряжения» |
+| `FB_StationCore_Test` | 29 | порядок цикла станции с подменными насосами: старт ПЛК, команды и кнопки, уставки LKG (в том числе восстановление энергонезависимой копии после перезапуска и замена неверной копии уставками проекта), действующее управление и требуемое число, подавления тревог, NE 107, `wState`, LIC101, АВР, «Ручной» → «Автомат», журнал, В1 и сигнализация |
+| ФБ станции: `FB_StationMode_Test` (10), `FB_ControlSelector_Test` (5), `FB_LevelControlStepped_Test` (11), `FB_LevelControlPid_Test` (15), `FB_PumpRotation_Test` (28), `FB_Ats_Test` (13), `FB_Protections_Test` (21), `FB_PumpProtection_Test` (9), `FB_PowerRestore_Test` (10), `FB_Ventilation_Test` (4), `FB_StationAlarms_Test` (9), `FB_Annunciator_Test` (7), `FB_F_StationCfgCheck_Test` (13) | 155 | алгоритмы 04: режимы и способ, старшинство управления, ступенчатое и ПИД с подпорным, роли и чередование, АВР, защиты и поплавки, недогрузка и перегрев, последовательный пуск, вентиляция, тревоги KNS1.*, сигнализация, проверка уставок; у каждого ФБ — умолчания, границы, «время назад» |
+| Модель: `FB_ScaledClock_Test` (8), `FB_InflowProfile_Test` (6), `FB_StormGenerator_Test` (10), `FB_TankModel_Test` (8), `FB_HydraulicSolver_Test` (11), `FB_VfdSim_Test` (15), `FB_PlantModel_Test` (24) | 82 | часы с ускорением, приток и ливни по seed, баланс резервуара и перелив, рабочая точка насосов и токи против эталона `plant_reference.py`, модель ПЧ (рампа, авария, сторожевой таймер 5 с → 50 Гц), модель целиком (инъекции, команды, согласованность при разном шаге) |
 
 ## Проверки без CODESYS
 
 | Проверка | Итог | Примечание |
 |---|---|---|
-| `ruff check`, `ruff format --check`, `mypy` (strict) | пройдено, 19.10.2026, локально | `tools/`, `tools_project/`, `scenarios/` |
-| `pytest` | 675 пройдено, 4 пропущено (19.10.2026) | сверка генерации побайтно (`test_generate.py`), таблица перечислений, правила символов (переменные и поля типов), обвязка сценариев на имитаторе OPC UA-сервера (PMI-13 целиком) и на подменном клиенте (единицы TIME, задержки от метки, перезапуск журнала, пропуск записей, переполнение списка тревог), таблицы суффиксов `F_AlarmCode` против `docs/alarms.csv` и 05, офлайн-проверка файлов сценариев; пропущены — сценарии на рантайме (`PMI_LIVE=1`) и каталог 39 сценариев (ещё нет) |
+| `ruff check`, `ruff format --check`, `mypy` (strict) | пройдено, 19.10.2026, локально | `tools/`, `tools_project/`, `scenarios/` (48 модулей mypy) |
+| `pytest` (с `PL_REPO` и `IOLISTGEN_REPO`) | 710 пройдено, 4 пропущено (19.10.2026) | тесты инструментов шаблона, сверка генерации побайтно и порядок вызова устройств, перекрытие шаблона `PRG_Devices` против шаблона пакета iolistgen, разметка PLCopenXML объекта Persistent Variables, правила символов, обвязка сценариев на имитаторе OPC UA-сервера, сверка документов; снимок plc-process-lib и вывод iolistgen сверены с исходниками; пропущены — сценарии на рантайме (`PMI_LIVE=1`) и каталог 39 сценариев (ещё нет) |
 | `tools_project/generate.py --check` | дрейфа нет (20 файлов) | iolistgen 0.2.0 |
-| `tools_project/check_docs_consistency.py` | 20 проверок, 0 расхождений | сверки с генератором и исходниками библиотеки — по `IOLISTGEN_REPO`/`PL_REPO` или соседним репозиториям (из рабочей копии `_wt/` — на уровень выше) |
-| `st_lint --strict`, iec_checker 0.4, RuSTy 1.0.6 | 0 ошибок, необоснованных находок 0 | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md), раздел К3 |
+| `tools_project/check_docs_consistency.py` | 20 проверок, 0 расхождений | — |
+| `tools/assemble.py --tests` | 121 объект | все варианты сборки |
+| `st_lint --strict`, iec_checker 0.4, RuSTy 1.0.6 | 0 ошибок, необоснованных находок 0 | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md): `st_lint` — 1003 файла; iec_checker — 121 объект, обоснованных 4297; RuSTy — 35 файлов, исключено 87 |

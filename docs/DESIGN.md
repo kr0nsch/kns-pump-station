@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Документ | `docs/DESIGN.md`, версия 0.3 (проект, до реализации), 19.10.2026 |
+| Документ | `docs/DESIGN.md`, версия 0.4 (сборка контура), 19.10.2026 |
 | Основание | [ARCHITECTURE.md](ARCHITECTURE.md) (слои, задачи, решения D-xx), [04_algorithms.md](04_algorithms.md) v0.3 (алгоритмы, уставки — раздел 18), [05_alarm_list.csv](05_alarm_list.csv), [06_PMI.md](06_PMI.md) v0.3 (39 проверок), контракт plc-process-lib 1.0.0 |
 | Согласованность | `python tools_project/check_docs_consistency.py` сверяет объявления этого документа с 01–08, перечнем сигналов, выводом iolistgen и контрактом библиотеки (CI) |
 | Для кого | три команды реализации (раздел 15): интерфейсы этого документа — **контракт** между ними |
@@ -25,10 +25,20 @@
 `SIM_ALLOWED`; инструменты проекта — в `tools_project/` (раздел 1); правки 04, 06, 08 из раздела 17
 версии 0.2 внесены.
 
+Отличия версии 0.4 (сборка контура — слияние веток трёх команд): код `PRG_Station` перенесён в
+`src/POUs/Station/PRG_Station/` (раздел 7) — входы автоматики насосов пишутся явными присваиваниями
+`GVL_Devices.fbP10n`, потому что `ARRAY OF REFERENCE TO` CODESYS 3.5.17 не допускает (C0261); входы
+`GVL_IO` в имитации действительны только после первого цикла модели — признак `GVL_Sim.xIoReady`
+(разделы 4.4, 8.1), до него `PRG_Station` и сгенерированный `PRG_Devices` не выполняются (перекрытие
+шаблона iolistgen, раздел 4.6); аудит режимов устройств — с цикла после первого вызова устройств;
+последняя корректная копия уставок станции сохраняется в `GVL_Persist.stStationCfgLkg` и
+восстанавливается при старте (разделы 4.7, 6.15); символы — раздел 13; Persistent Variables
+создаёт импорт (раздел 16).
+
 ## 0. Соглашения
 
 - Имена и префиксы — CONTRIBUTING.md и `tools/check/st_lint.toml`: массивы — `a` + префикс элемента
-  (`axPumpRun`, `aitfPump`, `arefPump`), физические величины — с единицами (`rLevel_m`,
+  (`axPumpRun`, `aitfPump`, `afbPumpProt`), физические величины — с единицами (`rLevel_m`,
   `rSpeed_pct`, `rCurrent_A`, `rFlow_m3h`). Имена методов тестов — PascalCase без подчёркиваний.
 - Числа в логике — только 0, 1, 2; всё остальное — `GVL_Const` (раздел 2). Границы массивов —
   константы `GVL_Const`; если iec_checker 0.4 не разберёт границу-константу в секции переменных,
@@ -92,6 +102,7 @@ tests/
     Field/, Log/ FB_VfdAdapter_Cond_Test, FB_EventLog_Test, FB_EventLogCsv_Test,
                  FB_AlarmSummary_Test, FB_DeviceAudit_Test, FB_F_AlarmCode_Test,
                  FB_F_UtcToIso_Test, FB_TestAlarmSource (источник тревог тестов)  К3
+                 FB_PlcStartAdoption_Test (подхват насоса в порядке PRG_Devices, 4.6) — сборка контура
     Model/       FB_ScaledClock_Test, FB_InflowProfile_Test, FB_StormGenerator_Test,
                  FB_HydraulicSolver_Test, FB_VfdSim_Test, FB_TankModel_Test      К2
     Integration/ FB_SimRunner, FB_ClosedLoop_Test                                К2
@@ -108,12 +119,15 @@ tools_project/                                   инструменты прое
   generate.py, gen_textlists.py, gen_enums.py, eventlog_decode.py, demo.py,
   test_alarm_code_tables.py (суффиксы F_AlarmCode против alarms.csv, 05, шаблонов библиотеки)  К3
   persist_station.txt  блок станции GVL_Persist для persist_extra iolistgen      К3 (текст блока — раздел 4.7, заморожен)
-  codesys/  codesys_pvl.py (Persistent Variables импортом PLCopenXML), symbol_config.py,
+  iolistgen_templates/st/PRG_Devices.impl.st.j2  перекрытие шаблона: ожидание входов имитации (4.6)  К3
+  codesys/  codesys_pvl.py (Persistent Variables импортом PLCopenXML; запасной путь — объект теперь
+            создаёт cds.py import), symbol_config.py,
             symbol_rules.json (символьная конфигурация, раздел 13), *_cds.py — скрипты CODESYS   К3
   plant_reference.py, test_plant_reference.py                                    К2 (эталон модели, раздел 11.3)
 tools/                                           шаблон plc-repo-template (общие инструменты, синхронизируются из шаблона)
-  codesys/   + symbol_config.py, online_bridge.py, импорт Persistent Variables через PLCopenXML, команды
-             cds.py scenarios и cds.py sim — доработки шаблона (запрос, раздел 17)                    К3
+  codesys/   + symbol_config.py, online_bridge.py, команды cds.py scenarios и cds.py sim — доработки
+             шаблона (запрос, раздел 17); импорт Persistent Variables через PLCopenXML уже в
+             import_sources.py проекта (сборка контура) — передать в шаблон                         К3
 ```
 
 Каталог `tools/` принадлежит шаблону: его файлы обновляются синхронизацией с plc-repo-template, и правка
@@ -727,7 +741,7 @@ VAR_GLOBAL
     axPumpRun       : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // → fbP10n.xAutoRun
     awPumpInterlock : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF WORD;   // → fbP10n.wInterlock
     rSpeedSp_pct    : REAL;                                         // → fbP10n.rSpeedSpAuto_pct
-    stCfgLkg        : ST_StationCfg;     // последняя корректная копия уставок (Read)
+    stCfgLkg        : ST_StationCfg;     // последняя корректная копия уставок (Read); энергонезависимая — GVL_Persist.stStationCfgLkg
 END_VAR
 ```
 
@@ -779,8 +793,17 @@ VAR_GLOBAL
     stSimCmd        : ST_SimCmd;         // команды модели (ReadWrite в сборке имитации)
     stFaultInj      : ST_FaultInjection; // отказы (ReadWrite в сборке имитации)
     stSimSts        : ST_SimSts;         // Read
+    xIoReady        : BOOL;              // входы GVL_IO действительны: реальный режим или модель опубликовала их (Read)
 END_VAR
 ```
+
+`xIoReady` ставит `PRG_FieldIn` (раздел 8.1) и больше не снимает: в реальном режиме — в первом цикле
+(входы обновляют драйверы до цикла задачи), в имитации — когда модель опубликовала входы хотя бы раз
+(`stSimSts.xRunning`). `PlantModelTask` ниже `MainTask` по приоритету, поэтому первый цикл `MainTask`
+видел бы нули: обрыв AI, «сработавшие» НЗ-поплавки и термовыключатели, нет напряжения ES301. Устройства
+в первом вызове берут значение DI без задержки (библиотека, DI-1), и такой старт давал ложные тревоги
+ES301, LS102, LS103, TS1n2, переход станции на поплавки и событие «нет напряжения» (проверено на
+Control Win, ASSUMPTIONS И2). Пока `xIoReady = FALSE`, `PRG_Station` и `PRG_Devices` сразу выходят.
 
 ```st
 // GVL_Time — часы контура (раздел 10)
@@ -830,6 +853,7 @@ time_source = "GVL_Time.fbClockMain"
 alarm_sink = "GVL_Log.fbEventLog"
 persist_extra = "tools_project/persist_station.txt"   # блок станции (раздел 4.7); persist_check его учитывает
 doc = "docs/03_io_list.md"   # документ в заголовках POU (правило STL001)
+template_dir = "tools_project/iolistgen_templates"    # перекрытие шаблона PRG_Devices (ниже)
 
 [generators.docs-table]
 filename = "docs/03_io_list.md"
@@ -842,6 +866,14 @@ title = "КНС-1. Перечень сигналов"
 настроек читается как путь, поэтому `generate.py` передаёт обе опции через `--set`, ASSUMPTIONS К3-02). `docs/03_io_list.md` и `docs/alarms.csv` уже в
 репозитории (этап документов): по `docs/alarms.csv` сверяется перечень тревог 05 (проверка C03
 `check_docs_consistency.py`); первый запуск `generate.py` должен дать те же файлы.
+
+Перекрытие шаблона `tools_project/iolistgen_templates/st/PRG_Devices.impl.st.j2` (механизм
+`template_dir` iolistgen) добавляет в начало `PRG_Devices` выход `IF NOT GVL_Sim.xIoReady THEN RETURN;
+END_IF` (раздел 4.4): первый вызов устройств — подхват работающего насоса и начальные значения DI — только
+по действительным входам. Остальной текст — шаблон пакета: `tools_project/test_generate.py` сравнивает
+их и падает, если шаблон пакета изменился (риск R-10 архитектуры). Порядок вызова генератора 0.2.0 —
+сначала устройства, на которые ссылаются `link_power` и `link_fb` (ES301), поэтому первый вызов насоса
+видит напряжение (ASSUMPTIONS И3; тесты `FB_PlcStartAdoption_Test`, `test_generate.py`).
 
 ### 4.7 Блок станции в `GVL_Persist` (заморожен)
 
@@ -863,7 +895,14 @@ title = "КНС-1. Перечень сигналов"
                      (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None),
                      (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None)]);
     stLIC101Retain : PL.ST_DeviceRetain;              // режим регулятора
+    stStationCfgLkg : ST_StationCfg;                  // последняя корректная копия уставок станции (LKG)
 ```
+
+`stStationCfgLkg` добавлена при сборке контура (версия 0.4) в конец блока — прежние переменные не
+переставлялись, их сохранённые значения не теряются. Её пишет только ядро станции, когда принимает
+корректные уставки (раздел 6.15); при старте ПЛК она становится действующей копией, если проходит
+`F_StationCfgCheck`. Без неё неверная правка, оставленная в `stStationCfg` до перезапуска, возвращала
+станцию к уставкам проекта (`GVL_Station.stCfgLkg` не энергонезависима).
 
 Сверку с прежним `GVL_Persist` выполняет сам генератор (`persist_check`): у устройств и у данных
 приложения смена типа, удаление, перестановка и новая переменная перед прежними — предупреждения, с
@@ -1443,6 +1482,7 @@ VAR_IN_OUT
     stCmd          : ST_StationCmd;           // GVL_Station.stStationCmd: импульсы и номера сбрасываются
     stCfgPersist   : ST_StationCfg;           // GVL_Persist.stStationCfg
     stCfgLkg       : ST_StationCfg;           // GVL_Station.stCfgLkg
+    stCfgLkgRetain : ST_StationCfg;           // GVL_Persist.stStationCfgLkg: копия LKG, переживает перезапуск
     stRetain       : ST_StationRetain;        // GVL_Persist.stStationRetain
     fbLIC101       : PL.FB_PID;               // GVL_Station.fbLIC101
     stLIC101Cmd    : PL.ST_PidCmd;            // GVL_Station.stLIC101Cmd
@@ -1488,10 +1528,15 @@ END_VAR
   `LACK`, `STEP_FALLBACK` `wState` — условие тревоги без подавления.
 - `FB_Annunciator` берёт счётчики сводки прошлого цикла (сводка вызывается после ядра): задержка
   сирены, лампы и K1 — один цикл `MainTask`.
+- Уставки при старте ПЛК: действующая копия `stCfgLkg` := сохранённая `stCfgLkgRetain`, если она проходит
+  `F_StationCfgCheck`, иначе уставки проекта (и копия переписывается ими); затем записанные уставки
+  проверяются как обычно. Каждое принятое изменение LKG пишется и в `stCfgLkgRetain` (только при
+  изменении — не каждый цикл).
 
 Тесты (`FB_StationCore_Test`, подменные насосы): `StationStsSizeIs72`, `StationDefaultsMatchTypeDefaults`,
 `PlcStartLogsEventAndDelaysRequests`, `ManualDryRunInterlocksAllPumps`, `CommandPulsesClearedAndCounted`,
-`ResetButtonEdgeResetsAndLogs`, `LkgRejectsInvalidCfg`, `RevertCfgRestoresLkg`, `ApplyProjectCfgRestoresDefaults`,
+`ResetButtonEdgeResetsAndLogs`, `LkgRejectsInvalidCfg`, `RevertCfgRestoresLkg`, `LkgRestoredAfterRestart`,
+`RestoredInvalidLkgFallsBackToDefaults`, `ApplyProjectCfgRestoresDefaults`,
 `EmergencyRequiresAllAtFullSpeed`, `PowerLostSuppressesLackNoresAts`, `LackSuppressesNoReserve`,
 `StepFallbackSuppressedInEmergency`, `PidControlsLeadSpeed`, `FloatModeStartsAllOnLs102`,
 `AtsReplacesFaultedLead`, `UnderloadTripInterlocksAndAts`, `ManualToAutoAdoptsRunningPump`,
@@ -1505,17 +1550,19 @@ END_VAR
 ядро `FB_StationCore` (раздел 6.15; экземпляр `PRG_Station.fbCore`, экземпляры ФБ раздела 6 — в его
 `VAR`), `PRG_Station` — шаг 1 и привязку ядра к сгенерированному слою: выходы устройств прошлого цикла
 во входы ядра, номера тревог через сводку, сброс и квитирование всех устройств, входы автоматики,
-сводку тревог и журнал. `aitfPump`, `arefPump : ARRAY[1..3] OF REFERENCE TO PL.FB_MotorVfd`,
-`itfTime := GVL_Time.fbClockMain`, `itfEvents := GVL_Log.fbEventLog` присваиваются в начале каждого
-цикла.
+сводку тревог и журнал. `aitfPump`, `itfTime := GVL_Time.fbClockMain`, `itfEvents := GVL_Log.fbEventLog`
+присваиваются в начале каждого цикла. Входы автоматики насосов (`xAutoRun`, `wInterlock`,
+`rSpeedSpAuto_pct`) и признак связи пишутся явными присваиваниями `GVL_Devices.fbP101…fbP103`: массив
+ссылок (`ARRAY OF REFERENCE TO`) CODESYS 3.5.17 не допускает (C0261), указатели не нужны. Пока входы
+имитации недействительны (`GVL_Sim.xIoReady = FALSE`, раздел 4.4), программа сразу выходит.
 
 1. **Ссылки и приёмник:** `PL.GVL_Lib.itfAlarmSink := GVL_Log.fbEventLog`,
-   `GVL_Log.fbEventLog.itfTime := GVL_Time.fbClockMain`; `aitfPump[i]`, `arefPump[i]`
-   (`REF=` `GVL_Devices.fbP101…fbP103`).
+   `GVL_Log.fbEventLog.itfTime := GVL_Time.fbClockMain`; `aitfPump[i] := GVL_Devices.fbP101…fbP103`.
 2. **Уставки (LKG):** `GVL_Hmi.xApplyProjectCfg` → `GVL_Persist.stStationCfg := GVL_StationDefaults.stStationCfg`,
    то же для `stLIC101Cfg`, событие 101017 (флаг не сбрасывать — его сбросит `PRG_Devices`).
-   `wCfgErr := F_StationCfgCheck(...)`; при 0 — `GVL_Station.stCfgLkg := GVL_Persist.stStationCfg`;
-   изменение корректной уставки — событие 101017.
+   `wCfgErr := F_StationCfgCheck(...)`; при 0 — `GVL_Station.stCfgLkg := GVL_Persist.stStationCfg` и
+   `GVL_Persist.stStationCfgLkg` (энергонезависимая копия); изменение корректной уставки — событие 101017.
+   При старте действующая копия — `GVL_Persist.stStationCfgLkg`, если она корректна (раздел 6.15).
 3. **Команды:** импульсы `stStationCmd` и кнопки (фронты `fbHS501.xValue`, `fbHS502.xValue`):
    сброс — `Reset()` всех `GVL_DeviceList.aitfDevice`, `fbLIC101.Reset()`, `xReset` для
    `FB_PumpProtection`, `fbAlarms.AckAll()` (событие 101016); квитирование — `AckAll()` всех
@@ -1526,7 +1573,7 @@ END_VAR
    `uiCmdSeq` растёт на каждую команду. «Звук» (фронт `HS502` или `xSilence`) — событие 101023
    (значение 1 — кнопка, 2 — HMI).
 4. **Входы:** уровень, флаги и `stSts.stCommon.eNe107` `fbLT101`, поплавки, `fbES301.xValue`, по насосам — `Running`,
-   `Available`, `SpeedAct`, `axCommOk[i] := (arefPump[i].stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0`,
+   `Available`, `SpeedAct`, `axCommOk[i] := (GVL_Devices.fbP10n.stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0`,
    ток `fbIT1n1`, перегрев `fbTS1n2`, импульс сброса `GVL_Hmi.stP10nCmd.stCommon.xReset`
    (до того, как его сбросит устройство).
 5. `fbMode` (6.1) → `fbPower` (6.9, `uiRequired` прошлого цикла) → `fbProt` (6.7) → `afbPumpProt[i]` (6.8).
@@ -1548,27 +1595,28 @@ END_VAR
 11. **Задание частоты:** `LevelPid` — `fbLIC101.rOut_pct`; `Stepped`, `Restart` — `rStepSpeed_pct`
     (в `Restart` при выбранном ПИД — тоже, ПИД в слежении; в `Restart` при аварийном уровне или по
     поплавкам — `STN_FULL_SPEED_PCT`); `Emergency`, `Float` — `STN_FULL_SPEED_PCT`.
-12. **Входы автоматики (R5):** `arefPump[i].xAutoRun := fbRotation.axRun[i]`,
-    `arefPump[i].rSpeedSpAuto_pct := rSpeedSp_pct`,
-    `arefPump[i].wInterlock := SEL(fbProt.xDryRun, 0, KNS_ILK_DRY_RUN) OR afbPumpProt[i].wInterlock`;
+12. **Входы автоматики (R5):** `GVL_Devices.fbP10n.xAutoRun := fbRotation.axRun[n]`,
+    `GVL_Devices.fbP10n.rSpeedSpAuto_pct := rSpeedSp_pct`,
+    `GVL_Devices.fbP10n.wInterlock := SEL(fbProt.xDryRun, 0, KNS_ILK_DRY_RUN) OR afbPumpProt[n].wInterlock`;
     `fbPT201.xSuppressLimitAlarms` и `fbFT202.xSuppressLimitAlarms := NOT` (хотя бы один насос
     работает дольше `STN_FLOW_SETTLE` — давление и расход набраны); `fbV1.xAutoRun`, `fbV1.wInterlock` от `fbVent`.
     Копии — в `GVL_Station.axPumpRun`, `awPumpInterlock`, `rSpeedSp_pct`.
 13. **Тревоги:** `GVL_Station.fbAlarms(...)` с условиями раздела 6.11;
     `GVL_Log.fbAlarmSummary(aitfSource := устройства + fbLIC101 + fbAlarms)`;
     `fbAnnunciator` → `GVL_IO.xHA1`, `xHL1`, `xK1`.
-14. **Журнал:** `GVL_Log.fbDeviceAudit` (смена режимов устройств, событие 101018); переход
+14. **Журнал:** `GVL_Log.fbDeviceAudit` (смена режимов устройств, событие 101018) — с цикла после первого
+    вызова устройств: до него режим устройства — начальное значение, а не восстановленный, и каждый старт
+    давал бы 101018 по каждому устройству (проверено на Control Win, ASSUMPTIONS И4); переход
     `GVL_Log.eExportState` в `Done`/`Error` — события 101019/101020; первый цикл — 101015; рост
     `GVL_Sim.stSimSts.udiFaultSeq` — событие 101021 (модель в другой задаче журнал не вызывает,
     правило R3); `GVL_Log.fbEventLog.FillView(GVL_Log.stEventView)` и
     `FillFeed(GVL_Log.stEventFeed)` — после всех событий цикла.
 15. **Состояние:** заполнить `GVL_Station.stStationSts` (поля раздела 3.1, `eNe107` по 04 §19.3).
 
-Код `PRG_Station` создаётся в `src/POUs/Station/PRG_Station/` при сборке контура (этап 2 раздела 15.2):
-до слияния с веткой команды К3 нет `GVL_Devices`, `GVL_Hmi`, `GVL_IO`, `GVL_Persist`, `GVL_Log`,
-`GVL_DeviceList` (и `GVL_Time`, `GVL_Sim` команды К2), и `cds.py check` его не скомпилирует. Пути ниже
+Код — `src/POUs/Station/PRG_Station/` (сборка контура, этап 2 раздела 15.2; ниже — тот же текст). Пути
 сверяет `check_docs_consistency.py` (C10) по выводу генератора и контракту библиотеки; логики в программе
-нет — она в ядре и проверена его тестами.
+нет — она в ядре и проверена его тестами, работа программы в контуре с моделью — прогоном на Control Win
+(TEST_REPORT, раздел «Сборка контура»).
 
 ```st
 // Назначение: программа станции (MainTask, после PRG_DeviceList, до PRG_Devices) — привязка ядра
@@ -1580,25 +1628,29 @@ PROGRAM PRG_Station
 VAR
     fbCore           : FB_StationCore;                                           // шаги 2–15 (6.15)
     aitfPump         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF PL.I_MotorVfd;      // насосы для ядра
-    arefPump         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF REFERENCE TO PL.FB_MotorVfd;   // входы автоматики
     aitfSource       : ARRAY[1..GVL_Const.ALM_SOURCE_MAX] OF PL.I_AlarmSource;   // источники сводки
+    itfDevice        : PL.I_Device;                                              // устройство списка
     uiIdx            : UINT;                                                     // насос, устройство, приоритет
     xAckIdFound      : BOOL;                                                     // ответ сводки на udiAckId
     xShelveIdFound   : BOOL;                                                     // … на udiShelveId
     xUnshelveIdFound : BOOL;                                                     // … на udiUnshelveId
+    xDevicesCalled   : BOOL;                                                     // PRG_Devices уже выполнялся
 END_VAR
 ```
 
 ```st
-// 1. Ссылки и приёмник журнала — каждый цикл (L12 контракта)
+// 0. Входы GVL_IO ещё недействительны (имитация до первого цикла модели, GVL_Sim.xIoReady): станция и устройства
+//    не выполняются — первый вызов ядра (подхват по ОС, событие 101015) только по действительным входам
+IF NOT GVL_Sim.xIoReady THEN
+    RETURN;
+END_IF
+
+// 1. Ссылки и приёмник журнала — каждый цикл (L12 контракта): интерфейсы переживают онлайн-изменение
 PL.GVL_Lib.itfAlarmSink := GVL_Log.fbEventLog;
 GVL_Log.fbEventLog.itfTime := GVL_Time.fbClockMain;
 aitfPump[1] := GVL_Devices.fbP101;
 aitfPump[2] := GVL_Devices.fbP102;
 aitfPump[3] := GVL_Devices.fbP103;
-arefPump[1] REF= GVL_Devices.fbP101;
-arefPump[2] REF= GVL_Devices.fbP102;
-arefPump[3] REF= GVL_Devices.fbP103;
 
 // 2. Номера тревог выполняет сводка (ядро засчитывает команду, пишет результат, сбрасывает номер)
 xAckIdFound := FALSE;
@@ -1616,9 +1668,9 @@ IF GVL_Station.stStationCmd.udiUnshelveId <> 0 THEN
 END_IF
 
 // 3. Входы ядра — выходы устройств прошлого цикла (шаг 4); импульс сброса насоса — до PRG_Devices
-FOR uiIdx := 1 TO GVL_Const.STN_PUMP_COUNT DO
-    fbCore.axCommOk[uiIdx] := (arefPump[uiIdx].stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0;
-END_FOR
+fbCore.axCommOk[1] := (GVL_Devices.fbP101.stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0;
+fbCore.axCommOk[2] := (GVL_Devices.fbP102.stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0;
+fbCore.axCommOk[3] := (GVL_Devices.fbP103.stSts.stCommon.wWarning AND PL.GVL_Const.MOT_WRN_COMM_LOSS) = 0;
 fbCore.axRunFeedback[1] := GVL_IO.xP101_RFB;
 fbCore.axRunFeedback[2] := GVL_IO.xP102_RFB;
 fbCore.axRunFeedback[3] := GVL_IO.xP103_RFB;
@@ -1656,18 +1708,20 @@ fbCore(itfTime := GVL_Time.fbClockMain, itfEvents := GVL_Log.fbEventLog, aitfPum
        udiLogOverwritten := GVL_Log.fbEventLog.udiOverwritten, ePrioUnack := GVL_Log.fbAlarmSummary.ePrioUnack,
        udiNewHighSeq := GVL_Log.fbAlarmSummary.udiNewHighSeq,
        stCmd := GVL_Station.stStationCmd, stCfgPersist := GVL_Persist.stStationCfg, stCfgLkg := GVL_Station.stCfgLkg,
+       stCfgLkgRetain := GVL_Persist.stStationCfgLkg,
        stRetain := GVL_Persist.stStationRetain, fbLIC101 := GVL_Station.fbLIC101,
        stLIC101Cmd := GVL_Station.stLIC101Cmd, stLIC101Cfg := GVL_Persist.stLIC101Cfg,
        stLIC101Retain := GVL_Persist.stLIC101Retain, fbAlarms := GVL_Station.fbAlarms);
 
 // 4. Общий сброс и квитирование всех устройств — только из MainTask (R3 контракта); выгрузка журнала
 FOR uiIdx := 1 TO GVL_DeviceList.DEVICE_COUNT DO
-    IF GVL_DeviceList.aitfDevice[uiIdx] <> 0 THEN
+    itfDevice := GVL_DeviceList.aitfDevice[uiIdx];
+    IF itfDevice <> 0 THEN
         IF fbCore.xResetAllReq THEN
-            GVL_DeviceList.aitfDevice[uiIdx].Reset();
+            itfDevice.Reset();
         END_IF
         IF fbCore.xAckAllReq THEN
-            GVL_DeviceList.aitfDevice[uiIdx].AckAll();
+            itfDevice.AckAll();
         END_IF
     END_IF
 END_FOR
@@ -1677,10 +1731,16 @@ IF fbCore.xExportReq THEN
 END_IF
 
 // 5. Входы автоматики устройств (шаг 12, R5): запросы, блокировки, задание; копии для HMI
+GVL_Devices.fbP101.xAutoRun := fbCore.axRun[1];
+GVL_Devices.fbP101.wInterlock := fbCore.awInterlock[1];
+GVL_Devices.fbP101.rSpeedSpAuto_pct := fbCore.rSpeedSp_pct;
+GVL_Devices.fbP102.xAutoRun := fbCore.axRun[2];
+GVL_Devices.fbP102.wInterlock := fbCore.awInterlock[2];
+GVL_Devices.fbP102.rSpeedSpAuto_pct := fbCore.rSpeedSp_pct;
+GVL_Devices.fbP103.xAutoRun := fbCore.axRun[3];
+GVL_Devices.fbP103.wInterlock := fbCore.awInterlock[3];
+GVL_Devices.fbP103.rSpeedSpAuto_pct := fbCore.rSpeedSp_pct;
 FOR uiIdx := 1 TO GVL_Const.STN_PUMP_COUNT DO
-    arefPump[uiIdx].xAutoRun := fbCore.axRun[uiIdx];
-    arefPump[uiIdx].wInterlock := fbCore.awInterlock[uiIdx];
-    arefPump[uiIdx].rSpeedSpAuto_pct := fbCore.rSpeedSp_pct;
     GVL_Station.axPumpRun[uiIdx] := fbCore.axRun[uiIdx];
     GVL_Station.awPumpInterlock[uiIdx] := fbCore.awInterlock[uiIdx];
 END_FOR
@@ -1702,9 +1762,14 @@ aitfSource[GVL_DeviceList.DEVICE_COUNT + 2] := GVL_Station.fbAlarms;
 GVL_Log.fbAlarmSummary(aitfSource := aitfSource, uiSourceCount := GVL_DeviceList.DEVICE_COUNT + 2,
                        itfTime := GVL_Time.fbClockMain, stView := GVL_Log.stAlarmView);
 
-// 7. Журнал (шаг 14): аудит режимов устройств; страница HMI и курсор — после всех событий цикла
-GVL_Log.fbDeviceAudit(aitfDevice := GVL_DeviceList.aitfDevice, auiDevNo := GVL_DeviceList.auiDevNo,
-                      itfEvents := GVL_Log.fbEventLog);
+// 7. Журнал (шаг 14): аудит режимов устройств — с цикла после первого вызова устройств (до него режим устройства —
+//    начальное значение, а не восстановленный: каждый старт давал бы событие 101018 по каждому устройству);
+//    страница HMI и курсор — после всех событий цикла
+IF xDevicesCalled THEN
+    GVL_Log.fbDeviceAudit(aitfDevice := GVL_DeviceList.aitfDevice, auiDevNo := GVL_DeviceList.auiDevNo,
+                          itfEvents := GVL_Log.fbEventLog);
+END_IF
+xDevicesCalled := TRUE;                                 // PRG_Devices выполняется следом в этом цикле
 GVL_Log.fbEventLog.FillView(stView := GVL_Log.stEventView);
 GVL_Log.fbEventLog.FillFeed(stFeed := GVL_Log.stEventFeed);
 
@@ -1725,6 +1790,8 @@ GVL_Station.stStationSts := fbCore.stSts;
    таргета — зонд в первом этапе: функции SysTarget (имя устройства, производитель) в 3.5.17;
    если в таргете ПЛК210 их нет — константа сборки `GVL_Const.SIM_ALLOWED` в файле-наложении
    `targets/plc210/` (FALSE).
+2а. `GVL_Sim.xIoReady` (раздел 4.4): `NOT xSimulation OR stSimSts.xRunning`, ставится один раз и не
+   снимается.
 3. Адаптеры ПЧ: `fbVfdP10n.Decode(wStw := GVL_IO.wP10n_STW, uiFact := GVL_IO.uiP10n_FACT,
    xSlaveOk := GVL_IO.xMbOk_RS485_1_Sn)`, затем `GVL_IO.xP10n_CommOk`, `xP10n_VfdReady`,
    `xP10n_VfdRun`, `xP10n_VfdFault`, `rP10n_SpeedAct_pct` из выходов адаптера (три явных блока: имена
@@ -2136,10 +2203,11 @@ Persistent Variables в проекте тестов — тот же объект
 | `GVL_Station` | `stStationSts`, `fbLIC101`, `fbAlarms`, `axPumpRun`, `awPumpInterlock`, `rSpeedSp_pct`, `stCfgLkg` | Read | все |
 | `GVL_Log` | `stEventView` (номер страницы HMI), `stEventFeed` (курсор клиента) | ReadWrite; запись — только `uiPage` и `udiFromSeq` (поля типов, ниже) | все |
 | `GVL_Log` | `stAlarmView`, `eExportState`, `uiExportLines`, `udiExportError` | Read | все |
+| `GVL_Persist` | `stStationCfgLkg` (копия LKG пишет только станция после проверки) | Read | все |
 | `GVL_Persist` | `st*Cfg` | Read (`site`), ReadWrite (`sim`: сценарии меняют уставки) | по сборке |
 | `GVL_Persist` | `st*Retain` | Read (`site`), ReadWrite (`sim`: наработка насосов в И0, 06 §5.2, п. 8) | по сборке |
 | `GVL_Sim` | `stSimCmd`, `stFaultInj`, `stSimCfg` | ReadWrite | только `sim` |
-| `GVL_Sim` | `xSimulation`, `xSimulationReq`, `stSimSts` | Read | все |
+| `GVL_Sim` | `xSimulation`, `xSimulationReq`, `stSimSts`, `xIoReady` | Read | все |
 | `GVL_Time` | `lrMainNow_s` | Read | все |
 | `GVL_Iiot` | по атрибутам проекта 06 | — | после встраивания |
 | `GVL_Const`, `GVL_DeviceList`, программы, локальные | — | не выгружаются | — |
@@ -2430,8 +2498,8 @@ k, время контура и реальное. Здесь — только т
    `../plc-process-lib` (переменная `PL_REPO`), проверка версии 1.0.0.0 в Library Manager.
 2. **Генерация слоя устройств.** `python tools_project/generate.py` после любой правки
    `docs/03_io_list.csv`; `--check` — проверка без записи (как в CI).
-3. **Persistent Variables.** После `cds.py import` в отчёте — «создан GVL_Persist (Persistent
-   Variables)». Если объект не создан: «Application → Добавить объект → Persistent Variables», имя
+3. **Persistent Variables.** Объект создаёт `cds.py import` импортом PLCopenXML (в отчёте — «created:
+   PVL GVL_Persist»; так же в `roundtrip`). Если объект не создан: «Application → Добавить объект → Persistent Variables», имя
    `GVL_Persist`, вставить текст `src/GVLs/Generated/GVL_Persist.pvl.st`; следующий импорт обновит
    текст. «Reorder List and Clear Gaps» не выполнять.
 4. **Символьная конфигурация.** Выполняется при импорте; проверить объект «Symbol Configuration» с
@@ -2507,5 +2575,5 @@ k, время контура и реальное. Здесь — только т
 | 06 plc-iiot-stack | правила символов — в `config.json` флагмана; имя устройства в узлах OPC UA — обзором; узлы OPC UA доступны только после ручного шага 5 раздела 16 (Z5) | общий скрипт, рабочий OPC UA |
 | 07 iolistgen | выполнено в 0.2.0: переменные приложения в `GVL_Persist` (`persist_extra`) с учётом в `persist_check`, тип устройства `Pid`. Осталось: генерация `GVL_DeviceList` (пока `generate.py`); тексты `TL_Reason` для битов, заданных проектом; многострочное объявление в `persist_extra`; значение `none` опции `templates` из `iolistgen.toml` (сейчас читается как путь) | убрать генератор проекта и обходы |
 | 01 plc-process-lib | вход подавления тревоги состояния `FB_DigitalInput` (1.1) | режим по поплавкам без повторных тревог (R-04) |
-| шаблон | создание Persistent Variables через PLCopenXML при импорте; заменитель GVL в проекте тестов; онлайн-мост `online_bridge.py` и символьная конфигурация `symbol_config.py` как общие инструменты; команды `cds.py scenarios` и `cds.py sim` | общий ручной шаг всех проектов; сценарии без OPC UA; `tools/` принадлежит шаблону (раздел 1) |
+| шаблон | создание Persistent Variables через PLCopenXML при импорте (сделано в `tools/codesys/import_sources.py` проекта при сборке контура — перенести в шаблон, иначе синхронизация его сотрёт); заменитель GVL в проекте тестов; онлайн-мост `online_bridge.py` и символьная конфигурация `symbol_config.py` как общие инструменты; команды `cds.py scenarios` и `cds.py sim` | общий ручной шаг всех проектов; сценарии без OPC UA; `tools/` принадлежит шаблону (раздел 1) |
 | `04_algorithms.md`, `06_PMI.md`, `08_hmi_spec.md` | правки этого раздела версии 0.2 внесены (04 v0.3, 06 v0.3, 08 v0.2); вопросы 1 и 2 раздела 14 документа 08 решены полями `ST_StationCmd` (раздел 3.1); согласованность документов проверяет `tools_project/check_docs_consistency.py` в CI | — |
