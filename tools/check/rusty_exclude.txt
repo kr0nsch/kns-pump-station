@@ -66,3 +66,41 @@ FB_HydraulicSolver_Test.st  # PL.U_RealBits, FB_HydraulicSolver (исключё�
 FB_TankModel_Test.st  # PL.U_RealBits, FB_TankModel (исключён)
 FB_VfdSim_Test.st  # PL.FB_FakeTime, FB_VfdSim (исключён)
 FB_PlantModel_Test.st  # PL.FB_FakeTime, FB_PlantModel (исключён)
+
+# --- Логика станции (К1) и сборка контура: каждый файл обращается к типам и ФБ plc-process-lib (PL.*) —
+# устройства через PL.I_MotorVfd, время PL.I_TimeSource/FB_Delay, тревоги PL.FB_Alarm, LIC101 PL.FB_PID,
+# тесты PL.FB_FakeTime; GVL_TestsStation объявляет экземпляры исключённых наборов. Результат прогона с
+# прокладками — docs/STATIC_ANALYSIS.md, раздел «Сборка контура».
+F_StationCfgCheck.st  # PL.ST_PidCfg, PL.E_AlarmPriority
+FB_Annunciator.st  # PL.I_TimeSource, PL.FB_SystemTime
+FB_Ats.st  # PL.I_MotorVfd, PL.FB_Delay
+FB_LevelControlPid.st  # PL.I_MotorVfd, PL.FB_Delay
+FB_LevelControlStepped.st  # PL.I_TimeSource, PL.FB_Delay
+FB_PowerRestore.st  # PL.I_TimeSource, PL.FB_Delay
+FB_Protections.st  # PL.I_TimeSource, PL.FB_Delay, PL.E_Ne107Status
+FB_PumpProtection.st  # PL.FB_Delay, PL.F_IsFinite
+FB_PumpRotation.st  # PL.I_MotorVfd, PL.FB_Delay
+FB_StationAlarms.st  # IMPLEMENTS PL.I_AlarmSource, PL.FB_Alarm
+FB_StationCore.st  # PL.FB_PID, PL.I_MotorVfd и ФБ станции (исключены)
+FB_StationMode.st  # PL.I_MotorVfd, PL.E_CmdResult
+FB_Ventilation.st  # PL.I_TimeSource, PL.FB_Delay
+GVL_Station.st  # PL.FB_PID, PL.ST_PidCmd, FB_StationAlarms (исключён)
+GVL_StationDefaults.st  # PL.ST_PidCfg
+PRG_Station.st  # PL.I_MotorVfd, PL.I_AlarmSource, GVL_Devices (исключён)
+ST_StationCfg.st  # PL.ST_AlarmCfg
+ST_StationSts.st  # PL.E_Ne107Status, PL.E_CmdResult
+FB_FakeMotorVfd.st  # IMPLEMENTS PL.I_MotorVfd
+FB_Annunciator_Test.st  # PL.FB_FakeTime, FB_Annunciator (исключён)
+FB_Ats_Test.st  # PL.FB_FakeTime, FB_Ats (исключён)
+FB_F_StationCfgCheck_Test.st  # PL.U_RealBits, F_StationCfgCheck (исключён)
+FB_LevelControlPid_Test.st  # PL.FB_FakeTime, FB_LevelControlPid (исключён)
+FB_LevelControlStepped_Test.st  # PL.FB_FakeTime, FB_LevelControlStepped (исключён)
+FB_PowerRestore_Test.st  # PL.FB_FakeTime, FB_PowerRestore (исключён)
+FB_Protections_Test.st  # PL.FB_FakeTime, FB_Protections (исключён)
+FB_PumpProtection_Test.st  # PL.FB_FakeTime, FB_PumpProtection (исключён)
+FB_PumpRotation_Test.st  # PL.FB_FakeTime, FB_PumpRotation (исключён)
+FB_StationAlarms_Test.st  # PL.FB_FakeTime, FB_StationAlarms (исключён)
+FB_StationCore_Test.st  # PL.FB_FakeTime, FB_StationCore (исключён)
+FB_StationMode_Test.st  # PL.E_DeviceMode, FB_StationMode (исключён)
+FB_Ventilation_Test.st  # PL.FB_FakeTime, FB_Ventilation (исключён)
+GVL_TestsStation.st  # экземпляры наборов станции (исключены)
