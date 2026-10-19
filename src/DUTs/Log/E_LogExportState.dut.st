@@ -1,5 +1,5 @@
 // Назначение: состояние выгрузки журнала в CSV (GVL_Log.eExportState, stStationSts.eLogExport).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.2
 {attribute 'qualified_only'}

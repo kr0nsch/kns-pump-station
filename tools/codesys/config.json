@@ -113,7 +113,7 @@
     "version": {"env": "CDS_LIBRARY_VERSION", "default": "0.1.0.0"},
     "default_namespace": "KNS",
     "placeholder": null,
-    "author": "<ИМЯ ФАМИЛИЯ>",
+    "author": "kr0nsch",
     "description": "КНС-1: логика станции, полевой слой, журнал событий и тревог, модель объекта с ускорением времени (объекты приложения без программ задач)",
     "released": false,
     "exclude": ["PRG_FieldIn", "PRG_DeviceList", "PRG_Station", "PRG_Devices", "PRG_FieldOut", "PRG_ApplyProjectCfg",

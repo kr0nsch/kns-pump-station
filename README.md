@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/kr0nsch/kns-pump-station/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/kr0nsch/kns-pump-station/actions/workflows/ci.yml/badge.svg?branch=main"></a> <a href="LICENSE"><img alt="Лицензия MIT" src="https://img.shields.io/badge/license-MIT-56677D?style=flat-square&labelColor=1B2736"></a>
   <img alt="CODESYS 3.5.17.30" src="https://img.shields.io/badge/CODESYS-3.5.17.30-C2410C?style=flat-square&labelColor=1B2736"> <img alt="IEC 61131-3" src="https://img.shields.io/badge/IEC%2061131--3-56677D?style=flat-square"> <img alt="Язык: Structured Text" src="https://img.shields.io/badge/Structured%20Text-3A4B60?style=flat-square"> <img alt="Язык: Python" src="https://img.shields.io/badge/Python-3A4B60?style=flat-square&logo=python&logoColor=white">
-  <a href="#тесты-и-качество"><img alt="Тесты: coUnit 333 из 333 в CODESYS Control Win (коммит 8bf535e, 19.10.2026), pytest 792 пройдено" src="https://img.shields.io/badge/tests-coUnit%20333%2F333%20%C2%B7%20pytest%20792-3A4B60?style=flat-square&labelColor=1B2736"></a> <a href="docs/07_test_protocol.md"><img alt="ПМИ: 39 из 39 проверок соответствуют на имитаторе, пять — по автоматической части (протокол № 1, 19.10.2026)" src="https://img.shields.io/badge/%D0%9F%D0%9C%D0%98-39%2F39%20%D0%BD%D0%B0%20%D0%B8%D0%BC%D0%B8%D1%82%D0%B0%D1%82%D0%BE%D1%80%D0%B5-3A4B60?style=flat-square&labelColor=1B2736"></a>
+  <a href="#тесты-и-качество"><img alt="Тесты: coUnit 333 из 333 в CODESYS Control Win (коммит 8bf535e, 19.10.2026), pytest 798 пройдено" src="https://img.shields.io/badge/tests-coUnit%20333%2F333%20%C2%B7%20pytest%20798-3A4B60?style=flat-square&labelColor=1B2736"></a> <a href="docs/07_test_protocol.md"><img alt="ПМИ: 39 из 39 проверок соответствуют на имитаторе, пять — по автоматической части (протокол № 1, 19.10.2026)" src="https://img.shields.io/badge/%D0%9F%D0%9C%D0%98-39%2F39%20%D0%BD%D0%B0%20%D0%B8%D0%BC%D0%B8%D1%82%D0%B0%D1%82%D0%BE%D1%80%D0%B5-3A4B60?style=flat-square&labelColor=1B2736"></a>
 </p>
 
 <p align="center"><a href="#что-это-и-зачем">Что это</a> · <a href="#как-это-выглядит">Как выглядит</a> · <a href="#быстрый-старт">Быстрый старт</a> · <a href="#как-использовать-в-своём-проекте">На свой объект</a> · <a href="#как-устроено">Как устроено</a> · <a href="#документация">Документация</a> · <a href="#summary-en">Summary (EN)</a></p>
@@ -210,7 +210,7 @@ expect_event = { event = "KNS1.E6", value = 1, since = "t_fault" }
    python -m pytest
    ```
 
-   Увидите: `792 passed, 39 skipped` примерно за 75 с. Пропущены 39 сценариев ПМИ: им нужен рантайм
+   Увидите: `798 passed, 39 skipped` примерно за 70 с. Пропущены 39 сценариев ПМИ: им нужен рантайм
    CODESYS (`PMI_LIVE=1`, ниже).
 
 4. Сверить сгенерированный слой устройств с перечнем сигналов и документы между собой (то же
@@ -425,7 +425,7 @@ flowchart TB
 | адаптер ПЧ, подхват работающего насоса при старте ПЛК, журнал, CSV через CAA File, сводка тревог | 59 тестов | coUnit, `tests/POUs/Field/`, `tests/POUs/Log/` |
 | модель: часы с ускорением, приток и ливни, резервуар, рабочая точка насосов против эталона `plant_reference.py`, модель ПЧ | 82 теста | coUnit, `tests/POUs/Model/` |
 | программа испытаний на модели объекта: 39 сценариев через OPC UA на работающем приложении | 39 из 39 соответствуют | CODESYS Control Win V3, [протокол № 1](docs/07_test_protocol.md) |
-| инструменты, обвязка сценариев на имитаторе OPC UA-сервера, файлы сценариев, символы, эталонная модель, сверка документов | 792 пройдено, 39 пропущено | pytest |
+| инструменты, обвязка сценариев на имитаторе OPC UA-сервера, файлы сценариев, символы, эталонная модель, сверка документов | 798 пройдено, 39 пропущено | pytest |
 | сгенерированный слой совпадает с перечнем; документы 01–08 согласованы | 20 файлов; 20 проверок | `generate.py --check`, `check_docs_consistency.py` |
 | линтер и статанализ ST | 0 необоснованных находок | `st_lint`, iec_checker 0.4, RuSTy 1.0.6 — [STATIC_ANALYSIS.md](docs/STATIC_ANALYSIS.md) |
 
@@ -443,7 +443,7 @@ flowchart TB
   них до исправления падали; после правок по ревью кода девять затронутых проверок прогнаны повторно.
   Протокол № 1 — [07_test_protocol.md](docs/07_test_protocol.md), проверки сценариев по шагам и измеренные
   значения — [07_pmi_report.md](docs/07_pmi_report.md).
-- **pytest**: 792 пройдено, 39 пропущено — Windows 11, 19.10.2026, рабочая копия с соседними
+- **pytest**: 798 пройдено, 39 пропущено — Windows 11, 19.10.2026, рабочая копия с соседними
   plc-process-lib и iolistgen.
 - **ПЛК210, ПЧ и модули ввода-вывода** — не проверялось.
 - **CI GitHub Actions** (Linux) — всё, что не требует CODESYS: ruff, mypy, pytest, сборка ST, линтер,
@@ -541,7 +541,7 @@ hardware. Docs are in Russian.
 
 <p align="center"><b>Портфолио АСУ ТП</b></p>
 <table>
-<tr><td width="33%"><a href="https://github.com/kr0nsch/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка проекта скриптом, CI</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><span data-repo="kns-pump-station"><b>03 · kns-pump-station</b></span> <sub>(готовится)</sub><br><sub>флагман: КНС, три насоса с ПЧ, модель, ПМИ</sub></td></tr>
-<tr><td width="33%"><span data-repo="kns-port-domestic">04 · kns-port-domestic</span> <sub>(готовится)</sub><br><sub>перенос на Astra.IDE / MasterSCADA 4D</sub></td><td width="33%"><span data-repo="plc-iiot-stack">05 · plc-iiot-stack</span> <sub>(готовится)</sub><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><a href="https://github.com/kr0nsch/iolistgen">06 · iolistgen</a><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/kr0nsch/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка проекта скриптом, CI</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><a href="https://github.com/kr0nsch/kns-pump-station"><b>03 · kns-pump-station</b></a><br><sub>флагман: КНС, три насоса с ПЧ, модель, ПМИ</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/kr0nsch/kns-port-domestic">04 · kns-port-domestic</a><br><sub>перенос на Astra.IDE / MasterSCADA 4D</sub></td><td width="33%"><span data-repo="plc-iiot-stack">05 · plc-iiot-stack</span> <sub>(готовится)</sub><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><a href="https://github.com/kr0nsch/iolistgen">06 · iolistgen</a><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
 <tr><td width="33%"><a href="https://github.com/kr0nsch/plc-ci-toolkit">07 · plc-ci-toolkit</a><br><sub>линтеры, сборка CODESYS, тесты, JUnit</sub></td><td width="33%"><a href="https://github.com/kr0nsch/s7-to-codesys">08 · s7-to-codesys</a><br><sub>конвертер SCL → ST с отчётом о переносе</sub></td><td width="33%"><a href="https://github.com/kr0nsch/sis-interlock-demo">09 · sis-interlock-demo</a><br><sub>ПАЗ: MooN, матрица причин и следствий</sub></td></tr>
 </table>

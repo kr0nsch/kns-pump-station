@@ -8,7 +8,7 @@
 //             параметрами VAR_IN_OUT: юнит-тесты идут с подменными насосами и временем, без модели и
 //             сгенерированного слоя. Привязку к GVL_Devices, GVL_Hmi, GVL_IO, GVL_Persist, GVL_Log,
 //             GVL_Sim, GVL_Time и GVL_DeviceList выполняет PRG_Station.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.3.0
 // Документ:   docs/DESIGN.md, разделы 6.15 и 7; docs/04_algorithms.md, разделы 4, 15, 16, 18.3, 19
 FUNCTION_BLOCK FB_StationCore

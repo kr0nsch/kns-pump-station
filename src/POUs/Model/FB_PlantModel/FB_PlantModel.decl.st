@@ -6,7 +6,7 @@
 //             обмен Modbus в stIo, состояние в stSts, счётчик изменений инъекций udiFaultSeq. Шаг времени
 //             за вызов — от itfTime (часы модели с ускорением), не больше SIM_DT_MAX; «время назад» —
 //             шаг 0. Пишет только входы ПЛК (stIo), выходы ПЛК читает со входов axRun, awCtw, auiFref, xV1Run.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.1
 // Документ:   docs/DESIGN.md, раздел 11; docs/ARCHITECTURE.md, раздел 4
 FUNCTION_BLOCK FB_PlantModel

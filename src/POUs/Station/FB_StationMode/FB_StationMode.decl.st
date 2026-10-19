@@ -4,7 +4,7 @@
 //             OutOfService; Автомат → Ручной: Manual насосам в Auto и Local) и даёт импульсы для
 //             безударного перехода. xSetManual старше xSetAuto, xSetStepped старше xSetLevelPid.
 //             События 101001…101004.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 6.1; docs/04_algorithms.md, раздел 3
 FUNCTION_BLOCK FB_StationMode

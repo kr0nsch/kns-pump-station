@@ -1,7 +1,7 @@
 // Назначение: слоты тревог станции KNS1.* (04 §15, 05_alarm_list.csv): индекс массивов
 //             FB_StationAlarms и ST_StationCfg.astAlarm; номер тревоги = STN_ALARM_ID_BASE + slot,
 //             бит слов wAlm* — slot - 1. Без strict: перечислением индексируются массивы.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.1
 {attribute 'qualified_only'}

@@ -1,7 +1,7 @@
 # Ручные шаги
 
 Шаги, которые выполняет человек в консоли Windows и в IDE CODESYS. Всё, что можно выполнить без
-CODESYS (сборка текстов, линтер, статанализ), описано в [README](../README.md#быстрый-старт-без-железа)
+CODESYS (сборка текстов, линтер, статанализ), описано в [README](../README.md#без-codesys-проверки-и-эталонная-модель)
 и выполняется в CI.
 
 Команды разделов 3–7 проверены прогоном на CODESYS V3.5 SP17 Patch 3 (3.5.17.30, 32-битная сборка
@@ -232,8 +232,9 @@ python tools\codesys\cds.py roundtrip
 2. Версия: `library.version` в `tools/codesys/config.json` (четыре числа, `1.2.0.0`) и запись в
    `CHANGELOG.md`. Компанию (`library.company`) и название (`library.title`) после первого релиза не
    меняйте: по тройке «компания, название, версия» библиотеку находят проекты-потребители.
-   Перед публикацией шаблона замените `plc-portfolio` на свой GitHub-логин (без символов
-   `<>:"/\|?*,()`).
+   Библиотеки портфолио выпускаются под компанией `plc-portfolio` (D32 в
+   [ASSUMPTIONS.md](ASSUMPTIONS.md)); в своём проекте из шаблона задайте свою компанию — без
+   символов `<>:"/\|?*,()`.
 3. Библиотека (для репозиториев-библиотек):
 
    ```bat
@@ -375,6 +376,13 @@ python tools_project\codesys\codesys_pvl.py --tests
 Дальше `cds.py build`, `build --tests`, `test` обновляют текст объекта сами. «Reorder List and Clear
 Gaps» не выполнять. Новые переменные блока станции — только в конец `persist_station.txt` (так
 добавлена `stStationCfgLkg`, DESIGN 4.7).
+
+Создание объекта импортом PLCopenXML и сторожевой таймер задач (ключ `watchdog` задачи в
+`tools/codesys/config.json`) — доработка `tools/codesys/import_sources.py` этого проекта; справочник
+[tools/README.md](../tools/README.md) общий с шаблоном plc-repo-template и описывает импорт шаблона
+(там Persistent Variables — ручной шаг). Доработка передаётся в шаблон (DESIGN, раздел 17); до этого при
+синхронизации инструментов с шаблоном `import_sources.py` и его тесты (`test_cds_config.py`,
+`test_import_tasks.py`, `test_import_pvl_xml.py`) не перезаписывать.
 
 ### 9.4. Символьная конфигурация OPC UA
 

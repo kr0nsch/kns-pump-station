@@ -3,7 +3,7 @@
 //             статического, сухой ход, засор, осушенный приёмок, ток двигателя, давление PT201. Ожидаемые значения —
 //             эталон tools_project/plant_reference.py (сценарии hydraulic.*), характеристика ST_PumpModelCfg по
 //             умолчанию; допуски — REAL против float64 эталона.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, разделы 11.3, 14.1
 FUNCTION_BLOCK FB_HydraulicSolver_Test EXTENDS coUnit.FB_TestSuite

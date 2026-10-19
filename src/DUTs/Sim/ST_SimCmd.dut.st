@@ -1,6 +1,6 @@
 // Назначение: команды модели (GVL_Sim.stSimCmd). Импульсы сбрасывает модель (FB_PlantModel)
 //             после выполнения; xInflowOverride и xDoorOpen — уровни.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.3; docs/06_PMI.md, раздел 5.4
 {attribute 'qualified_only'}

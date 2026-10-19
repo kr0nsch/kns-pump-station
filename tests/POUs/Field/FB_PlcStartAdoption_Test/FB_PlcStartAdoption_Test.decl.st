@@ -4,7 +4,7 @@
 //             подхватывает работающий по ОС насос с запросом станции. Обратный порядок (как по dev_no в
 //             iolistgen 0.1.0) показывает, зачем порядок нужен: без напряжения подхват кончается остановом.
 //             Устройства — настоящие ФБ библиотеки с параметрами проекта (GVL_CfgProject).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, разделы 4.6, 7; docs/04_algorithms.md, раздел 13.3; docs/ASSUMPTIONS.md, И3
 FUNCTION_BLOCK FB_PlcStartAdoption_Test EXTENDS coUnit.FB_TestSuite

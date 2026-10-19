@@ -1,7 +1,7 @@
 // Назначение: команды станции (GVL_Station.stStationCmd) — пишут HMI, OPC UA, MQTT. Импульсы и
 //             номера обрабатывает и сбрасывает PRG_Station в том же цикле (04 §19.2); результат —
 //             stStationSts.eCmdResult и uiCmdSeq.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.1
 {attribute 'qualified_only'}

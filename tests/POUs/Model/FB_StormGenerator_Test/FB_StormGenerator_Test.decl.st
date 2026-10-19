@@ -2,7 +2,7 @@
 //             xorshift32, ливни суток для seed по умолчанию, детерминизм и независимость от шага вызова,
 //             трапеция, переход через полночь, снятие ливней, предел числа, нулевое состояние генератора.
 //             Ожидаемые значения — эталон tools_project/plant_reference.py (сценарии xorshift.*, storms.*).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, разделы 11.3, 14.1
 FUNCTION_BLOCK FB_StormGenerator_Test EXTENDS coUnit.FB_TestSuite

@@ -2,7 +2,7 @@
 //             (GVL_Hmi.xApplyProjectCfg, 04 §18.3). Имена — как у переменных GVL_Persist; значения
 //             LIC101 — тот же инициализатор, что в блоке станции GVL_Persist (DESIGN, раздел 4.7):
 //             их совпадение сверяет тест StationDefaultsMatchPersistInit.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 4.2
 {attribute 'qualified_only'}

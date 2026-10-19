@@ -1,7 +1,7 @@
 // Назначение: действующее управление насосами (04 §4), поле stStationSts.eControlAct.
 //             Старшинство в «Автомате»: PowerLost > Restart > DryRunStop > Float > Emergency >
 //             LevelPid > Stepped.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.1
 {attribute 'qualified_only'}

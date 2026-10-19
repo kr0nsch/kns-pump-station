@@ -2,7 +2,7 @@
 //             Restart > DryRunStop > Float > Emergency > LevelPid (выбран и готов) > Stepped; в
 //             «Ручном» — Manual. xStepFallback — условие тревоги KNS1.STEP (выбран ПИД, ПИД не
 //             готов); xChanged — импульс смены управления (вход без рывка в PRG_Station).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 6.2; docs/04_algorithms.md, раздел 4
 FUNCTION_BLOCK FB_ControlSelector

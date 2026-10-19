@@ -1,6 +1,6 @@
 // Назначение: программа станции (MainTask, после PRG_DeviceList, до PRG_Devices) — привязка ядра
 //             FB_StationCore к сгенерированному слою, журналу и сводке тревог (DESIGN 7)
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 7
 PROGRAM PRG_Station

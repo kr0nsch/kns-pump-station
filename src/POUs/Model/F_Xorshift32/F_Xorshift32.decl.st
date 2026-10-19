@@ -2,7 +2,7 @@
 //             Journal of Statistical Software, 2003; сдвиги 13, 17, 5): x ^= x << 13; x ^= x >> 17;
 //             x ^= x << 5. Из нуля генератор не выходит — вызывающий не подаёт 0 (FB_StormGenerator
 //             заменяет нулевое начальное состояние на SIM_XS_ZERO_STATE).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 11.2
 FUNCTION F_Xorshift32 : DWORD

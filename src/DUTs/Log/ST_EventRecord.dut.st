@@ -1,6 +1,6 @@
 // Назначение: запись журнала событий FB_EventLog (кольцо LOG_CAPACITY записей). 40 байт: 32-битные поля
 //             на смещениях, кратных 4, ULINT и LREAL — кратных 8 (тест EventRecordSizeIs40).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.2
 {attribute 'qualified_only'}

@@ -1,5 +1,5 @@
 // Назначение: страница журнала для HMI (GVL_Log.stEventView): новые записи сверху, uiPage пишет HMI.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.2
 {attribute 'qualified_only'}

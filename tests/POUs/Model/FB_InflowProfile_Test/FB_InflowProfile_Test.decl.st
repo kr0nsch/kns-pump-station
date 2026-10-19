@@ -1,7 +1,7 @@
 // Назначение: набор coUnit для FB_InflowProfile — суточный профиль притока: значения в точках и между
 //             ними, переход через полночь, среднее за сутки, неконечные входы. Ожидаемые значения — эталон
 //             tools_project/plant_reference.py, сценарий inflow.profile (профиль ST_SimCfg по умолчанию).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, разделы 11.3, 14.1
 FUNCTION_BLOCK FB_InflowProfile_Test EXTENDS coUnit.FB_TestSuite

@@ -2,7 +2,7 @@
 //             GVL_DeviceList (номер = dev_no · 10 + слот, суффиксы слотов — таблица контракта plc-process-lib,
 //             раздел 19), станция — KNS1.<SUFFIX> (100000 + slot, 04 §15), LIC101 — LIC101.<SUFFIX> (100100 +
 //             слот), событие станции — KNS1.E<код> (101000 + код, 04 §16). Неизвестный номер — его цифры.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 9.2
 FUNCTION F_AlarmCode : STRING(GVL_Const.LOG_CODE_LEN)

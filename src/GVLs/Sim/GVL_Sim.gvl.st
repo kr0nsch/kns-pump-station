@@ -2,7 +2,7 @@
 //             отказов, состояние модели. Модель (PRG_PlantModel, PlantModelTask) пишет stSimSts
 //             и входы GVL_IO; признак xSimulation фиксирует PRG_FieldIn в первом цикле, он же
 //             выставляет xIoReady, когда входы GVL_IO действительны.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.2.0
 // Документ:   docs/DESIGN.md, раздел 4.4; docs/ARCHITECTURE.md, раздел 4
 {attribute 'qualified_only'}

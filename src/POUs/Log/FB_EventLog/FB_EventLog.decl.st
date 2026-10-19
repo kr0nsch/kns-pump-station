@@ -5,7 +5,7 @@
 //             SysTimeRtcHighResGet (мс; 0 — часы недоступны) и время процесса lrMono_s по itfTime.
 //             Страница HMI (FillView), курсор внешних клиентов (FillFeed), снимок для CSV (TakeSnapshot —
 //             MainTask, GetSnapshotRecord — SlowTask). Тело пустое: записи делают методы в момент события.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 9.1; docs/04_algorithms.md, раздел 16
 FUNCTION_BLOCK FB_EventLog IMPLEMENTS PL.I_AlarmSink, I_StationEventSink

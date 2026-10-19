@@ -138,7 +138,7 @@ tools_project/                                   инструменты прое
   codesys/  codesys_pvl.py (Persistent Variables импортом PLCopenXML; запасной путь — объект теперь
             создаёт cds.py import), symbol_config.py,
             symbol_rules.json (символьная конфигурация, раздел 13), sim.py (приложение имитации в
-            рантайме: загрузка, «Старт», сброс; прототип cds.py sim), opcua_pki.py (сертификаты
+            рантайме: загрузка, «Старт», сброс; прототип команды шаблона cds.py sim — запрос, раздел 17), opcua_pki.py (сертификаты
             OPC UA, раздел 16, шаг 5), *_cds.py — скрипты CODESYS                              К3
   plant_reference.py, test_plant_reference.py                                    К2 (эталон модели, раздел 11.3)
 tools/                                           шаблон plc-repo-template (общие инструменты, синхронизируются из шаблона)
@@ -1676,7 +1676,7 @@ END_VAR
 ```st
 // Назначение: программа станции (MainTask, после PRG_DeviceList, до PRG_Devices) — привязка ядра
 //             FB_StationCore к сгенерированному слою, журналу и сводке тревог (DESIGN 7)
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 7
 PROGRAM PRG_Station
@@ -2478,7 +2478,8 @@ class PlcClient(Protocol):
 | Запись | `write_values(DataValue(Variant(значение, тип)))` без меток времени, не больше 100 узлов в запросе (`MaxNodesPerWrite`); тип — по текущему значению узла, кэш (у перечисления `DataType` — тип перечисления, а значение — базового типа: `INT` — Int16; Int32 из `DataType` даёт `BadTypeMismatch`) | `set_prepared_value` для каждого пути и один `write_prepared_values` (Z7: 4 значения — 34 мс) |
 | `reset` | через `sim.py reset warm\|cold`: вход без загрузки, `ScriptOnlineApplication.reset`, «Старт» (проверено приёмкой ПМИ, PMI-10, PMI-35) | `ScriptOnlineApplication.reset(ResetOption.Warm/Cold)` |
 
-**Мост `online_bridge.py`** (IronPython 2.7, К3). Запускает его `cds.py scenarios --backend cds`
+**Мост `online_bridge.py`** (IronPython 2.7, К3; не реализован: приёмка 19.10.2026 шла исполнителем OPC UA, мост
+остаётся проектом для запроса в шаблон, раздел 17). Запускать его должна команда `cds.py scenarios --backend cds`
 под глобальной блокировкой рантайма: открыть проект имитации, собрать, войти, загрузить, «Старт»;
 слушать `127.0.0.1:0`, записать `build/codesys/bridge.json` (`port`, `token`, `pid`). Запросы — по
 одному JSON в строке, поле `token` обязательно (другие локальные процессы не пишут в ПЛК):
@@ -2514,13 +2515,14 @@ class PlcClient(Protocol):
 `src/` (GVL и DUT, `tools/codesys/stlayout.py`), и доступны на запись по правилам раздела 13 там, где
 сценарий пишет; коды тревог есть в `05_alarm_list.csv`, литералы перечислений — в `enums.py`.
 
-**Запуск** — `cds.py scenarios [--backend opcua|cds] [-k PMI-13]`: блокировка рантайма; перезапуск
+**Запуск** (приёмка 19.10.2026) — `python tools_project/codesys/sim.py start --need-min <мин>`, затем
+`PMI_LIVE=1 python -m pytest scenarios/test_pmi.py -m plc [-k …]` по частям серии (`docs/MANUAL_STEPS.md`, 9.5);
+`sim.py` берёт глобальную блокировку рантайма на загрузку и сброс. Команды `cds.py scenarios` в шаблоне нет —
+это запрос (раздел 17) с таким порядком: `cds.py scenarios [--backend opcua|cds] [-k PMI-13]`: блокировка рантайма; перезапуск
 рантайма, если до конца двухчасового демо-режима меньше, чем нужно серии (оценка — колонка
 «Реально» приложения А 06); сборка и загрузка приложения имитации и символьной конфигурации; для
 `cds` — мост; `pytest scenarios -m plc` с переменной окружения `PMI_LIVE=1` (`test_pmi.py` — по тесту на файл); отчёт; «Стоп»,
-выход, снятие блокировки. Серия ≈ 2 ч (06, приложение А) делится на две части с перезапуском рантайма. Пока
-команды `cds.py scenarios` в шаблоне нет, серию запускают так (приёмка 19.10.2026): `sim.py start --need-min <мин>`,
-затем `PMI_LIVE=1 python -m pytest scenarios/test_pmi.py -m plc [-k …]` по частям (`docs/MANUAL_STEPS.md`, 9.5).
+выход, снятие блокировки. Серия ≈ 2 ч (06, приложение А) делится на части с перезапуском рантайма.
 
 ### 14.4 Каталог сценариев
 
@@ -2561,14 +2563,14 @@ k, время контура и реальное. Здесь — только т
 |---|---|---|---|
 | 0. Каркас (сначала К3, затем все) | DUT станции (раздел 3.1), пустые ФБ с объявлениями | DUT имитации, `FB_ScaledClock`, `GVL_Sim`, `GVL_Time` | config.json, `iolistgen.toml`, шаблон `GVL_Persist`, `generate.py`, сгенерированный слой, `GVL_DeviceList`, `I_StationEventSink`, DUT журнала, пустой `FB_EventLog`, `PRG_Tests`, удаление примера; импорт Persistent Variables через PLCopenXML; зонды этапа 0 (раздел 15.3) |
 | 1. Модули | ФБ раздела 6 + тесты, подменные объекты | модель (раздел 11) + эталон + тесты | адаптер ПЧ, полевой слой, журнал (курсор, CSV), сводка, аудит, символы, обвязка сценариев и мост (офлайн-тесты: исполнитель TOML на заглушке клиента, разбор литералов, проверка файлов) |
-| 2. Сборка контура | `PRG_Station` | `PRG_PlantModel`, `FB_SimRunner`, интеграционные тесты, 39 сценариев TOML | `cds.py scenarios`, прогон обоих исполнителей, `TEST_REPORT.md` |
+| 2. Сборка контура | `PRG_Station` | `PRG_PlantModel`, `FB_SimRunner`, интеграционные тесты, 39 сценариев TOML | прогон сценариев (план — `cds.py scenarios` и оба исполнителя; сделано — `sim.py start` и исполнитель OPC UA, протокол 07), `TEST_REPORT.md` |
 | 3. Объект и документы | — | демонстрационный сценарий видео | `targets/plc210`, `MANUAL_STEPS.md`; `tools_project/check_docs_consistency.py` (есть с этапа документов) дополняется сверкой сценариев TOML и сгенерированного слоя |
 
 Готовность этапа: `cds.py check --tests` — 0 ошибок и 0 предупреждений, `cds.py test` зелёный,
 `st_lint --strict`, iec_checker (находки — в `STATIC_ANALYSIS.md`), `pytest`, нет дрейфа генерации.
 Порядок слияния в этапе 0: К3 первым (каркас), затем К1 и К2 параллельно — их файлы не пересекаются.
 Каждая команда работает в своей рабочей копии (`git worktree`, MANUAL_STEPS шаблона 7.4); рантайм
-один на машину — `cds.py test` и `cds.py scenarios` берут глобальную блокировку сами.
+один на машину — `cds.py test` и `sim.py` берут глобальную блокировку сами.
 
 ### 15.3 Что каждая команда получает от других
 

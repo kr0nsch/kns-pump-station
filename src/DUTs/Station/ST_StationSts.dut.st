@@ -1,6 +1,6 @@
 // Назначение: состояние станции (GVL_Station.stStationSts) для HMI, OPC UA и MQTT: только 16- и
 //             32-битные поля, 72 байта (тест StationStsSizeIs72), 04 §19.3.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.1
 {attribute 'qualified_only'}

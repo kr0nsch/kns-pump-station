@@ -2,7 +2,7 @@
 //             индекс = E_StationAlarm, номер = STN_ALARM_ID_BASE + slot. Условия, подавления по
 //             условию и значения задаёт PRG_Station; маски команд — бит slot - 1. Источник тревог
 //             PL.I_AlarmSource для сводки (GetAlarm: индекс 0 — slot 1).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 6.11; docs/04_algorithms.md, раздел 15
 FUNCTION_BLOCK FB_StationAlarms IMPLEMENTS PL.I_AlarmSource

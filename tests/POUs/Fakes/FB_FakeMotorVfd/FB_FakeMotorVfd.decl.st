@@ -3,7 +3,7 @@
 //             устройства (Auto, нет отказа; ReadyToStart — ещё стоит и xReady). Запросы RequestMode,
 //             Reset, AckAll считаются; при xFollowRequests RequestMode сразу меняет режим (Local
 //             остаётся Local — меняется запомненный режим, API 2.2). Тревог нет (GetAlarm → 0).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 6.14
 FUNCTION_BLOCK FB_FakeMotorVfd IMPLEMENTS PL.I_MotorVfd

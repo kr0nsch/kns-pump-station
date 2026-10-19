@@ -1,7 +1,7 @@
 // Назначение: набор coUnit для FB_TankModel — баланс объёма резервуара: интегрирование притока и откачки,
 //             перелив и его время, осушенный приёмок, шаг 0 и «время назад», установка уровня. Ожидаемые значения —
 //             эталон tools_project/plant_reference.py (сценарии tank.*): dh = (Qin − Qout)·dt / 3600 / S.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, разделы 11.3, 14.1
 FUNCTION_BLOCK FB_TankModel_Test EXTENDS coUnit.FB_TestSuite

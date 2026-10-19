@@ -104,7 +104,7 @@ ISA-18.2, журнал и суточный режим работы. Функци
 |---|---|
 | ПК | Windows 10/11, без прав администратора |
 | CODESYS Development System | V3.5 SP17 Patch 3 (3.5.17.30) |
-| Рантайм | CODESYS Control Win V3 (32 бит), процесс пользователя; демо-режим 2 ч — перед серией перезапустить (`cds.py scenarios` делает это сам) |
+| Рантайм | CODESYS Control Win V3 (32 бит), процесс пользователя; демо-режим 2 ч — перед частью серии перезапустить (`sim.py start --need-min` делает это сам) |
 | Приложение | сборка имитации (`GVL_Sim.xSimulationReq = TRUE`); задачи `MainTask` 20 мс, `PlantModelTask` 20 мс, `SlowTask` 200 мс, `VISU_TASK` 200 мс |
 | Библиотеки | plc-process-lib 1.0 (`PL`), coUnit 1.2.0.0, CAA File |
 | Перечень сигналов | `docs/03_io_list.csv`, SHA-256 `06336d13c4b2` (iolistgen 0.1.0) |
@@ -308,8 +308,10 @@ ISA-18.2, журнал и суточный режим работы. Функци
   WebVisu.
 - Исходные тексты репозитория `kns-pump-station` (тег или коммит записывают в протокол), собранная
   plc-process-lib 1.0, iolistgen 0.1.0.
-- Сценарии `scenarios/` и исполнитель (`cds.py scenarios`); для OPC UA — сертификат сервера
-  рантайма и доверие клиенту (ручной шаг, `docs/MANUAL_STEPS.md`).
+- Сценарии `scenarios/` и исполнитель OPC UA: `python tools_project/codesys/sim.py start` (приложение
+  имитации в рантайме), затем `PMI_LIVE=1 python -m pytest scenarios/test_pmi.py -m plc`; для OPC UA —
+  сертификат сервера рантайма и доверие клиенту (`sim.py pki`, его выполняет `sim.py start`;
+  `docs/MANUAL_STEPS.md`, 9.5).
 - Учётные данные рантайма — в `~/.local/plc-tools/cds-runtime/credentials.json`; в репозиторий, отчёты и
   протокол не попадают.
 

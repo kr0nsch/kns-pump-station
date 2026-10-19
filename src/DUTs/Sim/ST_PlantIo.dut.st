@@ -2,7 +2,7 @@
 //             TT403, состояние обмена со слейвами Modbus. Поля называются так же, как переменные
 //             GVL_IO (вывод iolistgen по docs/03_io_list.csv): PRG_PlantModel копирует поле в
 //             одноимённую переменную. Модель пишет только входы GVL_IO (ARCHITECTURE, раздел 4).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, разделы 3.3, 11.1; docs/03_io_list.md
 {attribute 'qualified_only'}

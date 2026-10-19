@@ -8,7 +8,7 @@
 //             tOverlap после tMaxContRun (событие 101007), повтор через STN_HANDOVER_RETRY.
 //             uiRequestLimit (последовательный пуск) ограничивает новые запросы: насосы, уже
 //             работающие по запросу (подхват при старте ПЛК), им не снимаются.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 6.5; docs/04_algorithms.md, разделы 5, 8
 FUNCTION_BLOCK FB_PumpRotation

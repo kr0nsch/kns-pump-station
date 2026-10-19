@@ -1,7 +1,7 @@
 // Назначение: аудит режимов устройств перечня (GVL_Log.fbDeviceAudit, MainTask после PRG_Devices… вызывает
 //             PRG_Station): смена Mode устройства — событие станции 101018 со значением dev_no · 10 + режим
 //             (E_DeviceMode). Первый вызов запоминает режимы без событий (режимы после старта — из retain).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.1
 // Документ:   docs/DESIGN.md, раздел 9.3; docs/04_algorithms.md, раздел 16
 FUNCTION_BLOCK FB_DeviceAudit

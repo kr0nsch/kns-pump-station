@@ -1,5 +1,5 @@
 // Назначение: вид записи журнала (ST_EventRecord.eKind): событие тревоги PL.FB_Alarm или событие станции.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 3.2
 {attribute 'qualified_only'}

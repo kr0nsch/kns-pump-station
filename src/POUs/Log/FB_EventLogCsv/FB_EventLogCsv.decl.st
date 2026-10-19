@@ -2,7 +2,7 @@
 //             FILE.Open (MWRITE) → заголовок и строки снимка FB_EventLog по LOG_CSV_LINES_PER_WRITE за один
 //             FILE.Write → FILE.Close. Файл — ASCII, «;», CRLF (F_EventCsvLine). Состояние: Writing, затем
 //             Done (uiLines строк) или Error (udiError — код FILE.ERROR); держится до следующего фронта.
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 9.2; docs/ARCHITECTURE.md, раздел 7
 FUNCTION_BLOCK FB_EventLogCsv

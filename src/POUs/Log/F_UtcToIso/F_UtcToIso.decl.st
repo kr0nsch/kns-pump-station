@@ -2,7 +2,7 @@
 //             строка (часы были недоступны). Дата — целочисленный алгоритм civil_from_days (H. Hinnant,
 //             «chrono-Compatible Low-Level Date Algorithms»), без зависимости от формата DT_TO_STRING;
 //             годы 1970…2105 (секунды от 1970 — UDINT).
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/DESIGN.md, раздел 9.2
 FUNCTION F_UtcToIso : STRING(GVL_Const.LOG_ISO_LEN)
