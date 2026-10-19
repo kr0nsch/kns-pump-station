@@ -6,6 +6,7 @@ StationEventIdIsBasePlusCode();
 RingOverwritesOldestAndCounts();
 GetRecordNewestFirst();
 ViewPagination();
+ViewPageEqualToCountClamped();
 FeedFromSeqOldestFirst();
 FeedReportsOverwrittenGap();
 MonoTimeIsProcessTime();

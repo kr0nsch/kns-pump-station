@@ -3,3 +3,4 @@ DeviceSuffixesByType();
 StationAlarms();
 Lic101AndEvents();
 UnknownIsNumber();
+SlotWithoutSuffixIsNumber();
