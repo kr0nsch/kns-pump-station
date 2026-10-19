@@ -16,4 +16,5 @@ VAR CONSTANT
     R_EPS_MA : REAL := 2.0E-3;        // допуск тока датчика, мА
     R_EPS_M : REAL := 1.0E-4;         // допуск уровня, м
     UI_FAULT_FIELDS : UDINT := 23;    // полей ST_FaultInjection в проверке счётчика
+    DW_NAN : DWORD := 16#7FC00000;
 END_VAR

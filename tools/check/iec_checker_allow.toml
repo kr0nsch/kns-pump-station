@@ -109,8 +109,8 @@ reason = "Ложное срабатывание: экземпляры PL.FB_Dela
 [[allow]]
 id = "UnusedVariable"
 file = "src/POUs/Model/F_FaultInjEqual/F_FaultInjEqual.decl.st"
-match = "STA|STB"
-reason = "Ложное срабатывание: VAR_IN_OUT CONSTANT-структуры используются обращениями к полям (stA.axVfdFault[uiI])"
+match = "STA|STB|UBITSA|UBITSB"
+reason = "Ложное срабатывание: VAR_IN_OUT CONSTANT-структуры и объединения U_RealBits используются обращениями к полям (stA.axVfdFault[uiI], uBitsA.dwValue)"
 
 [[allow]]
 id = "UnusedVariable"

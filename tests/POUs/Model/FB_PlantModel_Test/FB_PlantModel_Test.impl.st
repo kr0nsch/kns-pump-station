@@ -18,3 +18,4 @@ TimeBackwardsHoldsState();
 SetTimeOfDayKeepsDay();
 StepCappedAtMax();
 ResetPlantClearsOverflowTime();
+NanInjectionCountedOnce();
