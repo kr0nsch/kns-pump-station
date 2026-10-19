@@ -1,5 +1,5 @@
 {
- "source": "plc-process-lib 1.0.0 (выпуск 1.0.0.0, коммит cbf1d89)",
+ "source": "plc-process-lib 1.0.0 (выпуск 1.0.0.0, тег v1.0.0, коммит bd9df2a)",
  "types": {
   "E_AiAlarm": {
    "kind": "enum",
