@@ -231,3 +231,12 @@ reason = "Ложное срабатывание iec_checker 0.4: экземпл�
 id = "PLCOPEN-L17"
 file = "tests/POUs/Model/FB_StormGenerator_Test/StormCrossingMidnightContinues.method.impl.st"
 reason = "Поиск ливня суток 21 в списке: на остальных элементах делать нечего"
+
+# ===== Интеграция веток (сборка контура): PRG_Station, проверка подхвата насоса =====
+# Разбор — docs/STATIC_ANALYSIS.md, раздел «Сборка контура».
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Field/FB_PlcStartAdoption_Test/*.method.decl.st"
+match = "variable: (FBES301|FBP101)$"
+reason = "Ложное срабатывание iec_checker 0.4: экземпляры устройств библиотеки (VAR_INST метода-теста) используются вызовом и чтением выходов (fbES301.xValue, fbP101.stSts)"

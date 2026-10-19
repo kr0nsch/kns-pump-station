@@ -14,4 +14,5 @@ VAR_GLOBAL
     fbAlarmCodeTest      : FB_F_AlarmCode_Test;       // 9.2
     fbAlarmSummaryTest   : FB_AlarmSummary_Test;      // 9.3
     fbDeviceAuditTest    : FB_DeviceAudit_Test;       // 9.3
+    fbPlcStartAdoptionTest : FB_PlcStartAdoption_Test;  // 4.6, 7: подхват насоса в порядке PRG_Devices
 END_VAR

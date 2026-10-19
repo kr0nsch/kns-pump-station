@@ -95,6 +95,7 @@ FB_Ats_Test.st  # PL.FB_FakeTime, FB_Ats (исключён)
 FB_F_StationCfgCheck_Test.st  # PL.U_RealBits, F_StationCfgCheck (исключён)
 FB_LevelControlPid_Test.st  # PL.FB_FakeTime, FB_LevelControlPid (исключён)
 FB_LevelControlStepped_Test.st  # PL.FB_FakeTime, FB_LevelControlStepped (исключён)
+FB_PlcStartAdoption_Test.st  # PL.FB_DigitalInput, PL.FB_MotorVfd, PL.FB_FakeTime
 FB_PowerRestore_Test.st  # PL.FB_FakeTime, FB_PowerRestore (исключён)
 FB_Protections_Test.st  # PL.FB_FakeTime, FB_Protections (исключён)
 FB_PumpProtection_Test.st  # PL.FB_FakeTime, FB_PumpProtection (исключён)
