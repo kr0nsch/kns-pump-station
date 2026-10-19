@@ -392,18 +392,45 @@ python tools_project\codesys\symbol_config.py --build site
 ### 9.5. Сценарии ПМИ (`scenarios/`)
 
 Без ПЛК: `python -m pytest scenarios` — офлайн-проверка файлов сценариев и тесты обвязки на имитаторе
-OPC UA-сервера. На рантайме (после сборки контура, загрузки приложения имитации, символьной конфигурации
-и сертификатов OPC UA — DESIGN, раздел 16, шаг 5):
+OPC UA-сервера. На рантайме — приложение имитации и сертификаты OPC UA готовит один скрипт:
 
 ```bat
+python tools_project\codesys\sim.py start --need-min 60   & rem import, символы sim, рантайм, сертификаты, загрузка, «Старт»
 set PMI_LIVE=1
-python -m pytest scenarios -m plc
+python -m pytest scenarios\test_pmi.py -m plc               & rem все сценарии; -k "PMI-13" — один
+python tools_project\codesys\sim.py stop                   & rem остановить рантайм после серии
 ```
 
+`sim.py start` выполняет `cds.py import`, `symbol_config.py --build sim`, запускает рантайм (перезапускает,
+если до конца двухчасового демо-режима осталось меньше `--need-min` минут), готовит сертификаты OPC UA
+(ниже), загружает приложение имитации, даёт «Старт» и проверяет вход по OPC UA. `--no-import` — без импорта
+и символов, если проект уже собран. Шаги `reset` сценариев (PMI-10, PMI-35) исполнитель OPC UA выполняет
+командой `sim.py reset warm|cold` (скрипт CODESYS: вход без загрузки, сброс, «Старт»); без CODESYS
+(`PMI_RESET=none`) такие шаги — «не проверялось». Серия ≈ 1,7 ч реального времени: её делят на части с
+перезапуском рантайма между ними (`sim.py start --no-import --need-min <минут части>`).
+
+**Сертификаты OPC UA** (`python tools_project\codesys\sim.py pki`, вызывается из `start`). Хранилище
+сертификатов рантайма 3.5.17 у пользовательского процесса — каталог
+`%LOCALAPPDATA%\VirtualStore\Program Files (x86)\CODESYS 3.5.17.30\GatewayPLC\.pki\` (`own\cert`,
+`own\key`, `trusted\cert`, `quarantine`). Скрипт:
+
+1. если в `own\cert` нет сертификата с `CN = OPCUAServer@<имя ПК>`, создаёт самоподписанный сертификат
+   OPC UA-сервера (RSA 2048, SHA-256, 10 лет, `ApplicationUri` сервера в SubjectAltName) и ключ
+   (`tools_project\codesys\opcua_pki.py`) — то же, что кнопка создания сертификата на «Экране безопасности»;
+2. кладёт сертификат клиента сценариев (`%USERPROFILE%\.local\plc-tools\opcua-client\client_cert.der`,
+   создаётся при первом запуске) в `trusted\cert` и убирает его копии из `quarantine` и `untrusted`;
+3. если что-то изменилось — перезапускает рантайм: хранилище читается только при запуске.
+
+Проверено на 3.5.17.30: после этого сервер предлагает конечные точки Basic256Sha256 (Sign, SignAndEncrypt)
+со входом по имени и паролю; клиент вне `trusted` попадает в `quarantine` и получает `BadSecurityChecksFailed`.
+Запасной путь вручную (IDE): «Онлайн» → «Экран безопасности» → «Устройства» → сертификат для OPC UA-сервера
+→ перезапуск рантайма (`cds.py runtime restart`) → первый запуск сценария (клиент попадёт в отклонённые) →
+перенести сертификат клиента в доверенные на том же экране → перезапуск рантайма.
+
 Учётные данные — `%USERPROFILE%\.local\plc-tools\cds-runtime\credentials.json` (или
-`CODESYS_RUNTIME_CREDENTIALS`), сертификат клиента создаётся в `%USERPROFILE%\.local\plc-tools\opcua-client\`
-и при первом входе попадает в отклонённые: перенесите его в доверенные на «Экране безопасности» рантайма.
-Отчёт — `build\pmi-results.json` и `.md` (заготовка протокола 07). Таблица перечислений сценариев
+`CODESYS_RUNTIME_CREDENTIALS`), в вывод и отчёты не попадают. Сервер OPC UA CODESYS принимает не больше
+100 узлов в одном запросе чтения и записи (`MaxNodesPerRead`, `MaxNodesPerWrite`): исполнитель делит пакеты
+сам. Отчёт — `build\pmi-results.json` и `.md` (заготовка протокола 07). Таблица перечислений сценариев
 обновляется командой `python tools_project\gen_enums.py` после правки DUT.
 
 ### 9.6. Журнал в CSV на Control Win
