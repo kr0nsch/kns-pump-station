@@ -277,7 +277,7 @@ python tools/check/st_lint.py [пути...] [--root R] [--config FILE | --no-con
 
 ```
 // Назначение: что делает POU и в каких режимах
-// Автор:      <ИМЯ ФАМИЛИЯ>
+// Автор:      kr0nsch
 // Версия:     0.1.0
 // Документ:   docs/ARCHITECTURE.md, раздел «...»
 FUNCTION_BLOCK FB_Example
@@ -302,7 +302,8 @@ FUNCTION_BLOCK FB_Example
 
 ```
 python tools/check/run_iec_checker.py [--tests] [--binary PATH | --docker IMAGE] [--allow FILE]
-                                     [--out DIR] [--json FILE] [--md FILE] [--strip-namespace NS]... [--optional]
+                                     [--checker {v0.4,nightly}] [--out DIR] [--json FILE] [--md FILE]
+                                     [--strip-namespace NS]... [--optional]
 ```
 
 1. Собирает вариант `iec-checker` (по умолчанию только `src/`, с `--tests` — и `tests/`) в
@@ -330,10 +331,15 @@ python tools/check/run_iec_checker.py [--tests] [--binary PATH | --docker IMAGE]
 id = "PLCOPEN-CP3"          # правило iec_checker (шаблон fnmatch)
 file = "src/POUs/F_Clamp/*" # путь исходника или имя собранного файла (шаблон fnmatch, * захватывает /)
 match = "RVALUE|RMIN"       # необязательно: регулярное выражение по тексту сообщения
+checker = "nightly"         # необязательно: только для этой версии разборщика (v0.4 или nightly)
 reason = "..."              # обязательно; подробный разбор — docs/STATIC_ANALYSIS.md
 ```
 
 Неиспользованные записи выводятся предупреждением (записи для `tests/` — только при `--tests`).
+Версия разборщика `--checker`: по умолчанию `nightly` с `--docker` (образ необязательного задания CI) и
+`v0.4` с бинарником. Запись с ключом `checker` другой версии не применяется и неиспользованной не
+считается: так находки новых правил образа `nightly` (например, PLCOPEN-CP17) обосновываются, не ломая
+проверку «каждая запись используется» для v0.4. Версия попадает в отчёты (поле `checker` в JSON).
 `--optional`: нет бинарника или docker — предупреждение и код 0.
 
 ## `check/run_rusty.py` — проверка RuSTy
@@ -359,9 +365,8 @@ python tools/check/run_rusty.py [--plc PATH] [--stdlib DIR] [--no-tests] [--excl
 Прокладки:
 - `cfunit.st` — CfUnit/coUnit: `FB_TestSuite` с методами `Assert*` и `AreAllTestsFinished`, функции `TEST`,
   `TEST_ORDERED`, `TEST_FINISHED`, `TEST_FINISHED_NAMED`, `IS_TEST_FINISHED`, `RUN`, `RUN_IN_SEQUENCE`,
-  тип `T_MaxString`. Имена и сигнатуры взяты из исследования API coUnit 1.2.0.0
-  (`_research/cfunit.md`, раздел 2, по исходнику библиотеки на CODESYS Forge); компилятором CODESYS они не
-  проверялись. В коде namespace библиотеки v1.2 — `coUnit`, в v1.0/1.1 — `CfUnit`; убираются оба.
+  тип `T_MaxString`. Имена и сигнатуры взяты из исходника библиотеки coUnit 1.2.0.0 (SVN проекта counit
+  на CODESYS Forge, `tags/v1.2.0.0/`); компилятором CODESYS они не проверялись. В коде namespace библиотеки v1.2 — `coUnit`, в v1.0/1.1 — `CfUnit`; убираются оба.
 - `codesys_standard.st` — счётчики `CDS_CTU`, `CDS_CTD`, `CDS_CTUD` с сигнатурами CODESYS Standard (замена R12).
 - `codesys_conversions.st` — преобразования TIME и LTIME ↔ BYTE, WORD, DWORD, SINT, USINT, INT, UINT, DINT,
   UDINT, REAL (`TIME_TO_DINT`, `UDINT_TO_TIME`, ...), которых нет в stdlib RuSTy 1.0.6; только объявления.
@@ -449,9 +454,7 @@ Win V3 в пользовательском процессе и coUnit 1.2.0.0.
 - Удаляются объекты управляемых видов (POU, DUT, GVL, интерфейсы, их методы и свойства), которых
   нет в исходниках, и опустевшие папки — каждый случай в отчёте. Действия (`ACTION`), визуализации и
   прочие объекты не трогаются, но `export` о них предупреждает.
-- Задачи — по `modes.<режим>.tasks` (лишние удаляются): `interval_ms`, `priority`, `pous` и сторожевой таймер —
-  ключ `watchdog`: `{"time_ms": 100, "sensitivity": 1}` включает, `false` выключает, без ключа он не трогается
-  (у задачи, созданной скриптом, выключен; API `ScriptTaskObject.watchdog`). Библиотеки — по `modes.<режим>.libraries`
+- Задачи — по `modes.<режим>.tasks` (лишние удаляются). Библиотеки — по `modes.<режим>.libraries`
   и `library.libraries` (по умолчанию там `standard`, [ниже](#standard-по-умолчанию)):
   ищутся в репозиториях CODESYS по названию (компании) и закреплённой версии, при отсутствии ставятся
   из `install_from` (`COUNIT_LIBRARY`) или собираются в соседнем репозитории (`build_from_repo`);
@@ -465,10 +468,8 @@ Win V3 в пользовательском процессе и coUnit 1.2.0.0.
   его дополняют, а `cds.py` предупреждает «лишнее описание можно удалить». Разные ссылки на одну
   библиотеку (плейсхолдер и обычная ссылка, разные версии, разные явные `namespace`/`qualified_only`) —
   отказ до открытия проекта (код 1): иначе каждый импорт заменял бы одну ссылку другой (проверено).
-- Persistent Variables (`*.pvl.st`): `create_persistentvars` в SP17 нет, поэтому импорт создаёт
-  объект импортом PLCopenXML (`Application.import_xml`, текст объявления — как у экспорта CODESYS
-  «обычным текстом») и переносит в папку раскладки; не вышло — предупреждение и ручной шаг.
-  Существующий объект импорт обновляет, экспорт выгружает (проверено на 3.5.17.30, `roundtrip`).
+- Persistent Variables (`*.pvl.st`) в SP17 скриптом не создаются (`create_persistentvars` нет):
+  предупреждение и ручной шаг; существующий объект импорт обновляет, экспорт выгружает.
 - Экспорт: DUT, GVL, PVL, интерфейсы и POU на ST приложения (не библиотеки, не дерево устройств и не
   задачи); метод `ABSTRACT` с пустым телом файла тела не даёт; POU на графических языках
   пропускаются с предупреждением. Запись — `stlayout.write_objects(clean=True)`.
@@ -519,8 +520,8 @@ Win V3 в пользовательском процессе и coUnit 1.2.0.0.
 
 - Прямые адреса (`AT %IX0.0`, `AT %QX0.0`, `AT %IW2`) в GVL и программах в пуле компилируются без
   ошибок; TON, R_TRIG, CTU, CONCAT — через ту же ссылку `#Standard`, что у приложения.
-- Persistent Variables (`*.pvl.st`) в проверке пула (проект без устройства и приложения) — GVL
-  с тем же текстом без слова `PERSISTENT` (строки и столбцы не меняются):
+- Persistent Variables (`*.pvl.st`) скриптом в SP17 не создаются, поэтому в проверке объект
+  создаётся как GVL с тем же текстом без слова `PERSISTENT` (строки и столбцы не меняются):
   обращения к ним проверяются, ошибки в самом файле привязываются к `*.pvl.st`. С `PERSISTENT` пул
   выдал бы предупреждение C0244 «Приложение не содержит VAR_PERSISTENT-списка».
 - Ошибки синтаксиса (C0009, C0189) останавливают компиляцию до проверки типов: ошибки типов в других
@@ -811,7 +812,7 @@ default library»), а потребителю эта настройка не п�
 | `test_cds_config.py` | `config.json` репозитория — только на уровне схемы: JSON без путей пользователя, те же разделы и ключи, что у эталона `fixtures/config_template.json`, полные описания режимов, задач и библиотек, всё разрешается |
 | `test_assemble.py` | эталоны всех вариантов (`tools/tests/golden/<вариант>/`) и понижения примера `fixtures/lowering/` (`golden/iec-checker-lowering/`), порядок `all.st`, карта строк (в том числе после понижения многострочных конструкций примера `fixtures/sourcemap/`, для всех вариантов), CLI, каждое правило замен rusty и понижения iec-checker, вычисление константных выражений |
 | `test_st_lint.py` | каждое правило — срабатывание и отсутствие (в том числе составные префиксы массивов и `VAR_IN_OUT CONSTANT`), подавления, настройки: эталон шаблона равен умолчаниям, файл репозитория разбирается и не содержит неизвестных ключей, CLI |
-| `test_run_rusty.py`, `test_run_iec_checker.py` | поиск инструментов, команды, разбор вывода, обоснования, отчёты; интеграционные — с настоящими `plc` и iec_checker: фикстура `sample` (со своим пустым файлом исключений RuSTy), пример понижения `lowering` (ошибок разбора 0), строки находок примера `sourcemap` (PLCOPEN-CP8 — ровно на строках сравнений, OutOfBounds поддиапазона — у DUT, нет ZeroDivision и PLCOPEN-CP28 от `TIME()`), `VAR_IN_OUT CONSTANT` и преобразования TIME в RuSTy, а также `src/` и `tests/` репозитория с его собственным `iec_checker_allow.toml` (`test_integration_repository_sources`): в проекте тест проверяет исходники проекта его обоснованиями, и с `--tests` каждое обоснование должно использоваться |
+| `test_run_rusty.py`, `test_run_iec_checker.py` | поиск инструментов, команды, разбор вывода, обоснования, отчёты; интеграционные — с настоящими `plc` и iec_checker: фикстура `sample` (со своим пустым файлом исключений RuSTy), пример понижения `lowering` (ошибок разбора 0), строки находок примера `sourcemap` (PLCOPEN-CP8 — ровно на строках сравнений, OutOfBounds поддиапазона — у DUT, нет ZeroDivision и PLCOPEN-CP28 от `TIME()`), `VAR_IN_OUT CONSTANT` и преобразования TIME в RuSTy, а также `src/` и `tests/` репозитория с его собственным `iec_checker_allow.toml` (`test_integration_repository_sources`): в проекте тест проверяет исходники проекта его обоснованиями, и с `--tests` каждое обоснование, кроме записей `checker = "nightly"`, должно использоваться; область записей по `checker` (`test_main_checker_scopes_allow_rules`) |
 
 **Настройки в тестах.** `test_cds.py` и `test_cds_library.py` берут настройки из эталона
 `tools/tests/fixtures/config_template.json` — копии `config.json` шаблона, — а не из `config.json`

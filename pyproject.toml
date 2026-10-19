@@ -3,9 +3,9 @@
 # правила, которые предлагают синтаксис Python 3 (pyupgrade и др.).
 
 [project]
-name = "plc-repo-template-tools"
-version = "0.1.0"
-description = "Инструменты шаблона ПЛК-репозитория: раскладка ST, сборка, линтер, проверки"
+name = "kns-pump-station"
+version = "1.0.0"
+description = "КНС-1 на CODESYS V3.5: логика станции, модель объекта, сценарии ПМИ через OPC UA и инструменты проверок"
 requires-python = ">=3.11"
 
 [tool.ruff]
@@ -44,6 +44,9 @@ files = ["tools", "tools_project", "scenarios"]
 mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project", "tools_project/codesys", "scenarios"]
 strict = true
 warn_unreachable = true
+# cdshost управляет CODESYS и рантаймом только в Windows: mypy и в Linux-CI проверяет код как для
+# win32, иначе код после проверок `sys.platform != "win32"` считается недостижимым.
+platform = "win32"
 # Скрипты CODESYS (IronPython 2.7) используют глобальные объекты среды CODESYS (projects,
 # system, ...), mypy их не знает. stlayout.py проверяется: он типизирован комментариями.
 exclude = [
