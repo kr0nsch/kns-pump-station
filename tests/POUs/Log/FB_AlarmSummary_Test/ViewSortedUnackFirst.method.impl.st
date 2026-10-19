@@ -1,0 +1,30 @@
+coUnit.TEST('AlarmSummary_ViewSortedUnackFirst');
+
+fbSrc.astCfg[0].ePriority := PL.E_AlarmPriority.Low;
+fbSrc.astCfg[1].ePriority := PL.E_AlarmPriority.High;
+fbSrc.astCfg[2].ePriority := PL.E_AlarmPriority.Medium;
+fbSrc.astCfg[3].ePriority := PL.E_AlarmPriority.Medium;
+fbSrc.axIn[1] := TRUE;
+fbSrc.axIn[3] := TRUE;
+fbSrc(uiSlots := 4, udiIdBase := 140, itfTime := fbTime);
+fbSrc.AckAll();
+fbSrc(itfTime := fbTime);
+fbSrc.axIn[0] := TRUE;
+fbSrc.axIn[2] := TRUE;
+fbDut.aitfSource[1] := fbSrc;
+fbSrc(itfTime := fbTime);
+fbDut(uiSourceCount := 1, itfTime := fbTime, stView := stView);
+AssertTrue(Condition := fbDut.ShelveById(udiId := 143, xShelve := TRUE), Message := 'shelve 143 accepted');
+fbSrc(itfTime := fbTime);
+fbTime.Advance(tStep := GVL_Const.ALM_VIEW_PERIOD);
+fbDut(itfTime := fbTime, stView := stView);
+AssertEquals_UINT(Expected := 4, Actual := stView.uiCount, Message := '4 rows');
+AssertEquals_UDINT(Expected := 142, Actual := stView.astRow[1].udiId, Message := 'row 1: unacked Medium');
+AssertEquals_UDINT(Expected := 140, Actual := stView.astRow[2].udiId, Message := 'row 2: unacked Low');
+AssertEquals_UDINT(Expected := 141, Actual := stView.astRow[3].udiId, Message := 'row 3: acked High');
+AssertEquals_UDINT(Expected := 143, Actual := stView.astRow[4].udiId, Message := 'row 4: shelved');
+AssertTrue(Condition := stView.astRow[4].eState = PL.E_AlarmState.Shelved, Message := 'row 4 state Shelved');
+AssertEquals_UINT(Expected := 1, Actual := stView.astRow[1].uiSource, Message := 'source index');
+AssertEquals_UINT(Expected := 2, Actual := stView.astRow[1].uiSlot, Message := 'slot index');
+
+coUnit.TEST_FINISHED();

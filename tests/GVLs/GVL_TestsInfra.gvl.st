@@ -8,4 +8,7 @@
 {attribute 'linkalways'}
 VAR_GLOBAL
     fbVfdAdapterCondTest : FB_VfdAdapter_Cond_Test;   // 8.2
+    fbEventLogTest       : FB_EventLog_Test;          // 9.1
+    fbAlarmSummaryTest   : FB_AlarmSummary_Test;      // 9.3
+    fbDeviceAuditTest    : FB_DeviceAudit_Test;       // 9.3
 END_VAR

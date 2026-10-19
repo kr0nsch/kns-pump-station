@@ -1,0 +1,30 @@
+coUnit.TEST('AlarmSummary_AckByIdDeviceStationPid');
+
+fbDev.axIn[1] := TRUE;
+fbDev(uiSlots := 2, udiIdBase := 110, itfTime := fbTime);
+fbStn.axIn[0] := TRUE;
+fbStn(uiSlots := 1, udiIdBase := 100005, itfTime := fbTime);
+fbPid.axIn[0] := TRUE;
+fbPid(uiSlots := 1, udiIdBase := 100100, itfTime := fbTime);
+fbDut.aitfSource[1] := fbDev;
+fbDut.aitfSource[2] := fbStn;
+fbDut.aitfSource[3] := fbPid;
+fbDut(uiSourceCount := 3, itfTime := fbTime, stView := stView);
+AssertTrue(Condition := fbDut.AckById(udiId := 111), Message := 'device alarm 111');
+AssertTrue(Condition := fbDut.AckById(udiId := 100005), Message := 'station alarm 100005');
+AssertTrue(Condition := fbDut.AckById(udiId := 100100), Message := 'LIC101 alarm 100100');
+AssertFalse(Condition := fbDut.AckById(udiId := 999), Message := 'unknown id');
+fbDev(itfTime := fbTime);
+fbStn(itfTime := fbTime);
+fbPid(itfTime := fbTime);
+fbDut(itfTime := fbTime, stView := stView);
+itfAlm := fbDev.GetAlarm(uiIndex := 1);
+AssertTrue(Condition := itfAlm.State = PL.E_AlarmState.ActiveAck, Message := '111 acked');
+itfAlm := fbStn.GetAlarm(uiIndex := 0);
+AssertTrue(Condition := itfAlm.State = PL.E_AlarmState.ActiveAck, Message := '100005 acked');
+itfAlm := fbPid.GetAlarm(uiIndex := 0);
+AssertTrue(Condition := itfAlm.State = PL.E_AlarmState.ActiveAck, Message := '100100 acked');
+AssertFalse(Condition := fbDut.AckById(udiId := 111), Message := 'nothing to ack again');
+AssertTrue(Condition := fbDut.ePrioUnack = PL.E_AlarmPriority.None, Message := 'no unacked left');
+
+coUnit.TEST_FINISHED();
