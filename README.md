@@ -11,11 +11,13 @@
 HMI → испытания на модели объекта → документы. Логика проверяется без железа: в CODESYS Control Win
 входы ПЛК подменяет модель резервуара, насосов и сети с инъекцией отказов.
 
-> **Статус: сборка контура.** Логика станции, слой устройств из перечня сигналов, журнал событий и модель
-> объекта собраны в одно приложение CODESYS: компиляция без ошибок и предупреждений, 324 юнит-теста coUnit
-> проходят в CODESYS Control Win V3, приложение имитации запускается на рантайме
-> ([docs/TEST_REPORT.md](docs/TEST_REPORT.md)). Сценарии ПМИ на рантайме, интеграционные тесты замкнутого
-> контура и HMI — следующие этапы ([docs/DESIGN.md](docs/DESIGN.md), раздел 15).
+> **Статус: приёмка ПМИ на имитаторе.** Логика станции, слой устройств из перечня сигналов, журнал событий и
+> модель объекта собраны в одно приложение CODESYS: компиляция без ошибок и предупреждений, 328 юнит-тестов
+> coUnit проходят в CODESYS Control Win V3 ([docs/TEST_REPORT.md](docs/TEST_REPORT.md)). Все 39 проверок
+> программы испытаний выполнены сценариями на рантайме через OPC UA и соответствуют по автоматической части;
+> испытания нашли и закрыли три дефекта логики (протокол № 1 — [docs/07_test_protocol.md](docs/07_test_protocol.md)).
+> HMI WebVisu и интеграционные тесты замкнутого контура — следующие этапы ([docs/DESIGN.md](docs/DESIGN.md),
+> раздел 15).
 
 ## Демонстрация
 
@@ -104,22 +106,22 @@ python -m pytest                                 # то же в pytest и тес
 python -m ruff check . && python -m mypy
 ```
 
-### Как запустить симуляцию за 5 минут (черновик)
-
-> _Команды ниже — план; они появятся на этапах 0–2 реализации ([docs/DESIGN.md](docs/DESIGN.md),
-> раздел 15.2), и раздел будет уточнён по фактическому прогону._
+### Как запустить имитацию и сценарий ПМИ
 
 Нужны Windows, CODESYS V3.5 SP17 Patch 3 (3.5.17.30) и Python 3.11+; права администратора не нужны.
 
 ```bash
-python tools/codesys/cds.py deps                    # plc-process-lib 1.0 из соседнего репозитория
-python tools_project/generate.py                    # слой устройств из перечня сигналов (iolistgen)
-python tools/codesys/cds.py sim start               # сборка имитации, загрузка в Control Win V3, «Старт»
-# HMI: http://localhost:8080/webvisu.htm — экран «Имитация»: ускорение ×20, ливень, авария ПЧ
-python tools/codesys/cds.py scenarios --backend cds -k PMI-13   # сценарий ПМИ «АВР при аварии ПЧ»
+python tools/codesys/cds.py deps                          # plc-process-lib 1.0 из соседнего репозитория
+python tools/codesys/cds.py test                          # юнит-тесты coUnit в CODESYS Control Win V3
+python tools_project/codesys/sim.py start --need-min 60   # имитация: импорт, символы OPC UA, рантайм,
+                                                          # сертификаты OPC UA, загрузка и «Старт»
+PMI_LIVE=1 python -m pytest scenarios/test_pmi.py -m plc -k PMI-13   # сценарий ПМИ «АВР при аварии ПЧ»
+python tools_project/codesys/sim.py stop                  # остановить рантайм
 ```
 
-Без лицензии CODESYS Control Win работает 2 часа — `cds.py` перезапускает рантайм перед серией.
+Сертификат OPC UA-сервера и доверие клиенту сценариев `sim.py` готовит сам (файлы хранилища рантайма). Без
+лицензии CODESYS Control Win работает 2 часа — `sim.py start --need-min` перезапускает рантайм перед частью
+серии.
 Графику WebVisu собирают в IDE по [docs/08_hmi_spec.md](docs/08_hmi_spec.md) — ручные шаги в
 [docs/MANUAL_STEPS.md](docs/MANUAL_STEPS.md) (план — [docs/DESIGN.md](docs/DESIGN.md), раздел 16).
 
@@ -127,11 +129,11 @@ python tools/codesys/cds.py scenarios --backend cds -k PMI-13   # сценари
 
 | Проверка | Где | Что |
 |---|---|---|
-| Сверка документов (`tools_project/check_docs_consistency.py`, 19 проверок) | CI, pytest | позиции из перечня, коды, номера и тексты тревог (05 ↔ вывод iolistgen), уставки 04 ↔ перечень ↔ DESIGN, пути переменных HMI и ПМИ ↔ DESIGN, генератор и контракт plc-process-lib, события журнала, номера ПМИ ↔ протокол, разложение алгоритмов на ФБ |
+| Сверка документов (`tools_project/check_docs_consistency.py`, 20 проверок) | CI, pytest | позиции из перечня, коды, номера и тексты тревог (05 ↔ вывод iolistgen), уставки 04 ↔ перечень ↔ DESIGN, пути переменных HMI и ПМИ ↔ DESIGN, генератор и контракт plc-process-lib, события журнала, номера ПМИ ↔ протокол, разложение алгоритмов на ФБ |
 | ruff, mypy, pytest | CI | инструменты на Python (`tools/`, `tools_project/`) |
 | `st_lint --strict`, iec_checker, RuSTy | CI | статанализ ST: находки исправлены или обоснованы ([STATIC_ANALYSIS.md](docs/STATIC_ANALYSIS.md)) |
-| coUnit 1.2.0.0 | CODESYS Control Win V3: `cds.py test` | 324 юнит-теста: ФБ станции и ядро цикла, слой устройств и журнал, модель объекта; интеграционные тесты замкнутого контура — план (DESIGN, раздел 14) |
-| Сценарии ПМИ | `cds.py scenarios` (OPC UA или онлайн-мост CODESYS) | 39 проверок [06_PMI.md](docs/06_PMI.md) на модели, отчёт для протокола [07](docs/07_test_protocol.md) |
+| coUnit 1.2.0.0 | CODESYS Control Win V3: `cds.py test` | 328 юнит-тестов: ФБ станции и ядро цикла, слой устройств и журнал, модель объекта; интеграционные тесты замкнутого контура — план (DESIGN, раздел 14) |
+| Сценарии ПМИ | `sim.py start`, затем `PMI_LIVE=1 pytest scenarios/test_pmi.py` (OPC UA) | 39 проверок [06_PMI.md](docs/06_PMI.md) на модели: протокол № 1 — [07](docs/07_test_protocol.md), отчёт обвязки — [07_pmi_report.md](docs/07_pmi_report.md) |
 
 ## Документация
 
@@ -143,7 +145,7 @@ python tools/codesys/cds.py scenarios --backend cds -k PMI-13   # сценари
 | [04_algorithms.md](docs/04_algorithms.md) | алгоритмы, диаграммы состояний, уставки |
 | [05_alarm_list.csv](docs/05_alarm_list.csv) | перечень тревог: код, текст, приоритет, уставка, задержка, действие оператора ([alarms.csv](docs/alarms.csv) — вывод генератора) |
 | [06_PMI.md](docs/06_PMI.md) | программа и методика испытаний на имитаторе: 39 проверок |
-| [07_test_protocol.md](docs/07_test_protocol.md) | бланк протокола испытаний |
+| [07_test_protocol.md](docs/07_test_protocol.md), [07_pmi_report.md](docs/07_pmi_report.md) | протокол испытаний на имитаторе № 1 (19.10.2026) и отчёт обвязки сценариев |
 | [08_hmi_spec.md](docs/08_hmi_spec.md), [hmi/](docs/hmi/) | спецификация HMI по ISA-101 и макеты шести экранов |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md), [DESIGN.md](docs/DESIGN.md) | архитектура и проект ПО: слои, задачи, ФБ, типы, тесты, разделение работ |
 | [ASSUMPTIONS.md](docs/ASSUMPTIONS.md) | допущения и проектные решения |
@@ -151,12 +153,13 @@ python tools/codesys/cds.py scenarios --backend cds -k PMI-13   # сценари
 
 ## Ограничения и дальнейшие шаги
 
-- Сценарии ПМИ на рантайме (39 файлов TOML, команды `cds.py scenarios` и `cds.py sim`), интеграционные
-  тесты замкнутого контура, HMI — следующие этапы ([docs/DESIGN.md](docs/DESIGN.md), раздел 15); открытые
-  вопросы — там же, раздел 17, и в [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) (статус «проверить»).
+- HMI WebVisu и интеграционные тесты замкнутого контура — следующие этапы ([docs/DESIGN.md](docs/DESIGN.md),
+  раздел 15); ручные части ПМИ (экраны, права ролей, файл CSV, перезапуск процесса рантайма) не проверялись.
+  Открытые вопросы и запросы в другие проекты — DESIGN, раздел 17, и [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md)
+  (статусы «проверить», «открыт»).
 - Карта регистров ПЧ — условная, это не карта реального производителя; объект, заказчик и параметры
   оборудования вымышленные.
-- Графику WebVisu, дерево устройств ПЛК210 и Modbus, сертификат OPC UA-сервера настраивают вручную в IDE.
+- Графику WebVisu, дерево устройств ПЛК210 и Modbus настраивают вручную в IDE.
 - Наличие CAA File в таргете ПЛК210, версия таргет-файла и функции определения таргета — сверить при
   переносе на контроллер.
 
@@ -167,8 +170,10 @@ submersible pumps (two duty, one standby) driven by VFDs over Modbus RTU, and a 
 The project covers the full cycle — process, algorithms, CODESYS V3.5 Structured Text for an OWEN PLC210,
 an ISA-101 WebVisu HMI, a plant model with fault injection for testing in CODESYS Control Win, and
 GOST-style documents (requirements, functional diagram, I/O list, algorithms, ISA-18.2 alarm list,
-39-check test procedure, HMI spec). This stage contains the documents and the software design; a
-Python checker in CI keeps tags, setpoints and alarm texts consistent across all of them. Docs are in Russian.
+39-check test procedure, HMI spec). The application builds without errors or warnings, 328 coUnit tests
+pass on CODESYS Control Win V3, and all 39 test-procedure checks run live as scenarios over OPC UA against
+the simulated plant (automated parts pass, test protocol No. 1); a Python checker in CI keeps tags,
+setpoints and alarm texts consistent across all documents. Docs are in Russian.
 
 ## Лицензия
 
