@@ -67,6 +67,7 @@ fbCore(itfTime := GVL_Time.fbClockMain, itfEvents := GVL_Log.fbEventLog, aitfPum
        udiLogOverwritten := GVL_Log.fbEventLog.udiOverwritten, ePrioUnack := GVL_Log.fbAlarmSummary.ePrioUnack,
        udiNewHighSeq := GVL_Log.fbAlarmSummary.udiNewHighSeq,
        stCmd := GVL_Station.stStationCmd, stCfgPersist := GVL_Persist.stStationCfg, stCfgLkg := GVL_Station.stCfgLkg,
+       stCfgLkgRetain := GVL_Persist.stStationCfgLkg,
        stRetain := GVL_Persist.stStationRetain, fbLIC101 := GVL_Station.fbLIC101,
        stLIC101Cmd := GVL_Station.stLIC101Cmd, stLIC101Cfg := GVL_Persist.stLIC101Cfg,
        stLIC101Retain := GVL_Persist.stLIC101Retain, fbAlarms := GVL_Station.fbAlarms);

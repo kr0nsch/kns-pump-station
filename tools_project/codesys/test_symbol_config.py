@@ -48,12 +48,15 @@ def test_rules_file_matches_design_table_sim() -> None:
     assert S.access_for(sim, "GVL_Sim", "stSimSts") == "Read"
     assert S.access_for(sim, "GVL_Sim", "xIoReady") == "Read"
     assert S.access_for(sim, "GVL_Time", "lrMainNow_s") == "Read"
+    # копию LKG пишет только станция после проверки уставок: и в сборке имитации — только чтение
+    assert S.access_for(sim, "GVL_Persist", "stStationCfgLkg") == "Read"
 
 
 def test_site_build_closes_writes_to_persist_and_simulation() -> None:
     site = rules("site")
     assert S.access_for(site, "GVL_Persist", "stStationCfg") == "Read"
     assert S.access_for(site, "GVL_Persist", "stP101Retain") == "Read"
+    assert S.access_for(site, "GVL_Persist", "stStationCfgLkg") == "Read"
     assert S.access_for(site, "GVL_Sim", "stFaultInj") is None
     assert S.access_for(site, "GVL_Sim", "xSimulation") == "Read"
 

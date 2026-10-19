@@ -7,7 +7,19 @@ eCmdRes := stSts.eCmdResult;
 
 // 1. Уставки (DESIGN 7, шаг 2; 04 §18.3). «Применить уставки проекта» и откат командой переписывают
 //    записанные уставки; корректные уставки становятся действующей копией (LKG), каждое принятое
-//    изменение — событие 101017 (номер параметра; команда — значение 0)
+//    изменение — событие 101017 (номер параметра; команда — значение 0). Копия LKG сохраняется в
+//    энергонезависимой памяти (stCfgLkgRetain): при старте ПЛК действующая копия — сохранённая, если она
+//    корректна, иначе уставки проекта; неверная правка, оставленная до перезапуска, не возвращает станцию
+//    к уставкам проекта
+IF xFirstCall THEN
+    IF F_StationCfgCheck(stCfg := stCfgLkgRetain, stPidCfg := stLIC101Cfg, rLvlL_m := rLvlL_m,
+                         rLvlH_m := rLvlH_m) = 0 THEN
+        stCfgLkg := stCfgLkgRetain;
+    ELSE
+        stCfgLkg := GVL_StationDefaults.stStationCfg;
+        stCfgLkgRetain := stCfgLkg;
+    END_IF
+END_IF
 xCfgCmd := FALSE;
 IF xApplyProjectCfg THEN
     stCfgPersist := GVL_StationDefaults.stStationCfg;
@@ -29,6 +41,7 @@ IF wCfgErr = 0 THEN
     uiParam := ChangedParam(stOld := stCfgLkg, stNew := stCfgPersist);
     IF uiParam <> 0 THEN
         stCfgLkg := stCfgPersist;
+        stCfgLkgRetain := stCfgPersist;                 // энергонезависимая копия — только при изменении
         // при старте записанные уставки принимаются молча; команда уже записала событие
         IF NOT xFirstCall AND NOT xCfgCmd AND itfEvents <> 0 THEN
             itfEvents.LogEvent(eEvent := E_StationEvent.CfgChanged, rValue := UINT_TO_REAL(uiParam));

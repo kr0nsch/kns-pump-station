@@ -17,6 +17,7 @@
      "access": "Read"},
     {"gvl": "GVL_Log", "vars": ["stEventView", "stEventFeed"], "access": "ReadWrite"},
     {"gvl": "GVL_Log", "vars": ["stAlarmView", "eExportState", "uiExportLines", "udiExportError"], "access": "Read"},
+    {"gvl": "GVL_Persist", "vars": ["stStationCfgLkg"], "access": "Read"},
     {"gvl": "GVL_Persist", "vars": ["st*Cfg", "st*Retain"], "access": {"sim": "ReadWrite", "site": "Read"}},
     {"gvl": "GVL_Sim", "vars": ["stSimCmd", "stFaultInj", "stSimCfg"], "access": {"sim": "ReadWrite"}},
     {"gvl": "GVL_Sim", "vars": ["xSimulation", "xSimulationReq", "stSimSts", "xIoReady"], "access": "Read"},

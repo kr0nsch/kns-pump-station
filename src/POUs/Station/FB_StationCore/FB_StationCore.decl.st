@@ -1,15 +1,15 @@
 // Назначение: ядро PRG_Station — порядок цикла станции (DESIGN, раздел 7, шаги 2–15) без обращений
-//             к глобальным переменным: уставки (LKG, «Применить уставки проекта», откат), команды
-//             станции и кнопки шкафа, режим, питание, защиты, действующее управление, ступенчатое и
-//             ПИД (LIC101), чередование, АВР, задание частоты, блокировки, вентиляция, тревоги
-//             KNS1.*, местная сигнализация, события журнала, состояние stStationSts. Устройства —
-//             интерфейсами PL.I_MotorVfd и значениями входов, журнал — I_StationEventSink, время —
-//             PL.I_TimeSource, данные GVL_Station и GVL_Persist — параметрами VAR_IN_OUT: юнит-тесты
-//             идут с подменными насосами и временем, без модели и сгенерированного слоя. Привязку к
-//             GVL_Devices, GVL_Hmi, GVL_IO, GVL_Persist, GVL_Log, GVL_Sim, GVL_Time и
-//             GVL_DeviceList выполняет PRG_Station.
+//             к глобальным переменным: уставки (LKG с энергонезависимой копией, «Применить уставки
+//             проекта», откат), команды станции и кнопки шкафа, режим, питание, защиты, действующее
+//             управление, ступенчатое и ПИД (LIC101), чередование, АВР, задание частоты, блокировки,
+//             вентиляция, тревоги KNS1.*, местная сигнализация, события журнала, состояние
+//             stStationSts. Устройства — интерфейсами PL.I_MotorVfd и значениями входов, журнал —
+//             I_StationEventSink, время — PL.I_TimeSource, данные GVL_Station и GVL_Persist —
+//             параметрами VAR_IN_OUT: юнит-тесты идут с подменными насосами и временем, без модели и
+//             сгенерированного слоя. Привязку к GVL_Devices, GVL_Hmi, GVL_IO, GVL_Persist, GVL_Log,
+//             GVL_Sim, GVL_Time и GVL_DeviceList выполняет PRG_Station.
 // Автор:      <ИМЯ ФАМИЛИЯ>
-// Версия:     0.1.0
+// Версия:     0.2.0
 // Документ:   docs/DESIGN.md, разделы 6.15 и 7; docs/04_algorithms.md, разделы 4, 15, 16, 18.3, 19
 FUNCTION_BLOCK FB_StationCore
 VAR_INPUT
@@ -60,6 +60,7 @@ VAR_IN_OUT
     stCmd          : ST_StationCmd;           // GVL_Station.stStationCmd: импульсы и номера сбрасываются
     stCfgPersist   : ST_StationCfg;           // GVL_Persist.stStationCfg
     stCfgLkg       : ST_StationCfg;           // GVL_Station.stCfgLkg
+    stCfgLkgRetain : ST_StationCfg;           // GVL_Persist.stStationCfgLkg: копия LKG, переживает перезапуск
     stRetain       : ST_StationRetain;        // GVL_Persist.stStationRetain
     fbLIC101       : PL.FB_PID;               // GVL_Station.fbLIC101
     stLIC101Cmd    : PL.ST_PidCmd;            // GVL_Station.stLIC101Cmd

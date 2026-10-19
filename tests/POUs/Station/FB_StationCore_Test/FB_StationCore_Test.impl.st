@@ -7,6 +7,8 @@ CommandPulsesClearedAndCounted();
 ResetButtonEdgeResetsAndLogs();
 LkgRejectsInvalidCfg();
 RevertCfgRestoresLkg();
+LkgRestoredAfterRestart();
+RestoredInvalidLkgFallsBackToDefaults();
 ApplyProjectCfgRestoresDefaults();
 EmergencyRequiresAllAtFullSpeed();
 PowerLostSuppressesLackNoresAts();

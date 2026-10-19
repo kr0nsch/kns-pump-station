@@ -497,4 +497,5 @@ VAR_GLOBAL PERSISTENT RETAIN
     // LIC101 (04 §18.2, № 32–43)
     stLIC101Cfg : PL.ST_PidCfg := (eAction := PL.E_PidAction.Direct, rKp := 6.0, rTi_s := 600.0, rTd_s := 0.0, rPvMin_eu := 0.0, rPvMax_eu := 5.0, rSpMin_eu := 1.2, rSpMax_eu := 2.2, rOutMin_pct := 0.0, rOutMax_pct := 100.0, tSample := T#500MS, ePvFailAction := PL.E_PidPvFailAction.Hold, rSafeOut_pct := 100.0, xUseOutAct := TRUE, udiAlarmIdBase := 100100, astAlarm := [(ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None), (ePriority := PL.E_AlarmPriority.None)]);
     stLIC101Retain : PL.ST_DeviceRetain;  // режим регулятора
+    stStationCfgLkg : ST_StationCfg;  // последняя корректная копия уставок станции (LKG): переживает перезапуск
 END_VAR
