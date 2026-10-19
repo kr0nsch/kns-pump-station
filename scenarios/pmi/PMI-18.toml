@@ -1,0 +1,100 @@
+# PMI-18. Сухой ход по уровнемеру в ручном режиме станции (06_PMI, раздел 5.6.4; приложение А: k = 20, 15 мин
+# контура).
+#
+# Приток 0, Н1 с фейсплейта на 100 %: уровень 1,20 → 0,80 м ≈ 2 мин, → 0,50 м ≈ 1,5 мин. Задержка уставки LL —
+# 3 с от наблюдения уровня ≤ 0,50 м (метка, допуск обвязки), KNS1.DRY — в следующем цикле станции после
+# LT101.LL. Снятие защиты — выше L с гистерезисом 0,05 м.
+id = "PMI-18"
+title = "Сухой ход по уровнемеру в ручном режиме станции"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+inflow_m3h = 0.0
+
+[[step]]
+note = "шаг 1: станция «Ручной», пуск Н1 с фейсплейта, частота 100 %"
+pulse = "GVL_Station.stStationCmd.xSetManual"
+wait = "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Manual"
+timeout_s = 10
+expect = ["GVL_Station.stStationSts.eMode = E_StationMode.Manual"]
+
+[[step]]
+note = "шаг 1: «Пуск» Н1, задание 100 %"
+write = { "GVL_Hmi.stP101Cmd.rSpeedSp_pct" = 100.0 }
+pulse = "GVL_Hmi.stP101Cmd.xStart"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+expect = ["GVL_Devices.fbP101.stSts.stCommon.eCmdResult = E_CmdResult.Accepted"]
+
+[[step]]
+note = "при 0,80 м — LT101.L"
+wait_alarm = { code = "LT101.L", state = "ActiveUnack" }
+timeout_s = 300
+
+[[step]]
+note = "уровень ≤ 0,50 м"
+wait = "GVL_Station.stStationSts.rLevel_m <= 0.50"
+timeout_s = 300
+
+[[step]]
+note = "через 3 с — LT101.LL и KNS1.DRY (High)"
+mark = "t_ll"
+wait_alarm = [
+  { code = "LT101.LL", state = "ActiveUnack" },
+  { code = "KNS1.DRY", state = "ActiveUnack" },
+]
+timeout_s = 30
+expect_delay = [
+  { from = "t_ll", alarm = "LT101.LL", state = "ActiveUnack", min_s = 3.0, max_s = 3.0 },
+  { since = "t_ll", from_alarm = "LT101.LL", state = "ActiveUnack", alarm = "KNS1.DRY", min_s = 0.0, max_s = 0.8 },
+]
+
+[[step]]
+note = "бит 0 wInterlock у всех насосов, Н1 остановлен и в Manual"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 30
+expect = [
+  "GVL_Devices.fbP101.stSts.wInterlock & 16#0001",       # KNS_ILK_DRY_RUN
+  "GVL_Devices.fbP102.stSts.wInterlock & 16#0001",
+  "GVL_Devices.fbP103.stSts.wInterlock & 16#0001",
+  "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Manual",
+]
+
+[[step]]
+note = "шаг 2: пуск Н1 ещё раз — отклонён блокировкой"
+pulse = "GVL_Hmi.stP101Cmd.xStart"
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.eCmdResult = E_CmdResult.RejectedInterlock",
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "шаг 3: приток 100 м³/ч — после подъёма выше 0,80 м блокировка снята"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
+wait = "GVL_Devices.fbP101.stSts.wInterlock !& 16#0001"
+timeout_s = 600
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"]
+expect = [
+  "GVL_Station.stStationSts.rLevel_m > 0.80",
+  "GVL_Devices.fbP102.stSts.wInterlock !& 16#0001",
+  "GVL_Devices.fbP103.stSts.wInterlock !& 16#0001",
+]
+
+[[step]]
+note = "шаг 3: KNS1.DRY → RtnUnack; насосы сами не пускаются (станция в «Ручном»)"
+wait_alarm = { code = "KNS1.DRY", state = "RtnUnack" }
+timeout_s = 10
+hold_s = 30
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+  "GVL_Station.stStationSts.eMode = E_StationMode.Manual",
+]
+
+[teardown]
+clear_faults = true

@@ -1,8 +1,9 @@
 """Отчёт прогона сценариев ПМИ: ``build/pmi-results.json`` и ``.md`` — заготовка протокола 07 (DESIGN 14.3).
 
 По каждому пункту — номер, итог («соответствует» / «не соответствует» / «не проверялось» с причиной),
-измеренные задержки, исполнитель, ускорение, метки времени процесса и поле ``manual`` (что отмечает
-инженер). Протокол ``docs/07_test_protocol.md`` заполняет инженер.
+вид исполнения (``mode``: авто, авто + ручн.), измеренные задержки, размахи и скорости, исполнитель, ускорение,
+метки времени процесса и поле ``manual`` (что отмечает инженер). Протокол ``docs/07_test_protocol.md`` заполняет
+инженер.
 """
 
 from __future__ import annotations
@@ -13,6 +14,8 @@ from dataclasses import asdict
 from pathlib import Path
 
 from kns_scenarios.scenario import ScenarioResult
+
+MODE_TEXT = {"auto": "авто", "auto+manual": "авто + ручн.", "manual": "ручн."}  # 06, приложение А, «Вид»
 
 
 def to_json(results: Sequence[ScenarioResult]) -> str:
@@ -31,11 +34,16 @@ def to_markdown(results: Sequence[ScenarioResult]) -> str:
         "Заготовка для `docs/07_test_protocol.md`: итог и измеренные значения по пунктам; вид экранов, права",
         "ролей и файл журнала отмечает инженер (колонка «Вручную»).",
         "",
-        "| № | Проверка | Итог | Исполнитель | k | Измерено | Вручную | Замечания |",
-        "|---|---|---|---|---:|---|---|---|",
+        "| № | Проверка | Итог | Вид | Исполнитель | k | Измерено | Вручную | Замечания |",
+        "|---|---|---|---|---|---:|---|---|---|",
     ]
     for r in results:
-        measured = "; ".join(f"{k}: {v:.3f} с" for k, v in r.measured.items()) or "—"
+        measured = (
+            "; ".join(
+                f"{k}: {v:.3f}" + ("" if "размах" in k or "скорость" in k else " с") for k, v in r.measured.items()
+            )
+            or "—"
+        )
         notes = [f"{c.step}: {c.text} — {c.actual!r}" for c in r.checks if c.ok is False]
         notes += [f"{c.step}: {c.note}" for c in r.checks if c.ok is None and c.note]
         if r.error:
@@ -43,7 +51,8 @@ def to_markdown(results: Sequence[ScenarioResult]) -> str:
         manual = ", ".join(r.manual) or "—"
         remark = "<br>".join(n.replace("|", "\\|") for n in notes) or "—"
         lines.append(
-            f"| {r.id} | {r.title} | {r.verdict} | {r.backend} | {r.time_scale:g} | {measured} | {manual} | {remark} |"
+            f"| {r.id} | {r.title} | {r.verdict} | {MODE_TEXT.get(r.mode, r.mode)} | {r.backend} | {r.time_scale:g} | "
+            f"{measured} | {manual} | {remark} |"
         )
     return "\n".join(lines) + "\n"
 

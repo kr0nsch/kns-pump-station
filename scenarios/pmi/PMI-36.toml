@@ -1,0 +1,190 @@
+# PMI-36. Тревоги ISA-18.2, баннер, местная сигнализация, кнопки шкафа (06_PMI, раздел 5.6.9; приложение А: k = 10,
+# 20 мин контура, авто + ручн.).
+#
+# Квитирование «на экране «Тревоги»» — номер строки: Cmd.udiAckId; отложить / вернуть — Cmd.udiShelveId /
+# udiUnshelveId (номер сбрасывается станцией, итог — Sts.eCmdResult). «HL1 мигает 1 Гц» — лампа меняется между
+# отсчётами (размах ≥ 1), «горит постоянно» — размах 0; частоту 1 Гц проверяет юнит-тест FB_Annunciator
+# (при k = 10 полупериод 0,5 с контура — 50 мс). Шаг 3: лампа горит постоянно, когда квитированы все тревоги
+# Medium и выше (04 §14) — квитируются обе тревоги AT401 (HH и H, обе активны с шага 1).
+id = "PMI-36"
+title = "Тревоги ISA-18.2, баннер, местная сигнализация, кнопки шкафа"
+time_scale = 10.0
+timeout_s = 120
+backends = ["opcua", "cds"]
+mode = "auto+manual"
+manual = [
+  "шаг 1: баннер HMI показывает AT401.HH первой строкой (приоритет выше)",
+  "шаг 5: на экране «Тревоги» — остаток срока отложенной LS203.ALM",
+  "шаг 6: KNS1.EHL остаётся в баннере",
+]
+
+[setup]
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: H₂S 12 мг/м³"
+write = { "GVL_Sim.stFaultInj.rH2S_mgm3" = 12.0 }
+mark = "t1"
+
+[[step]]
+note = "шаг 1: через 5 с AT401.H (Medium) и AT401.HH (High)"
+wait_alarm = [
+  { code = "AT401.HH", state = "ActiveUnack" },
+  { code = "AT401.H", state = "ActiveUnack" },
+]
+timeout_s = 30
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "AT401.HH", state = "ActiveUnack", min_s = 4.8, max_s = 5.4 }
+expect = ["GVL_Station.stStationSts.ePrioUnack = E_AlarmPriority.High"]
+manual = "баннер HMI: AT401.HH первой строкой"
+
+[[step]]
+note = "шаг 1: HA1 вкл., K1 обесточено, HL1 мигает, В1 включён"
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+hold_s = 20
+expect = [
+  "GVL_IO.xHA1 = TRUE",
+  "GVL_IO.xK1 = FALSE",
+]
+during_span = { "GVL_IO.xHL1" = { min = 1.0 } }
+
+[[step]]
+note = "шаг 2: кнопка HS502 — HA1 выкл., событие 101023 (кнопка)"
+pulse = "GVL_Sim.stSimCmd.xPressSilence"
+mark = "t2"
+wait = "GVL_IO.xHA1 = FALSE"
+timeout_s = 10
+expect_event = { event = "KNS1.E23", value = 1, since = "t2" }
+
+[[step]]
+note = "шаг 3: квитировать AT401.HH на экране «Тревоги» — ActiveAck"
+write = { "GVL_Station.stStationCmd.udiAckId" = 4010 }
+wait = "GVL_Station.stStationCmd.udiAckId = 0"
+timeout_s = 10
+wait_alarm = { code = "AT401.HH", state = "ActiveAck" }
+expect = ["GVL_Station.stStationSts.eCmdResult = E_CmdResult.Accepted"]
+
+[[step]]
+note = "шаг 3: квитировать AT401.H — HL1 горит постоянно"
+write = { "GVL_Station.stStationCmd.udiAckId" = 4011 }
+wait = "GVL_Station.stStationCmd.udiAckId = 0"
+timeout_s = 10
+wait_alarm = { code = "AT401.H", state = "ActiveAck" }
+
+[[step]]
+note = "шаг 3: HL1 горит постоянно"
+hold_s = 20
+during = ["GVL_IO.xHL1 = TRUE"]
+
+[[step]]
+note = "шаг 4: H₂S — фон: квитированные тревоги → Normal"
+write = { "GVL_Sim.stFaultInj.rH2S_mgm3" = -1.0 }
+wait_alarm = [
+  { code = "AT401.HH", state = "Normal" },
+  { code = "AT401.H", state = "Normal" },
+]
+timeout_s = 60
+
+[[step]]
+note = "шаг 4: повтор без квитирования — H₂S 12"
+write = { "GVL_Sim.stFaultInj.rH2S_mgm3" = 12.0 }
+wait_alarm = [
+  { code = "AT401.HH", state = "ActiveUnack" },
+  { code = "AT401.H", state = "ActiveUnack" },
+]
+timeout_s = 30
+
+[[step]]
+note = "шаг 4: фон без квитирования — RtnUnack"
+write = { "GVL_Sim.stFaultInj.rH2S_mgm3" = -1.0 }
+wait_alarm = [
+  { code = "AT401.HH", state = "RtnUnack" },
+  { code = "AT401.H", state = "RtnUnack" },
+]
+timeout_s = 60
+
+[[step]]
+note = "шаг 4: после квитирования — Normal"
+write = { "GVL_Station.stStationCmd.udiAckId" = 4010 }
+wait = "GVL_Station.stStationCmd.udiAckId = 0"
+timeout_s = 10
+wait_alarm = { code = "AT401.HH", state = "Normal" }
+
+[[step]]
+note = "шаг 4: квитировать AT401.H — Normal"
+write = { "GVL_Station.stStationCmd.udiAckId" = 4011 }
+wait = "GVL_Station.stStationCmd.udiAckId = 0"
+timeout_s = 10
+wait_alarm = { code = "AT401.H", state = "Normal" }
+
+[[step]]
+note = "шаг 5: затопление камеры задвижек — LS203.ALM"
+write = { "GVL_Sim.stFaultInj.xValveChamberFlood" = true }
+wait_alarm = { code = "LS203.ALM", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 5: отложить LS203.ALM на экране «Тревоги» — Shelved"
+write = { "GVL_Station.stStationCmd.udiShelveId" = 2030 }
+wait = "GVL_Station.stStationCmd.udiShelveId = 0"
+timeout_s = 10
+wait_alarm = { code = "LS203.ALM", state = "Shelved" }
+expect = ["GVL_Station.stStationSts.eCmdResult = E_CmdResult.Accepted"]
+manual = "на экране «Тревоги» — остаток срока отложенной LS203.ALM"
+
+[[step]]
+note = "шаг 5: через 10 мин — отложена"
+hold_s = 600
+expect_alarm = { code = "LS203.ALM", state = "Shelved" }
+
+[[step]]
+note = "шаг 5: «Вернуть» — снова ActiveUnack"
+write = { "GVL_Station.stStationCmd.udiUnshelveId" = 2030 }
+wait = "GVL_Station.stStationCmd.udiUnshelveId = 0"
+timeout_s = 10
+wait_alarm = { code = "LS203.ALM", state = "ActiveUnack" }
+expect = ["GVL_Station.stStationSts.eCmdResult = E_CmdResult.Accepted"]
+
+[[step]]
+note = "шаг 6: LS102 залип в сработавшем состоянии — активна KNS1.EHL"
+write = { "GVL_Sim.stFaultInj.eLs102Stuck" = "E_SimFloatStuck.StuckTripped" }
+wait_alarm = { code = "KNS1.EHL", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 6: отложить KNS1.EHL — команда отклонена (tShelveMax = 0 для Critical)"
+write = { "GVL_Station.stStationCmd.udiShelveId" = 100001 }
+wait = "GVL_Station.stStationCmd.udiShelveId = 0"
+timeout_s = 10
+expect = [
+  "GVL_Station.stStationSts.eCmdResult = E_CmdResult.RejectedState",
+  "GVL_Station.stStationSts.ePrioUnack = E_AlarmPriority.Critical",
+  "GVL_Station.stCfgLkg.astAlarm[1].tShelveMax = T#0S",
+]
+expect_alarm = { code = "KNS1.EHL", state = "ActiveUnack" }
+manual = "KNS1.EHL остаётся в баннере"
+
+[[step]]
+note = "шаг 7: кнопка HS501 — сброс устройств, квитирование тревог станции, событие 101016 (кнопка)"
+capture = { seq_p1 = "GVL_Devices.fbP101.stSts.stCommon.uiCmdSeq", seq_lt = "GVL_Devices.fbLT101.stSts.stCommon.uiCmdSeq", seq_v1 = "GVL_Devices.fbV1.stSts.stCommon.uiCmdSeq" }
+pulse = "GVL_Sim.stSimCmd.xPressReset"
+mark = "t7"
+timeout_s = 10
+expect_event = { event = "KNS1.E16", value = 1, since = "t7" }
+
+[[step]]
+note = "шаг 7: Reset() всех устройств (счётчик команд вырос), тревоги станции квитированы"
+expect = [
+  "GVL_Devices.fbP101.stSts.stCommon.uiCmdSeq <> {seq_p1}",
+  "GVL_Devices.fbLT101.stSts.stCommon.uiCmdSeq <> {seq_lt}",
+  "GVL_Devices.fbV1.stSts.stCommon.uiCmdSeq <> {seq_v1}",
+  "GVL_Station.stStationSts.wAlmUnack = 0",
+]
+expect_alarm = [
+  { code = "KNS1.EHL", state = "ActiveAck" },
+  { code = "LS203.ALM", state = "ActiveAck" },
+  { code = "LS102.ALM", state = "ActiveAck" },
+]
+
+[teardown]
+clear_faults = true

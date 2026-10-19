@@ -1,0 +1,92 @@
+# PMI-22. Залипание поплавка LS103 в сработавшем состоянии (обрыв цепи НЗ) (06_PMI, раздел 5.6.4; приложение А:
+# k = 20, 10 мин контура).
+#
+# Ложный LS103 сразу останавливает насосы (защита), через tLdev = 30 с при уровне > 0,80 м поплавок исключается
+# (маска): KNS1.LDEV, бит 10 wState, событие 101011 со значением 103. После снятия блокировки ПИД пускает ведущего
+# заново на 1,60 м (уровень ≈ 1,4 м → ≈ 1,5 мин контура); шаг 2 — после этого пуска, ≈ 2 мин от инъекции.
+id = "PMI-22"
+title = "Залипание поплавка LS103 в сработавшем состоянии (обрыв цепи НЗ)"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: работает ведущий, уровень ≈ 1,4 м"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 1: уровень у задания"
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.45"
+timeout_s = 1200
+
+[[step]]
+note = "шаг 1: LS103 залип в сработавшем состоянии"
+write = { "GVL_Sim.stFaultInj.eLs103Stuck" = "E_SimFloatStuck.StuckTripped" }
+mark = "t1"
+
+[[step]]
+note = "через 1 с LS103.ALM, KNS1.DRY, все насосы остановлены"
+wait_alarm = [
+  { code = "LS103.ALM", state = "ActiveUnack" },
+  { code = "KNS1.DRY", state = "ActiveUnack" },
+]
+timeout_s = 10
+expect_delay = [
+  { since = "t1", from_event = "KNS1.E21", alarm = "LS103.ALM", state = "ActiveUnack", min_s = 0.6, max_s = 1.8 },
+  { since = "t1", from_alarm = "LS103.ALM", state = "ActiveUnack", alarm = "KNS1.DRY", min_s = 0.0, max_s = 0.8 },
+]
+
+[[step]]
+note = "все насосы остановлены"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 0"
+timeout_s = 30
+
+[[step]]
+note = "через 30 с (уровень > 0,80 м): KNS1.LDEV, LS103 исключён (бит 10), событие 101011 (103)"
+wait_alarm = { code = "KNS1.LDEV", state = "ActiveUnack" }
+timeout_s = 60
+expect_delay = { since = "t1", from_alarm = "LS103.ALM", state = "ActiveUnack", alarm = "KNS1.LDEV", min_s = 29.6, max_s = 30.8 }
+expect_event = { event = "KNS1.E11", value = 103, since = "t1" }
+expect = [
+  "GVL_Station.stStationSts.wState & 16#0400",          # STN_ST_LS103_MASKED
+  "GVL_Station.stStationSts.rLevel_m > 0.80",
+]
+
+[[step]]
+note = "блокировка снята, KNS1.DRY → RtnUnack"
+wait = "GVL_Devices.fbP101.stSts.wInterlock !& 16#0001"
+timeout_s = 10
+wait_alarm = { code = "KNS1.DRY", state = "RtnUnack" }
+expect = [
+  "GVL_Devices.fbP102.stSts.wInterlock !& 16#0001",
+  "GVL_Devices.fbP103.stSts.wInterlock !& 16#0001",
+]
+
+[[step]]
+note = "насосы работают по уровню: пуск ведущего на 1,60 м"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 300
+expect = ["GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"]
+
+[[step]]
+note = "шаг 2: ≈ 2 мин после инъекции — LS103 в норме"
+write = { "GVL_Sim.stFaultInj.eLs103Stuck" = "E_SimFloatStuck.None" }
+mark = "t2"
+
+[[step]]
+note = "шаг 2: маска снята, событие 101012 (103), KNS1.LDEV → RtnUnack"
+wait = "GVL_Station.stStationSts.wState !& 16#0400"
+timeout_s = 30
+wait_alarm = { code = "KNS1.LDEV", state = "RtnUnack" }
+expect_event = { event = "KNS1.E12", value = 103, since = "t2" }
+
+[teardown]
+clear_faults = true

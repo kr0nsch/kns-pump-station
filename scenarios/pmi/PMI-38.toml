@@ -1,0 +1,434 @@
+# PMI-38. Коллектор и павильон: уставки, отказы сигналов, вентиляция (06_PMI, раздел 5.6.9; приложение А: k = 20,
+# 25 мин контура).
+#
+# PT201 (шкала 0…10 бар) — подменный ток: 12,32 / 10,72 / 5,44 / 4,64 мА → 5,2 / 4,2 / 0,9 / 0,4 бар; перед каждым
+# значением инъекция снимается и тревоги квитируются, чтобы каждая уставка появлялась заново. Задержки уставок
+# (PT201 — 5 с, FT202 — 30 с) — от события 101021 и включают фильтр датчика (PT201 tFilter 1 с: пересечение уставки
+# через 2,3…2,9 с; FT202 tFilter 3 с: до 30 м³/ч ≈ 9,7 с). «При остановленных насосах L и LL не появляются» —
+# станция подавляет уставки PT201 и FT202, пока насос не отработал STN_FLOW_SETTLE = 20 с. В1: выбег tV1Overrun =
+# 10 мин после снятия условий — сценарий ждёт останова В1, где 06 требует «остановленный В1».
+id = "PMI-38"
+title = "Коллектор и павильон: уставки, отказы сигналов, вентиляция"
+time_scale = 20.0
+timeout_s = 120
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+
+# --- шаг 1: PT201 при работающем насосе ---------------------------------------------------------
+
+[[step]]
+note = "шаг 1: работает один насос, давление и расход набраны (20 с)"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+hold_s = 25
+expect = [
+  "GVL_Station.stStationSts.uiPumpsRunning = 1",
+  "GVL_Devices.fbPT201.xSuppressLimitAlarms = FALSE",
+]
+
+[[step]]
+note = "шаг 1: PT201 12,32 мА (5,2 бар)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 12.32 }
+mark = "t_hh"
+
+[[step]]
+note = "шаг 1: через 5 с PT201.HH"
+wait_alarm = { code = "PT201.HH", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t_hh", from_event = "KNS1.E21", alarm = "PT201.HH", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+
+[[step]]
+note = "шаг 1: инъекция снята, тревоги квитированы"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+wait_alarm = [
+  { code = "PT201.HH", state = "Normal" },
+  { code = "PT201.H", state = "Normal" },
+]
+
+[[step]]
+note = "шаг 1: PT201 10,72 мА (4,2 бар)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 10.72 }
+mark = "t_h"
+
+[[step]]
+note = "шаг 1: через 5 с PT201.H"
+wait_alarm = { code = "PT201.H", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t_h", from_event = "KNS1.E21", alarm = "PT201.H", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+expect_alarm = { code = "PT201.HH", state = "Normal" }
+
+[[step]]
+note = "шаг 1: инъекция снята, тревоги квитированы"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+wait_alarm = { code = "PT201.H", state = "Normal" }
+
+[[step]]
+note = "шаг 1: PT201 5,44 мА (0,9 бар)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 5.44 }
+mark = "t_l"
+
+[[step]]
+note = "шаг 1: через 5 с PT201.L"
+wait_alarm = { code = "PT201.L", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t_l", from_event = "KNS1.E21", alarm = "PT201.L", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+expect_alarm = { code = "PT201.LL", state = "Normal" }
+
+[[step]]
+note = "шаг 1: инъекция снята, тревоги квитированы"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+wait_alarm = { code = "PT201.L", state = "Normal" }
+
+[[step]]
+note = "шаг 1: PT201 4,64 мА (0,4 бар)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 4.64 }
+mark = "t_ll"
+
+[[step]]
+note = "шаг 1: через 5 с PT201.LL"
+wait_alarm = { code = "PT201.LL", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t_ll", from_event = "KNS1.E21", alarm = "PT201.LL", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+
+[[step]]
+note = "шаг 1: инъекция снята, тревоги квитированы"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+wait_alarm = [
+  { code = "PT201.LL", state = "Normal" },
+  { code = "PT201.L", state = "Normal" },
+]
+
+# --- шаг 1: то же при остановленных насосах ------------------------------------------------------
+
+[[step]]
+note = "шаг 1: насосы остановлены (приток 0, уровень 0,95 м)"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 0.0, "GVL_Sim.stSimCmd.rSetLevel_m" = 0.95 }
+pulse = "GVL_Sim.stSimCmd.xSetLevel"
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 0"
+timeout_s = 60
+expect = ["GVL_Devices.fbPT201.xSuppressLimitAlarms = TRUE"]
+
+[[step]]
+note = "насосы стоят: PT201 12,32 мА — PT201.HH (по 06)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 12.32 }
+mark = "s_hh"
+timeout_s = 15
+expect_delay = { since = "s_hh", from_event = "KNS1.E21", alarm = "PT201.HH", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+
+[[step]]
+note = "насосы стоят: инъекция снята"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+
+[[step]]
+note = "насосы стоят: PT201 10,72 мА — PT201.H (по 06)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 10.72 }
+mark = "s_h"
+timeout_s = 15
+expect_delay = { since = "s_h", from_event = "KNS1.E21", alarm = "PT201.H", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+
+[[step]]
+note = "насосы стоят: инъекция снята"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+
+[[step]]
+note = "насосы стоят: PT201 5,44 мА — PT201.L не появляется"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 5.44 }
+mark = "s_l"
+hold_s = 12
+expect = ["GVL_Devices.fbPT201.xL = TRUE"]                # уставка считается, тревога подавлена
+expect_absent = { alarm = "PT201.L", since = "s_l" }
+
+[[step]]
+note = "насосы стоят: PT201 4,64 мА — PT201.LL не появляется"
+write = { "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 4.64 }
+mark = "s_ll"
+hold_s = 12
+expect = ["GVL_Devices.fbPT201.xLL = TRUE"]
+expect_absent = [
+  { alarm = "PT201.LL", since = "s_ll" },
+  { alarm = "PT201.L", since = "s_l" },
+]
+
+[[step]]
+note = "насосы стоят: инъекция снята"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.None" }
+hold_s = 8
+pulse = "GVL_Station.stStationCmd.xAckAll"
+
+# --- шаг 2: FT202 при работающем насосе ----------------------------------------------------------
+
+[[step]]
+note = "шаг 2: снова работает насос, расход набран"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0, "GVL_Sim.stSimCmd.rSetLevel_m" = 1.7 }
+pulse = "GVL_Sim.stSimCmd.xSetLevel"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 2: расход набран (STN_FLOW_SETTLE)"
+hold_s = 25
+expect = ["GVL_Devices.fbFT202.xSuppressLimitAlarms = FALSE"]
+
+[[step]]
+note = "шаг 2: FT202 4,8 мА (25 м³/ч)"
+write = { "GVL_Sim.stFaultInj.aeAiFault[3]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[3]" = 4.8 }
+mark = "t_ft"
+
+[[step]]
+note = "шаг 2: через 30 с FT202.L"
+wait_alarm = { code = "FT202.L", state = "ActiveUnack" }
+timeout_s = 90
+expect_delay = { since = "t_ft", from_event = "KNS1.E21", alarm = "FT202.L", state = "ActiveUnack", min_s = 29.6, max_s = 41.2 }
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 2: инъекция снята"
+write = { "GVL_Sim.stFaultInj.aeAiFault[3]" = "E_SimAiFault.None" }
+
+# --- шаг 3: затопление, дверь, пожар -------------------------------------------------------------
+
+[[step]]
+note = "шаг 3: затопление камеры задвижек"
+write = { "GVL_Sim.stFaultInj.xValveChamberFlood" = true }
+mark = "t_fl"
+
+[[step]]
+note = "шаг 3: LS203.ALM через 5 с"
+wait_alarm = { code = "LS203.ALM", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t_fl", from_event = "KNS1.E21", alarm = "LS203.ALM", state = "ActiveUnack", min_s = 4.6, max_s = 5.8 }
+
+[[step]]
+note = "шаг 3: дверь открыта"
+write = { "GVL_Sim.stSimCmd.xDoorOpen" = true }
+mark = "t_door"
+
+[[step]]
+note = "шаг 3: ZS404.ALM через 2 с и пуск В1"
+wait_alarm = { code = "ZS404.ALM", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { from = "t_door", alarm = "ZS404.ALM", state = "ActiveUnack", min_s = 2.0, max_s = 2.0 }
+
+[[step]]
+note = "шаг 3: В1 в работе"
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+
+[[step]]
+note = "шаг 3: пожар при открытой двери"
+write = { "GVL_Sim.stFaultInj.xFire" = true }
+mark = "t_fire"
+
+[[step]]
+note = "шаг 3: YS405.ALM (High), В1 остановлен блокировкой"
+wait_alarm = { code = "YS405.ALM", state = "ActiveUnack" }
+timeout_s = 10
+expect_delay = { since = "t_fire", from_event = "KNS1.E21", alarm = "YS405.ALM", state = "ActiveUnack", min_s = 0.0, max_s = 0.8 }
+
+[[step]]
+note = "шаг 3: В1 остановлен, блокировка «пожар»"
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Stopped"
+timeout_s = 30
+expect = ["GVL_Devices.fbV1.stSts.wInterlock & 16#0001"]  # V1_ILK_FIRE
+
+[[step]]
+note = "шаг 3: пуск В1 с фейсплейта (режим Manual) отклонён блокировкой"
+pulse = [
+  "GVL_Hmi.stV1Cmd.stCommon.xSetManual",
+  "GVL_Hmi.stV1Cmd.xStart",
+]
+expect = [
+  "GVL_Devices.fbV1.stSts.stCommon.eCmdResult = E_CmdResult.RejectedInterlock",
+  "GVL_Devices.fbV1.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "шаг 3: В1 снова в «Автомате»"
+pulse = "GVL_Hmi.stV1Cmd.stCommon.xSetAuto"
+expect = ["GVL_Devices.fbV1.stSts.stCommon.eMode = E_DeviceMode.Auto"]
+
+# --- шаг 4: газы и температура ------------------------------------------------------------------
+
+[[step]]
+note = "шаг 4: пожар снят, дверь закрыта — В1 отрабатывает выбег и останавливается"
+write = { "GVL_Sim.stFaultInj.xFire" = false, "GVL_Sim.stSimCmd.xDoorOpen" = false }
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Stopped"
+timeout_s = 900
+
+[[step]]
+note = "шаг 4: H₂S 6 мг/м³ — AT401.H, пуск В1"
+write = { "GVL_Sim.stFaultInj.rH2S_mgm3" = 6.0 }
+wait_alarm = { code = "AT401.H", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 4: пуск В1 по газу"
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+
+[[step]]
+note = "шаг 4: H₂S 12 мг/м³ — AT401.HH"
+write = { "GVL_Sim.stFaultInj.rH2S_mgm3" = 12.0 }
+wait_alarm = { code = "AT401.HH", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 4: CH₄ 12 % НКПР — AT402.H"
+write = { "GVL_Sim.stFaultInj.rCh4_pctLel" = 12.0 }
+wait_alarm = { code = "AT402.H", state = "ActiveUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 4: CH₄ 25 % НКПР — AT402.HH; В1 работает"
+write = { "GVL_Sim.stFaultInj.rCh4_pctLel" = 25.0 }
+wait_alarm = { code = "AT402.HH", state = "ActiveUnack" }
+timeout_s = 30
+expect = ["GVL_Devices.fbV1.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 4: температура 36 °C"
+write = { "GVL_Sim.stSimCfg.rAirTemp_C" = 36.0 }
+mark = "t_th"
+
+[[step]]
+note = "шаг 4: через 60 с TT403.H"
+wait_alarm = { code = "TT403.H", state = "ActiveUnack" }
+timeout_s = 120
+expect_delay = { from = "t_th", alarm = "TT403.H", state = "ActiveUnack", min_s = 60.0, max_s = 60.0 }
+
+[[step]]
+note = "шаг 4: температура 3 °C"
+write = { "GVL_Sim.stSimCfg.rAirTemp_C" = 3.0 }
+mark = "t_tl"
+
+[[step]]
+note = "шаг 4: через 60 с TT403.L"
+wait_alarm = { code = "TT403.L", state = "ActiveUnack" }
+timeout_s = 120
+expect_delay = { from = "t_tl", alarm = "TT403.L", state = "ActiveUnack", min_s = 60.0, max_s = 60.0 }
+
+# --- шаг 5: авария вентилятора, связь с TT403 ----------------------------------------------------
+
+[[step]]
+note = "шаг 5: авария вентилятора — V1.EXT"
+write = { "GVL_Sim.stFaultInj.xFanFault" = true }
+wait_alarm = { code = "V1.EXT", state = "ActiveUnack" }
+timeout_s = 10
+
+[[step]]
+note = "шаг 5: TT403 не отвечает — TT403.FAIL"
+write = { "GVL_Sim.stFaultInj.xTempCommLoss" = true }
+wait_alarm = { code = "TT403.FAIL", state = "ActiveUnack" }
+timeout_s = 15
+
+# --- шаг 6: ОС вентилятора ------------------------------------------------------------------------
+
+[[step]]
+note = "шаг 6: авария вентилятора снята, «Сброс» В1"
+write = { "GVL_Sim.stFaultInj.xFanFault" = false }
+pulse = "GVL_Hmi.stV1Cmd.stCommon.xReset"
+wait = "GVL_Devices.fbV1.stSts.eState <> E_MotorState.Fault"
+timeout_s = 10
+
+[[step]]
+note = "шаг 6: В1 работает (дверь открыта)"
+write = { "GVL_Sim.stSimCmd.xDoorOpen" = true }
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+
+[[step]]
+note = "шаг 6: ОС В1 пропала при работе"
+write = { "GVL_Sim.stFaultInj.xFanNoFeedback" = true }
+mark = "t_fbl"
+
+[[step]]
+note = "шаг 6: через 0,5 с V1.FBL, В1 в отказе"
+wait_alarm = { code = "V1.FBL", state = "ActiveUnack" }
+timeout_s = 10
+expect_delay = { since = "t_fbl", from_event = "KNS1.E21", alarm = "V1.FBL", state = "ActiveUnack", min_s = 0.1, max_s = 1.3 }
+expect = ["GVL_Devices.fbV1.stSts.eState = E_MotorState.Fault"]
+
+[[step]]
+note = "шаг 6: инъекция снята, «Сброс» — В1 снова в работе"
+write = { "GVL_Sim.stFaultInj.xFanNoFeedback" = false }
+pulse = "GVL_Hmi.stV1Cmd.stCommon.xReset"
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 6: условия работы В1 сняты — В1 отрабатывает выбег и останавливается"
+write = { "GVL_Sim.stSimCmd.xDoorOpen" = false, "GVL_Sim.stFaultInj.rH2S_mgm3" = -1.0, "GVL_Sim.stFaultInj.rCh4_pctLel" = -1.0, "GVL_Sim.stFaultInj.xTempCommLoss" = false, "GVL_Sim.stSimCfg.rAirTemp_C" = 18.0 }
+wait = "GVL_Devices.fbV1.stSts.eState = E_MotorState.Stopped"
+timeout_s = 900
+
+[[step]]
+note = "шаг 6: при остановленном В1 — ОС не приходит, открыть дверь"
+write = { "GVL_Sim.stFaultInj.xFanNoFeedback" = true }
+hold_s = 2
+
+[[step]]
+note = "шаг 6: дверь открыта — команда пуска В1"
+write = { "GVL_Sim.stSimCmd.xDoorOpen" = true }
+mark = "t_fts"
+
+[[step]]
+note = "шаг 6: через 5 с после команды — V1.FTS"
+wait_alarm = { code = "V1.FTS", state = "ActiveUnack" }
+timeout_s = 30
+expect_delay = { since = "t_fts", from_alarm = "ZS404.ALM", state = "ActiveUnack", alarm = "V1.FTS", min_s = 4.6, max_s = 5.8 }
+
+# --- шаг 7: отказы и выход за диапазон сигналов 4–20 мА ------------------------------------------
+
+[[step]]
+note = "шаг 7: обрыв PT201, FT202, AT401, AT402"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.WireBreak", "GVL_Sim.stFaultInj.aeAiFault[3]" = "E_SimAiFault.WireBreak", "GVL_Sim.stFaultInj.aeAiFault[4]" = "E_SimAiFault.WireBreak", "GVL_Sim.stFaultInj.aeAiFault[5]" = "E_SimAiFault.WireBreak" }
+mark = "t_wb"
+
+[[step]]
+note = "шаг 7: через 2 с PT201.FAIL, FT202.FAIL, AT401.FAIL, AT402.FAIL"
+wait_alarm = [
+  { code = "PT201.FAIL", state = "ActiveUnack" },
+  { code = "FT202.FAIL", state = "ActiveUnack" },
+  { code = "AT401.FAIL", state = "ActiveUnack" },
+  { code = "AT402.FAIL", state = "ActiveUnack" },
+]
+timeout_s = 15
+expect_delay = [
+  { since = "t_wb", from_event = "KNS1.E21", alarm = "PT201.FAIL", state = "ActiveUnack", min_s = 1.6, max_s = 2.8 },
+  { since = "t_wb", from_event = "KNS1.E21", alarm = "FT202.FAIL", state = "ActiveUnack", min_s = 1.6, max_s = 2.8 },
+  { since = "t_wb", from_event = "KNS1.E21", alarm = "AT401.FAIL", state = "ActiveUnack", min_s = 1.6, max_s = 2.8 },
+  { since = "t_wb", from_event = "KNS1.E21", alarm = "AT402.FAIL", state = "ActiveUnack", min_s = 1.6, max_s = 2.8 },
+]
+
+[[step]]
+note = "шаг 7: ток 20,8 мА (OverRange) — PT201.OOR, FT202.OOR, AT401.OOR, AT402.OOR"
+write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.OverRange", "GVL_Sim.stFaultInj.aeAiFault[3]" = "E_SimAiFault.OverRange", "GVL_Sim.stFaultInj.aeAiFault[4]" = "E_SimAiFault.OverRange", "GVL_Sim.stFaultInj.aeAiFault[5]" = "E_SimAiFault.OverRange" }
+wait_alarm = [
+  { code = "PT201.OOR", state = "ActiveUnack" },
+  { code = "FT202.OOR", state = "ActiveUnack" },
+  { code = "AT401.OOR", state = "ActiveUnack" },
+  { code = "AT402.OOR", state = "ActiveUnack" },
+]
+timeout_s = 30
+
+[teardown]
+clear_faults = true
+write = { "GVL_Sim.stSimCmd.xDoorOpen" = false, "GVL_Sim.stSimCfg.rAirTemp_C" = 18.0 }

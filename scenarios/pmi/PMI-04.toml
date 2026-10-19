@@ -1,0 +1,101 @@
+# PMI-04. Поддержание уровня ПИД (06_PMI, раздел 5.6.1; приложение А: k = 20, 45 мин контура).
+#
+# Проверка качества регулирования — при k = 20 (шаг времени за цикл 0,4 с меньше tSample = 0,5 с, 06 §5.3).
+# «Через 20 мин» — от выхода ведущего в работу; «установилась без колебаний с размахом больше 5 %» — размах задания
+# на ПЧ за последние 5 мин из 20. Равновесные частоты по модели (DESIGN, раздел 11.3): 100 м³/ч — ≈ 79 %,
+# 60 м³/ч — ≈ 65 %.
+id = "PMI-04"
+title = "Поддержание уровня ПИД"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6                      # шаг 2 06: SimCmd.rSetLevel_m, xSetLevel
+inflow_m3h = 100.0
+
+[[step]]
+note = "способ «ПИД уровня», задание 1,40 м"
+expect = [
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.LevelPid",
+  "GVL_Station.stStationSts.rLevelSp_m = 1.40",
+]
+capture = { s2 = "GVL_Devices.fbP102.stSts.udiStarts", s3 = "GVL_Devices.fbP103.stSts.udiStarts" }
+
+[[step]]
+note = "пуск ведущего при 1,60 м; действует ПИД, LIC101 в Auto"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"
+timeout_s = 60
+expect_event = { event = "KNS1.E5", value = 1 }
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+  "GVL_Station.fbLIC101.stSts.stCommon.eMode = E_DeviceMode.Auto",
+]
+
+[[step]]
+note = "слежение ПИД снято после выхода насоса в работу"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
+note = "LIC101 управляет: слежения нет"
+wait = "GVL_Station.fbLIC101.xTrack = FALSE"
+timeout_s = 30
+expect = ["GVL_Station.fbLIC101.stSts.stCommon.wStatus !& 16#0040"]   # PID_STS_TRACKING снят
+
+[[step]]
+note = "регулирование 15 мин: подпорный не пускается"
+hold_s = 900
+during = ["GVL_Station.stStationSts.uiPumpsRunning <= 1"]
+
+[[step]]
+note = "последние 5 мин из 20: частота в 60…100 %, размах не больше 5 %"
+hold_s = 300
+during = [
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 60.0",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct <= 100.0",
+  "GVL_Station.stStationSts.uiPumpsRunning <= 1",
+]
+during_span = { "GVL_Devices.fbP101.stSts.rSpeedRef_pct" = 5.0 }
+
+[[step]]
+note = "через 20 мин уровень 1,40 ± 0,10 м; частота при 100 м³/ч"
+expect = [
+  "GVL_Station.stStationSts.rLevel_m >= 1.30",
+  "GVL_Station.stStationSts.rLevel_m <= 1.50",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+]
+capture = { f1 = "GVL_Devices.fbP101.stSts.rSpeedRef_pct" }
+
+[[step]]
+note = "приток 60 м³/ч, регулирование 15 мин"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 60.0 }
+hold_s = 900
+during = ["GVL_Station.stStationSts.uiPumpsRunning <= 1"]
+
+[[step]]
+note = "последние 5 мин из 20: частота в 60…100 %, размах не больше 5 %"
+hold_s = 300
+during = [
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 60.0",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct <= 100.0",
+  "GVL_Station.stStationSts.uiPumpsRunning <= 1",
+]
+during_span = { "GVL_Devices.fbP101.stSts.rSpeedRef_pct" = 5.0 }
+
+[[step]]
+note = "уровень снова 1,40 ± 0,10 м, частота ниже прежней; подпорный не пускался"
+expect = [
+  "GVL_Station.stStationSts.rLevel_m >= 1.30",
+  "GVL_Station.stStationSts.rLevel_m <= 1.50",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct < {f1}",
+  "GVL_Devices.fbP102.stSts.udiStarts = {s2}",
+  "GVL_Devices.fbP103.stSts.udiStarts = {s3}",
+]
+expect_absent = { alarm = "KNS1.STEP" }
+
+[teardown]
+clear_faults = true

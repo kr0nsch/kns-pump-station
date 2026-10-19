@@ -91,6 +91,12 @@ class EventFeed:
         self.client.write({f"{FEED}.udiFromSeq": self.next_seq})
         return self.next_seq
 
+    def start_at_first(self) -> int:
+        """Читать с самой старой записи кольца (PMI-01: события старта приложения, записанные до сценария)."""
+        self.next_seq = max(int(self.client.read([f"{FEED}.udiSeqFirst"])[0]), 1)
+        self.client.write({f"{FEED}.udiFromSeq": self.next_seq})
+        return self.next_seq
+
     def poll(self) -> list[EventRecord]:
         """Новые записи с номера ``next_seq``; курсор сдвигается за последнюю прочитанную."""
         values = self.client.read(self._paths())

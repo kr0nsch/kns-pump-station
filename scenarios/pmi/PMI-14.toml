@@ -1,0 +1,108 @@
+# PMI-14. Контроль ОС: пропадание и залипание (06_PMI, раздел 5.6.3; приложение А: k = 20, 20 мин контура).
+#
+# Перед залипанием ОС Н2 все тревоги квитированы: сирену HA1 и обесточивание K1 включает новая неквитированная
+# тревога High — иначе HA1 уже звучала бы от KNS1.NORES шага 1. Команда снята станцией через 5 с после 1,00 м
+# (записи журнала у снятия нет): «через 15 с после снятия команды» — от наблюдения снятия (метка, допуск обвязки).
+# Шаг 3 06 ждёт P102.UCR после сброса при залипшей ОС; по контракту FB_Motor (сброс снимает FailToStop, только
+# когда двигатель не работает по ОС; UncommandedRun — только из Stopped) ожидается RejectedFault — проверка
+# оставлена по тексту 06, расхождение передано на согласование.
+id = "PMI-14"
+title = "Контроль ОС: пропадание и залипание"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+level_m = 1.7
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: работает Н1"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 1: ОС «ПЧ в работе» Н1 пропала"
+write = { "GVL_Sim.stFaultInj.axNoFeedback[1]" = true }
+mark = "t1"
+
+[[step]]
+note = "шаг 1: через 0,5 с P101.FBL, Н1 в отказе"
+wait_alarm = { code = "P101.FBL", state = "ActiveUnack" }
+timeout_s = 10
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "P101.FBL", state = "ActiveUnack", min_s = 0.1, max_s = 1.3 }
+expect = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Fault"]
+
+[[step]]
+note = "шаг 1: АВР на резервный, KNS1.ATS"
+wait_alarm = { code = "KNS1.ATS", state = "ActiveUnack" }
+timeout_s = 10
+expect_event = { event = "KNS1.E6", value = 2, since = "t1" }
+
+[[step]]
+note = "шаг 1: резервный Н2 в работе"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
+note = "шаг 2: снять инъекцию, «Сброс» Н1"
+write = { "GVL_Sim.stFaultInj.axNoFeedback[1]" = false }
+pulse = "GVL_Hmi.stP101Cmd.stCommon.xReset"
+wait = "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Standby"
+timeout_s = 30
+
+[[step]]
+note = "шаг 2: тревоги квитированы, сирены нет, K1 под напряжением; работает Н2 — ОС залипла"
+pulse = "GVL_Station.stStationCmd.xAckAll"
+write = { "GVL_Sim.stFaultInj.axFeedbackStuck[2]" = true }
+mark = "t2"
+wait = "GVL_IO.xHA1 = FALSE"
+timeout_s = 10
+expect = [
+  "GVL_IO.xK1 = TRUE",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running",
+]
+
+[[step]]
+note = "шаг 2: откачка до 1,00 м"
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.00"
+timeout_s = 900
+
+[[step]]
+note = "шаг 2: станция снимает команду Н2 (через 5 с после 1,00 м)"
+wait = "GVL_Station.axPumpRun[2] = FALSE"
+timeout_s = 30
+
+[[step]]
+note = "шаг 2: через 15 с после снятия команды — P102.FTP (High)"
+mark = "t_off"
+wait_alarm = { code = "P102.FTP", state = "ActiveUnack" }
+timeout_s = 60
+expect_delay = { from = "t_off", alarm = "P102.FTP", state = "ActiveUnack", min_s = 15.0, max_s = 15.0 }
+
+[[step]]
+note = "шаг 2: сирена HA1, K1 обесточено; АВР нет (насос не запрошен)"
+wait = "GVL_IO.xHA1 = TRUE"
+timeout_s = 5
+expect = ["GVL_IO.xK1 = FALSE"]
+expect_absent = [
+  { alarm = "KNS1.ATS", since = "t2" },
+  { event = "KNS1.E6", since = "t2" },
+]
+
+[[step]]
+note = "шаг 3: «Сброс» Н2 при залипшей ОС"
+pulse = "GVL_Hmi.stP102Cmd.stCommon.xReset"
+mark = "t3"
+
+[[step]]
+note = "шаг 3: через 10 с после сброса — P102.UCR (High): ОС без команды"
+timeout_s = 30
+expect_delay = { from = "t3", alarm = "P102.UCR", state = "ActiveUnack", min_s = 10.0, max_s = 10.0 }
+expect_alarm = { code = "P102.UCR", state = "ActiveUnack" }
+
+[teardown]
+clear_faults = true

@@ -1,0 +1,87 @@
+# PMI-37. Журнал событий: 200 записей, выгрузка CSV (06_PMI, раздел 5.6.9; приложение А: k = 20, 25 мин контура,
+# авто + ручн.).
+#
+# 110 открытий и закрытий двери с интервалом 3 с контура (задержка ZS404 — 2 с): ≈ 220 записей ZS404.ALM. Курсор
+# журнала читается после каждого переключения — он не отстаёт от кольца (200 записей). Страницы журнала HMI —
+# GVL_Log.stEventView (uiPage пишет экран, 20 строк, новые сверху). Файл kns_events.csv лежит в рабочем каталоге
+# рантайма — его содержимое и расшифровку проверяет инженер.
+id = "PMI-37"
+title = "Журнал событий: 200 записей, выгрузка CSV"
+time_scale = 20.0
+timeout_s = 120
+backends = ["opcua", "cds"]
+mode = "auto+manual"
+manual = [
+  "шаг 2: экран «Тревоги», вкладка «Журнал» — листание страниц, новые сверху",
+  "шаг 3: файл kns_events.csv в рабочем каталоге рантайма — ASCII, разделитель «;», заголовок и 200 строк; tools_project/eventlog_decode.py подставляет русские тексты по 05_alarm_list.csv",
+]
+
+[setup]
+inflow_m3h = 100.0
+
+[[step]]
+note = "счётчик затёртых записей до проверки"
+capture = { ow0 = "GVL_Station.stStationSts.udiLogOverwritten" }
+
+[[step]]
+note = "шаг 1: 110 раз открыть и закрыть дверь (интервал 3 с)"
+repeat = 110
+steps = [
+  { write = { "GVL_Sim.stSimCmd.xDoorOpen" = true }, hold_s = 3 },
+  { write = { "GVL_Sim.stSimCmd.xDoorOpen" = false }, hold_s = 3 },
+]
+
+[[step]]
+note = "в журнале 200 записей — самые новые; затёрто ≥ 20; время записей не убывает"
+hold_s = 5
+expect = [
+  "GVL_Log.stEventView.uiCount = 200",
+  "GVL_Station.stStationSts.udiLogOverwritten >= 20",
+  "GVL_Station.stStationSts.udiLogOverwritten >= {ow0 + 20}",
+]
+expect_log_order = true
+
+[[step]]
+note = "шаг 2: первая страница — 20 строк, новые сверху"
+write = { "GVL_Log.stEventView.uiPage" = 0 }
+hold_s = 2
+capture = { seq = "GVL_Station.stStationSts.udiEventSeq" }
+expect = [
+  "GVL_Log.stEventView.uiPageCount = 10",
+  "GVL_Log.stEventView.astRow[1].udiSeq = {seq}",
+  "GVL_Log.stEventView.astRow[20].udiSeq = {seq - 19}",
+]
+manual = "экран «Тревоги», вкладка «Журнал»: листание страниц"
+
+[[step]]
+note = "шаг 2: вторая страница продолжает первую"
+write = { "GVL_Log.stEventView.uiPage" = 1 }
+hold_s = 2
+expect = [
+  "GVL_Log.stEventView.astRow[1].udiSeq = {seq - 20}",
+  "GVL_Log.stEventView.astRow[20].udiSeq = {seq - 39}",
+]
+
+[[step]]
+note = "шаг 2: последняя страница — самые старые из 200"
+write = { "GVL_Log.stEventView.uiPage" = 9 }
+hold_s = 2
+expect = ["GVL_Log.stEventView.astRow[20].udiSeq = {seq - 199}"]
+
+[[step]]
+note = "шаг 3: «Выгрузить CSV» — Done, событие 101019 (число строк)"
+write = { "GVL_Log.stEventView.uiPage" = 0 }
+pulse = "GVL_Station.stStationCmd.xExportLog"
+mark = "t3"
+wait = "GVL_Station.stStationSts.eLogExport = E_LogExportState.Done"
+timeout_s = 120
+expect = ["GVL_Station.stStationSts.eCmdResult = E_CmdResult.Accepted"]
+expect_event = { event = "KNS1.E19", value = 200, since = "t3" }
+
+[[step]]
+note = "шаг 3: файл журнала"
+manual = "kns_events.csv в рабочем каталоге рантайма: заголовок и 200 строк, расшифровка eventlog_decode.py"
+
+[teardown]
+clear_faults = true
+write = { "GVL_Sim.stSimCmd.xDoorOpen" = false }

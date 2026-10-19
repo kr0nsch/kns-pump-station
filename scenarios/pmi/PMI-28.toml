@@ -1,0 +1,128 @@
+# PMI-28. Потеря связи с ПЧ ведущего насоса (06_PMI, раздел 5.6.6; приложение А: k = 20, 10 мин контура).
+#
+# «Только Н1 на ≈ 88 %» — приток 120 м³/ч, ПИД устанавливается 15 мин контура. Первые секунды без связи — при k = 1:
+# IT111.FAIL через 2 с, P101.COM через 3 с (от события 101021), ПЧ через 5 с без запросов уходит рампой на 50 Гц
+# (= 50 Гц не позже ≈ 6,2 с: с 44 Гц ещё 1,2 с; DESIGN 11.2, сторожевой таймер модели). KNS1.STEP — с задержкой
+# 10 с (04 §7.4, 05): готовность ПИД снимается в цикле после P101.COM, действующее управление — ещё через цикл.
+# Останов «по уровням проводами на 1,00 м» за 3 мин без связи не наступает — см. not_checked.
+id = "PMI-28"
+title = "Потеря связи с ПЧ ведущего насоса"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 120.0
+
+[[step]]
+note = "ведущий Н1 в работе под ПИД"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+
+[[step]]
+note = "шаг 1: ПИД устанавливается"
+hold_s = 900
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 1"]
+
+[[step]]
+note = "шаг 1: работает только Н1 на ≈ 88 % под ПИД"
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+  "GVL_Station.stStationSts.uiPumpsRunning = 1",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 83.0",
+  "GVL_Devices.fbP101.stSts.rSpeedRef_pct <= 93.0",
+]
+
+[[step]]
+note = "шаг 1: потеря связи с ПЧ Н1 — без ускорения"
+time_scale = 1.0
+write = { "GVL_Sim.stFaultInj.axVfdCommLoss[1]" = true }
+mark = "t1"
+
+[[step]]
+note = "через 2 с IT111.FAIL, через 3 с P101.COM; насос работает, отказа нет, бит MOT_WRN_COMM_LOSS"
+wait_alarm = [
+  { code = "IT111.FAIL", state = "ActiveUnack" },
+  { code = "P101.COM", state = "ActiveUnack" },
+]
+timeout_s = 10
+expect_delay = [
+  { since = "t1", from_event = "KNS1.E21", alarm = "IT111.FAIL", state = "ActiveUnack", min_s = 1.98, max_s = 2.04 },
+  { since = "t1", from_event = "KNS1.E21", alarm = "P101.COM", state = "ActiveUnack", min_s = 2.98, max_s = 3.04 },
+]
+expect = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP101.stSts.stCommon.wFault = 0",
+  "GVL_Devices.fbP101.stSts.stCommon.wWarning & 16#0040",   # MOT_WRN_COMM_LOSS
+]
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "насос не останавливается, через 5 с ПЧ рампой выходит на 50 Гц"
+wait = "GVL_Sim.stSimSts.arFreq_Hz[1] >= 49.9"
+timeout_s = 10
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "50 Гц не позже ≈ 6,2 с от потери связи и не раньше 5 с"
+mark = "t50"
+expect = [
+  "{t50 - t1} >= 4.7",
+  "{t50 - t1} <= 6.6",
+]
+
+[[step]]
+note = "нет работающего насоса со связью — KNS1.STEP (Low), действует ступенчатое"
+wait_alarm = { code = "KNS1.STEP", state = "ActiveUnack" }
+timeout_s = 20
+expect_delay = { since = "t1", from_alarm = "P101.COM", state = "ActiveUnack", alarm = "KNS1.STEP", min_s = 9.98, max_s = 10.06 }
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped",
+  "GVL_Station.stStationSts.uiPumpsRequired = 1",
+  "GVL_Station.axPumpRun[1] = TRUE",
+  "GVL_IO.xP101_RUN = TRUE",                              # пуск и стоп — проводом
+]
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "шаг 1: без связи до 3 мин — насос работает по уровням проводом на 50 Гц"
+time_scale = 20.0
+hold_s = 160
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped",
+  "GVL_Sim.stSimSts.arFreq_Hz[1] >= 49.9",
+]
+not_checked = "останов «по уровням проводами» на 1,00 м: за 3 мин без связи при притоке 120 м³/ч (≈ 88 %) насос на 50 Гц (≈ 150 м³/ч) снижает уровень с ≈ 1,40 м лишь до ≈ 1,3 м; останов на 1,00 м по проводу проверяют PMI-29 и интеграционный тест CommLossAllFallsBackToStepped"
+
+[[step]]
+note = "шаг 2: связь восстановлена"
+write = { "GVL_Sim.stFaultInj.axVfdCommLoss[1]" = false }
+mark = "t2"
+
+[[step]]
+note = "шаг 2: P101.COM снята; через 30 с снова ПИД"
+wait_alarm = { code = "P101.COM", state = "RtnUnack" }
+timeout_s = 30
+
+[[step]]
+note = "шаг 2: ПИД снова действует, KNS1.STEP → RtnUnack"
+wait = "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid"
+timeout_s = 60
+wait_alarm = { code = "KNS1.STEP", state = "RtnUnack" }
+expect_delay = { since = "t2", from_alarm = "P101.COM", state = "RtnUnack", alarm = "KNS1.STEP", min_s = 29.6, max_s = 31.2 }
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+during_rate = { "GVL_Station.rSpeedSp_pct" = 5.5, "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
+
+[[step]]
+note = "шаг 2: без рывка — задание и выход ПИД без скачков, насос работает"
+hold_s = 60
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+during_rate = { "GVL_Station.rSpeedSp_pct" = 5.5, "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
+
+[teardown]
+clear_faults = true

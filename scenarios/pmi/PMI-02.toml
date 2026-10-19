@@ -1,0 +1,108 @@
+# PMI-02. Ступенчатое регулирование: ведущий насос (06_PMI, раздел 5.6.1; приложение А: k = 20, 25 мин контура).
+#
+# Наполнение и откачка — при k = 20; пересечение уровней пуска и останова, выдержка tLvlConfirm = 5 с и рампа
+# задания — при k = 1: при k = 20 период опроса 0,25 с — это 5 с контура, выдержку от момента пересечения не
+# различить, а записи журнала у пересечения уровня нет. Интервал между двумя наблюдениями сценария (метки) —
+# с допуском ±(период опроса + чтение курсора журнала + цикл MainTask) · k ≈ ±0,4 с при k = 1.
+id = "PMI-02"
+title = "Ступенчатое регулирование: ведущий насос"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "Stepped"
+inflow_m3h = 100.0                 # И0; наработка И0 — ведущий Н1
+
+[[step]]
+note = "способ «Ступенчатое», насосы стоят, уровень растёт"
+expect = [
+  "GVL_Station.stStationSts.eMethod = E_ControlMethod.Stepped",
+  "GVL_Station.stStationSts.uiPumpsRunning = 0",
+  "GVL_Persist.stP101Cfg.stVfd.rRampUp_pctps = 5.0",     # рампа задания 5 %/с (перечень сигналов)
+]
+wait = "GVL_Station.stStationSts.rLevel_m >= 1.55"
+timeout_s = 400
+
+[[step]]
+note = "к уровню пуска — без ускорения"
+time_scale = 1.0
+wait = "GVL_Station.stStationSts.rLevel_m >= 1.60"
+timeout_s = 60
+
+[[step]]
+note = "уровень ≥ 1,60 м: через 5 с ведущий Н1 (событие 101005 — момент запроса)"
+mark = "t_lvl"
+timeout_s = 15
+expect_delay = { from = "t_lvl", event = "KNS1.E5", min_s = 5.0, max_s = 5.0 }
+expect_event = { event = "KNS1.E5", value = 1, since = "t_lvl" }
+
+[[step]]
+note = "роль Lead, запрос Н1, Н1 в работе не позже 10 с (иначе FailToStart)"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 10
+expect = [
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead",
+  "GVL_Station.axPumpRun[1] = TRUE",
+]
+expect_absent = { alarm = "P101.FTS" }
+
+[[step]]
+note = "задание на ПЧ растёт рампой 5 %/с до 100 %; Н2, Н3 стоят"
+wait = "GVL_Devices.fbP101.stSts.rSpeedRef_pct >= 99.9"
+timeout_s = 20
+during_rate = { "GVL_Devices.fbP101.stSts.rSpeedRef_pct" = 5.5 }
+during_span = { "GVL_Devices.fbP101.stSts.rSpeedRef_pct" = { min = 30.0 } }   # рампа видна, а не скачок к 100
+during = [
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "откачка ведущим: Н1 работает, Н2 и Н3 стоят"
+time_scale = 20.0
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.05"
+timeout_s = 900
+during = [
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped",
+  "GVL_Devices.fbP103.stSts.eState = E_MotorState.Stopped",
+]
+
+[[step]]
+note = "к уровню останова — без ускорения"
+time_scale = 1.0
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.00"
+timeout_s = 90
+during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
+
+[[step]]
+note = "уровень ≤ 1,00 м (метка — сразу после наблюдения): ждать снятия запроса Н1"
+mark = "t_low"
+wait = "GVL_Station.axPumpRun[1] = FALSE"
+timeout_s = 15
+
+[[step]]
+note = "запрос Н1 снят через 5 с после пересечения уровня останова"
+mark = "t_off"
+expect = [
+  "{t_off - t_low} >= 4.6",
+  "{t_off - t_low} <= 5.4",
+]
+
+[[step]]
+note = "Н1 остановлен (Stopped), роль — Standby"
+time_scale = 20.0
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Standby"]
+
+[[step]]
+note = "тревог, кроме KNS1.SIM, нет"
+expect_absent = { any_alarm = true, except = ["KNS1.SIM"] }
+expect = ["GVL_Station.stStationSts.wAlmActive = 16#1000"]   # из тревог станции активна только KNS1.SIM
+
+[teardown]
+clear_faults = true

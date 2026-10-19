@@ -1,0 +1,80 @@
+# PMI-19. Сухой ход по поплавку LS103 при отказе уровнемера (06_PMI, раздел 5.6.4; приложение А: k = 20, 15 мин
+# контура).
+#
+# После подтверждения отказа LT101 уровнемер негоден, защиты работают по поплавкам (04 §11): KNS1.DRY подавлена по
+# условию режима по поплавкам (04 §15) — SuppressedByDesign с входа в режим (FB_Alarm подавляет и неактивную
+# тревогу), поэтому срабатывание защиты видно по биту 0 wState и блокировкам wInterlock.0. Поплавок
+# LS103 — по истинному уровню модели (≤ 0,40 м), задержка входа 1 с от наблюдения уровня (метка, допуск обвязки).
+id = "PMI-19"
+title = "Сухой ход по поплавку LS103 при отказе уровнемера"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+inflow_m3h = 0.0
+
+[[step]]
+note = "шаг 1: обрыв LT101"
+write = { "GVL_Sim.stFaultInj.aeAiFault[1]" = "E_SimAiFault.WireBreak" }
+mark = "t1"
+
+[[step]]
+note = "шаг 1: через 2 с LT101.FAIL; ложного сухого хода в момент обрыва нет"
+wait_alarm = { code = "LT101.FAIL", state = "ActiveUnack" }
+timeout_s = 10
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "LT101.FAIL", state = "ActiveUnack", min_s = 1.6, max_s = 2.8 }
+expect = [
+  "GVL_Devices.fbLT101.xValid = FALSE",
+  "GVL_Station.stStationSts.wState !& 16#0001",          # STN_ST_DRY_RUN — нет
+]
+expect_absent = [
+  { alarm = "KNS1.DRY", since = "t1" },
+  { alarm = "LT101.LL", since = "t1" },
+]
+
+[[step]]
+note = "шаг 2: станция «Ручной», пуск Н1 (100 %)"
+pulse = "GVL_Station.stStationCmd.xSetManual"
+wait = "GVL_Devices.fbP101.stSts.stCommon.eMode = E_DeviceMode.Manual"
+timeout_s = 10
+
+[[step]]
+note = "шаг 2: «Пуск» Н1"
+write = { "GVL_Hmi.stP101Cmd.rSpeedSp_pct" = 100.0 }
+pulse = "GVL_Hmi.stP101Cmd.xStart"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
+note = "уровень (SimSts.rLevel_m) падает до 0,40 м"
+wait = "GVL_Sim.stSimSts.rLevel_m <= 0.40"
+timeout_s = 600
+during = ["GVL_Station.stStationSts.wState !& 16#0001"]
+
+[[step]]
+note = "через 1 с LS103.ALM, KNS1.DRY (подавлена режимом по поплавкам), Н1 остановлен блокировкой"
+mark = "t_ls"
+wait_alarm = [
+  { code = "LS103.ALM", state = "ActiveUnack" },
+  { code = "KNS1.DRY", state = "SuppressedByDesign" },
+]
+timeout_s = 30
+expect_delay = { from = "t_ls", alarm = "LS103.ALM", state = "ActiveUnack", min_s = 1.0, max_s = 1.0 }
+
+[[step]]
+note = "Н1 остановлен блокировкой «сухой ход» (бит 0 всем насосам, первопричина — бит 0)"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
+timeout_s = 30
+expect = [
+  "GVL_Station.stStationSts.wState & 16#0001",
+  "GVL_Devices.fbP101.stSts.wInterlock & 16#0001",
+  "GVL_Devices.fbP102.stSts.wInterlock & 16#0001",
+  "GVL_Devices.fbP103.stSts.wInterlock & 16#0001",
+  "GVL_Devices.fbP101.stSts.uiFirstOut = 0",
+]
+
+[teardown]
+clear_faults = true

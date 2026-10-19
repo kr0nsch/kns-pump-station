@@ -3,7 +3,10 @@
 Время в сценариях — время контура: ускорение k (``GVL_Sim.stSimCfg.rTimeScale``) действует на весь
 замкнутый контур, поэтому выдержки логики в секундах контура одинаковы при любом k. Таймаут ожидания
 в секундах контура исполнитель делит на k и добавляет запас на задержку опроса (``margin_s``).
-Моменты действий сценария — ``GVL_Time.lrMainNow_s`` сразу после записи (``mark``).
+Моменты действий сценария — ``GVL_Time.lrMainNow_s`` сразу после записи (``mark``); метка доступна и как
+значение подстановки ``{имя}`` — так сценарий сравнивает интервалы между своими наблюдениями
+(``{t_off-t_low} >= 4.7``). Выражение, у которого после подстановки слева число, а не путь, сравнивается без
+чтения ПЛК.
 """
 
 from __future__ import annotations
@@ -26,9 +29,12 @@ CMD_SEQ = STATION_STS + ".uiCmdSeq"
 DEVICES = "GVL_Devices"
 TIME_SCALE_MAX = 50.0  # SIM_TIME_SCALE_MAX (DESIGN, раздел 2)
 
+_OP = r"(?P<op><>|<=|>=|!&|=|<|>|&)"
 # path оператор литерал; путь может содержать индексы [..] и подстановки {имя}
-_EXPR_RE = re.compile(
-    r"^\s*(?P<path>[A-Za-z_][\w.{}]*(?:\[[^\]]+\][\w.{}]*)*)\s*(?P<op><>|<=|>=|=|<|>|&)\s*(?P<lit>.+?)\s*$"
+_EXPR_RE = re.compile(r"^\s*(?P<path>[A-Za-z_][\w.{}]*(?:\[[^\]]+\][\w.{}]*)*)\s*" + _OP + r"\s*(?P<lit>.+?)\s*$")
+# число оператор литерал: левая часть — значение сценария после подстановки ({a-b} >= 5), ПЛК не читается
+_LOCAL_RE = re.compile(
+    r"^\s*(?P<lhs>(?i:TRUE|FALSE)|[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)\s*" + _OP + r"\s*(?P<lit>.+?)\s*$"
 )
 # поля ST_StationSts, которые читает station_status (DESIGN, раздел 3.1)
 STATION_FIELDS = (
@@ -75,12 +81,13 @@ class ExpressionError(ValueError):
 
 @dataclass(frozen=True)
 class Condition:
-    """Условие ``путь оператор литерал``; литерал уже разобран."""
+    """Условие ``путь оператор литерал`` (литерал уже разобран) или сравнение значений сценария (``local``)."""
 
     path: str
     op: str
     expected: PlcValue
     text: str
+    local: PlcValue | None = None  # левая часть — значение сценария, путь пуст
 
 
 @dataclass
@@ -103,9 +110,17 @@ class ScenarioContext:
         """Таймаут в секундах контура → реальные секунды с запасом на опрос."""
         return process_s / max(self.time_scale, 1.0) + self.margin_s
 
-    def hold(self, process_s: float) -> None:
-        """Выдержка в секундах контура."""
-        self.sleep(process_s / max(self.time_scale, 1.0))
+    def hold(self, process_s: float, tick: Callable[[], None] | None = None) -> None:
+        """Выдержка в секундах контура; с ``tick`` — порциями периода опроса, ``tick`` после каждой (проверки
+        «всё время», курсор журнала)."""
+        real_s = process_s / max(self.time_scale, 1.0)
+        if tick is None:
+            self.sleep(real_s)
+            return
+        end = self.clock() + real_s
+        while (remaining := end - self.clock()) > 0:
+            self.sleep(min(self.poll_s, remaining))
+            tick()
 
     def set_time_scale(self, k: float) -> None:
         """Ускорение всего контура (1…SIM_TIME_SCALE_MAX)."""
@@ -118,6 +133,7 @@ class ScenarioContext:
         now = float(self.read1(TIME_NOW))
         if name:
             self.marks[name] = now
+            self.captures[name] = now  # {имя} в выражениях: интервалы между наблюдениями сценария
         return now
 
     # --- чтение, запись, условия ----------------------------------------------------------------
@@ -146,30 +162,45 @@ class ScenarioContext:
         return got
 
     def condition(self, expr: str) -> Condition:
-        m = _EXPR_RE.match(self.path(expr))
-        if m is None:
-            raise ExpressionError(f"выражение «{expr}»: ожидается «путь оператор литерал» или «путь & маска»")
-        return Condition(m.group("path"), m.group("op"), parse_literal(m.group("lit"), self.enums), expr)
+        text = self.path(expr)
+        local = _LOCAL_RE.match(text)  # раньше пути: TRUE/FALSE слева — значение, а не имя переменной
+        if local is not None:
+            return Condition(
+                "",
+                local.group("op"),
+                parse_literal(local.group("lit"), self.enums),
+                expr,
+                local=parse_literal(local.group("lhs"), self.enums),
+            )
+        m = _EXPR_RE.match(text)
+        if m is not None:
+            return Condition(m.group("path"), m.group("op"), parse_literal(m.group("lit"), self.enums), expr)
+        raise ExpressionError(
+            f"выражение «{expr}»: ожидается «путь оператор литерал», «путь & маска» или «{{значение}} оператор литерал»"
+        )
 
     def check(self, expr: str) -> tuple[bool, PlcValue]:
         """Проверка «здесь и сейчас»: (выполнено, фактическое значение)."""
         cond = self.condition(expr)
-        actual = self.client.read([cond.path])[0]
+        actual = cond.local if cond.local is not None else self.client.read([cond.path])[0]
         return compare(actual, cond.op, cond.expected), actual
 
-    def wait(self, expr: str, timeout_s: float) -> PlcValue:
-        """Ждать условие не дольше ``timeout_s`` секунд контура; ``ScenarioTimeout`` с последним значением."""
+    def wait(self, expr: str, timeout_s: float, tick: Callable[[], None] | None = None) -> PlcValue:
+        """Ждать условие не дольше ``timeout_s`` секунд контура; ``ScenarioTimeout`` с последним значением.
+        ``tick`` — после каждой неуспешной проверки (проверки «всё время», курсор журнала)."""
         cond = self.condition(expr)
         deadline = self.clock() + self.real_timeout(timeout_s)
         while True:
-            actual = self.client.read([cond.path])[0]
+            actual = cond.local if cond.local is not None else self.client.read([cond.path])[0]
             if compare(actual, cond.op, cond.expected):
                 return actual
-            if self.clock() >= deadline:
+            if self.clock() >= deadline or cond.local is not None:
                 raise ScenarioTimeout(
                     f"«{cond.text}» не выполнено за {timeout_s:g} с контура (k = "
                     f"{self.time_scale:g}); последнее значение {actual!r}"
                 )
+            if tick is not None:
+                tick()
             self.sleep(self.poll_s)
 
     def wait_until(self, path: str, op: str, expected: PlcValue | str, timeout_s: float) -> PlcValue:

@@ -1,0 +1,135 @@
+# PMI-05. ПИД: подключение и отключение подпорного по нагрузке (06_PMI, раздел 5.6.1; приложение А: k = 20,
+# 40 мин контура).
+#
+# Выдержки tAssistOn = 30 с и tAssistOff = 60 с записи журнала не дают: «не раньше» — проверка «всё время» после
+# наблюдения условия (наблюдение запаздывает не больше чем на (опрос + цикл) · k ≈ 5,4 с), интервал между
+# наблюдениями — с допуском ±(опрос + чтение журнала + цикл) · k ≈ ±7 с. Модель: два насоса на 100 % — ≈ 198 м³/ч,
+# поэтому при 180 м³/ч выход ПИД устанавливается ниже 98 %; при 100 м³/ч два насоса — на ≈ 70 % (≤ 75 %).
+id = "PMI-05"
+title = "ПИД: подключение и отключение подпорного по нагрузке"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "шаг 1: работает ведущий Н1 под ПИД"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 60
+expect = ["GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead"]
+capture = { s3 = "GVL_Devices.fbP103.stSts.udiStarts" }
+
+[[step]]
+note = "шаг 1: уровень у задания 1,40 м"
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.45"
+timeout_s = 1800
+during = ["GVL_Station.stStationSts.uiPumpsRunning <= 1"]
+
+[[step]]
+note = "шаг 2: приток 180 м³/ч — выход ПИД ≥ 98 %"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 180.0 }
+wait = "GVL_Station.fbLIC101.stSts.rOut_pct >= 98.0"
+timeout_s = 1200
+during = [
+  "GVL_Station.stStationSts.uiPumpsRunning <= 1",
+  "GVL_Station.stStationSts.rLevel_m < 2.40",
+]
+
+[[step]]
+note = "шаг 2: подпорный не раньше 30 с насыщения"
+mark = "t_sat"
+hold_s = 20
+during = [
+  "GVL_Station.stStationSts.aeRole[2] <> E_PumpRole.Assist",
+  "GVL_Station.stStationSts.rLevel_m < 2.40",
+]
+
+[[step]]
+note = "шаг 2: через 30 с — подпорный Н2"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Assist"
+timeout_s = 60
+during = ["GVL_Station.stStationSts.rLevel_m < 2.40"]
+
+[[step]]
+note = "шаг 2: интервал от насыщения до пуска подпорного ≈ 30 с"
+mark = "t_as"
+expect = [
+  "{t_as - t_sat} >= 23",
+  "{t_as - t_sat} <= 37",
+]
+
+[[step]]
+note = "шаг 2: Н2 в работе, оба насоса получают одно задание GVL_Station.rSpeedSp_pct"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+capture = { sp = "GVL_Station.rSpeedSp_pct" }
+expect = [
+  "GVL_Devices.fbP101.rSpeedSpAuto_pct >= {sp - 1}",
+  "GVL_Devices.fbP101.rSpeedSpAuto_pct <= {sp + 1}",
+  "GVL_Devices.fbP102.rSpeedSpAuto_pct >= {sp - 1}",
+  "GVL_Devices.fbP102.rSpeedSpAuto_pct <= {sp + 1}",
+]
+
+[[step]]
+note = "шаг 2: выход ПИД снижается ниже 98 %"
+wait = "GVL_Station.fbLIC101.stSts.rOut_pct < 98.0"
+timeout_s = 600
+during = ["GVL_Station.stStationSts.rLevel_m < 2.40"]
+
+[[step]]
+note = "шаг 2: выход устанавливается ниже 98 %, работают два насоса"
+hold_s = 300
+during = [
+  "GVL_Station.fbLIC101.stSts.rOut_pct < 98.0",
+  "GVL_Station.stStationSts.uiPumpsRunning = 2",
+  "GVL_Station.stStationSts.rLevel_m < 2.40",
+]
+
+[[step]]
+note = "шаг 3: приток 100 м³/ч — выход ≤ 75 %"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 100.0 }
+wait = "GVL_Station.fbLIC101.stSts.rOut_pct <= 75.0"
+timeout_s = 1200
+during = ["GVL_Station.stStationSts.rLevel_m < 2.40"]
+
+[[step]]
+note = "шаг 3: подпорный не останавливается раньше 60 с"
+mark = "t_low"
+hold_s = 50
+during = [
+  "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Assist",
+  "GVL_Station.stStationSts.rLevel_m < 2.40",
+]
+
+[[step]]
+note = "шаг 3: через 60 с останавливается насос с большей наработкой (Н2)"
+wait = "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Standby"
+timeout_s = 120
+
+[[step]]
+note = "шаг 3: интервал ≈ 60 с; ведущий — Н1"
+mark = "t_off"
+expect = [
+  "{t_off - t_low} >= 53",
+  "{t_off - t_low} <= 67",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead",
+]
+
+[[step]]
+note = "шаг 3: уровень возвращается к заданию, не поднимаясь до 2,40 м; Н3 не пускался"
+wait = "GVL_Station.stStationSts.rLevel_m <= 1.45"
+timeout_s = 1800
+during = [
+  "GVL_Station.stStationSts.rLevel_m < 2.40",
+  "GVL_Station.stStationSts.uiPumpsRunning <= 1",
+]
+expect = ["GVL_Devices.fbP103.stSts.udiStarts = {s3}"]
+
+[teardown]
+clear_faults = true
