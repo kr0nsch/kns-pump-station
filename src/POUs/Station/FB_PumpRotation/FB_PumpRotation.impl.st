@@ -288,7 +288,14 @@ FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
 END_FOR
 uiLead := uiLeadIdx;
 xHandover := xHoActive;
-IF uiLeadIdx <> uiLeadPrev AND uiLeadIdx <> 0 AND itfEvents <> 0 THEN
-    itfEvents.LogEvent(eEvent := E_StationEvent.LeadChanged, rValue := UINT_TO_REAL(uiLeadIdx));
+// По кругу следующий ведущий отсчитывается от любого нового ведущего — и без пуска (передача роли, подпорный
+// стал ведущим, подхват): иначе тот же насос снова получил бы следующий пуск (04 §8.1)
+IF uiLeadIdx <> uiLeadPrev AND uiLeadIdx <> 0 THEN
+    IF stCfg.eRotation = E_RotationMode.Cyclic THEN
+        stRetain.uiNextLead := (uiLeadIdx MOD GVL_Const.STN_PUMP_COUNT) + 1;
+    END_IF
+    IF itfEvents <> 0 THEN
+        itfEvents.LogEvent(eEvent := E_StationEvent.LeadChanged, rValue := UINT_TO_REAL(uiLeadIdx));
+    END_IF
 END_IF
 uiLeadPrev := uiLeadIdx;

@@ -24,3 +24,6 @@ DisabledNoRequestsRolesStandby();
 GarbageNextLeadSanitized();
 StaggerSkippedWhenPreviousDropped();
 TimeBackwardsRestartsStagger();
+HandoverLeadNeedsCommInPid();
+CyclicNextLeadFollowsRoleTransfer();
+StopKeepsCommPumpInPid();
