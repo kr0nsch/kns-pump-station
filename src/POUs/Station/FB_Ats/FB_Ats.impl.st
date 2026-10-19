@@ -21,7 +21,8 @@ FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
 END_FOR
 
 // 2. Окно поиска замены: новый запрос насоса, которого не было в момент отказа (FB_PumpRotation
-//    назначает замену в том же цикле, если резерв готов)
+//    назначает замену в том же цикле, если резерв готов). Снятый АВР насос заменой не бывает: при
+//    блокировке станции (недогрузка, перегрев) он ещё доступен и запрошен в цикле отказа
 IF xFailed THEN
     xWindow := TRUE;
     fbWindow.Preset(xValue := FALSE);
@@ -33,7 +34,7 @@ fbWindow(xIn := xWindow, tOnDelay := GVL_Const.STN_ATS_WINDOW, itfTime := itfTim
 IF xWindow THEN
     uiNewPump := 0;
     FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
-        IF uiNewPump = 0 AND axRun[uiPump] AND NOT axReqAtAts[uiPump] THEN
+        IF uiNewPump = 0 AND axRun[uiPump] AND NOT axReqAtAts[uiPump] AND NOT axRemoved[uiPump] THEN
             uiNewPump := uiPump;
         END_IF
     END_FOR

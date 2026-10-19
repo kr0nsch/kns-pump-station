@@ -181,6 +181,9 @@ FOR uiPump := 1 TO GVL_Const.STN_PUMP_COUNT DO
                             xReset := axPumpReset[uiPump] OR xResetNow, itfTime := itfTime, stCfg := stCfgLkg);
     END_IF
     axTrip[uiPump] := afbPumpProt[uiPump].xUnderloadTrip;
+    // АВР — по отказу устройства или блокировке станции насоса: недогрузка и перегрев. TS1n2 без задержки приходит
+    // раньше аварии ПЧ (фильтр tExtFaultFilter): насос останавливается и теряет запрос до отказа (04 §9.1, PMI-16)
+    axAtsTrip[uiPump] := afbPumpProt[uiPump].wInterlock <> 0;
 END_FOR
 
 // 5. Действующее управление (готовность ПИД — прошлого цикла); смена управления или вход в
@@ -204,8 +207,20 @@ fbPidCtl(xEnable := eAct = E_ControlAct.LevelPid, rLevel_m := rLevel_m, xLevelVa
          uiLead := fbRotation.uiLead, xInit := xInitReq, uiInitPumps := uiRunningNow, itfTime := itfTime,
          stCfg := stCfgLkg);
 CASE eAct OF
-    E_ControlAct.Stepped, E_ControlAct.Restart:
+    E_ControlAct.Stepped:
         uiRequired := fbStepped.uiRequired;
+    E_ControlAct.Restart:
+        // последовательный пуск охватывает все насосы состояния под ним: сухой ход — 0, по поплавкам и аварийный
+        // уровень — все (ведущий, подпорный, остальные), иначе ступенчатый автомат; по одному — uiRequestLimit
+        IF fbProt.xDryRun THEN
+            uiRequired := 0;
+        ELSIF fbProt.xFloatMode THEN
+            uiRequired := fbProt.uiFloatRequired;
+        ELSIF fbProt.xEmergency THEN
+            uiRequired := GVL_Const.STN_PUMP_COUNT;
+        ELSE
+            uiRequired := fbStepped.uiRequired;
+        END_IF
     E_ControlAct.LevelPid:
         uiRequired := fbPidCtl.uiRequired;
     E_ControlAct.Emergency:
@@ -222,7 +237,7 @@ fbRotation(xEnable := NOT xManual, uiRequired := uiRequired, uiRequestLimit := f
            xHandoverAllowed := eAct = E_ControlAct.Stepped OR eAct = E_ControlAct.LevelPid,
            xAdopt := xInitReq OR xFirstCall, axAdoptRun := axAdoptRun, aitfPump := aitfPump, axCommOk := axCommOk,
            itfTime := itfTime, itfEvents := itfEvents, stCfg := stCfgLkg, stRetain := stRetain);
-fbAts(xEnable := NOT xManual, aitfPump := aitfPump, axRun := fbRotation.axRun, axTrip := axTrip,
+fbAts(xEnable := NOT xManual, aitfPump := aitfPump, axRun := fbRotation.axRun, axTrip := axAtsTrip,
       uiRequired := uiRequired, uiAvailable := fbRotation.uiAvailable, uiForeign := fbRotation.uiForeign,
       itfTime := itfTime, itfEvents := itfEvents, stCfg := stCfgLkg);
 
@@ -236,8 +251,15 @@ fbLIC101(rPv_eu := rLevel_m, xPvValid := fbProt.xLevelUsable, xSpExt := TRUE, rS
 CASE eAct OF
     E_ControlAct.LevelPid:
         rSpeedSp_pct := fbLIC101.rOut_pct;
-    E_ControlAct.Stepped, E_ControlAct.Restart:
+    E_ControlAct.Stepped:
         rSpeedSp_pct := stCfgLkg.rStepSpeed_pct;
+    E_ControlAct.Restart:
+        // последовательный пуск при аварийном уровне или по поплавкам — на полной частоте, как сами эти режимы
+        IF (fbProt.xFloatMode OR fbProt.xEmergency) AND NOT fbProt.xDryRun THEN
+            rSpeedSp_pct := GVL_Const.STN_FULL_SPEED_PCT;
+        ELSE
+            rSpeedSp_pct := stCfgLkg.rStepSpeed_pct;
+        END_IF
     E_ControlAct.Emergency, E_ControlAct.Float:
         rSpeedSp_pct := GVL_Const.STN_FULL_SPEED_PCT;
     E_ControlAct.Manual:

@@ -24,3 +24,5 @@ FlowAlarmsSuppressedUntilSettled();
 VentilationAndAnnunciatorOutputs();
 DryRunStopSuppressesNoReserve();
 StepAlarmNoFlickerOnStartAndAutoEntry();
+OverheatTripIsAts();
+RestartSequencesEmergencyPumps();

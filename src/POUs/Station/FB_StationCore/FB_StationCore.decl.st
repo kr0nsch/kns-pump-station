@@ -118,7 +118,8 @@ VAR_TEMP
     wUnshelveMask  : WORD;
     uiRunningNow   : UINT;                    // работающие насосы
     axAdoptRun     : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // «работает» для подхвата
-    axTrip         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // фиксация недогрузки
+    axTrip         : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // фиксация недогрузки (KNS1.ULn)
+    axAtsTrip      : ARRAY[1..GVL_Const.STN_PUMP_COUNT] OF BOOL;   // блокировка станции насоса (АВР)
     xAnyRunning    : BOOL;                    // работает хотя бы один насос
     xInitReq       : BOOL;                    // вход без рывка: смена управления или вход в «Автомат»
     xSteppedCont   : BOOL;                    // ступенчатый автомат продолжает работу (Restart <-> Stepped)

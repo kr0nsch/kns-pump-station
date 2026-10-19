@@ -11,3 +11,4 @@ ForeignRunningCountsAgainstLack();
 UnrequestedOrManualFaultIsNotAts();
 TimeBackwardsWindowRestarts();
 NoReserveUsesEffectiveDuty();
+TripEventNamesReplacementNotTrippedPump();
