@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 22:01:25. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 23:07:22. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 22:01:25 |
-| Коммит | e2b8239 |
+| Дата прогона | 2026-10-19 23:07:22 |
+| Коммит | 8bf535e |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -41,18 +41,18 @@
 | `GVL_TestsStation.fbStationModeTest` | 10 | 10 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbControlSelectorTest` | 5 | 5 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbLevelControlSteppedTest` | 11 | 11 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbLevelControlPidTest` | 15 | 15 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbLevelControlPidTest` | 16 | 16 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbPumpRotationTest` | 28 | 28 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbAtsTest` | 13 | 13 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbProtectionsTest` | 21 | 21 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbProtectionsTest` | 20 | 20 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbPumpProtectionTest` | 9 | 9 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbPowerRestoreTest` | 12 | 12 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbVentilationTest` | 4 | 4 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationAlarmsTest` | 10 | 10 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbAnnunciatorTest` | 7 | 7 | 0 | 0 | пройдено |
 | `GVL_TestsStation.fbStationCfgCheckTest` | 13 | 13 | 0 | 0 | пройдено |
-| `GVL_TestsStation.fbStationCoreTest` | 29 | 29 | 0 | 0 | пройдено |
-| **Всего** | 328 | 328 | 0 | 0 | **пройдено** |
+| `GVL_TestsStation.fbStationCoreTest` | 34 | 34 | 0 | 0 | пройдено |
+| **Всего** | 333 | 333 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
@@ -240,6 +240,7 @@
 | `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_OutputStagingOnlyWhenPidControls_A7` | пройден |
 | `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NanOutputNoStaging_A7` | пройден |
 | `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TimeBackwardsRestartsConfirm_A7` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_CommAbsentDuringPowerRestoreNoRecoverDelay_A7_A12_A13` | пройден |
 | `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RunHoursPicksLeastHours_A8_PMI09` | пройден |
 | `GVL_TestsStation.fbPumpRotationTest` | `Rotation_TieBreakStartsThenIndex_A8` | пройден |
 | `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicAdvancesNextLeadRetained_A8_PMI10` | пройден |
@@ -292,9 +293,8 @@
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_Ls102NotTrippedAboveOffMark_A10_PMI24` | пройден |
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_MaskReleasedWhenFloatReturns_A10_PMI22` | пройден |
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_MaskReleasedWhenLtInvalid_A10_PMI25` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_OorLtContradictingFloatMaskedAfterTLdev_A10_A11_PMI26` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_OorLtInvalidFloatsAtOnce_A10_A11_PMI26` | пройден |
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_GoodLtContradictingFloatMasksFloat_A10_PMI22` | пройден |
-| `GVL_TestsStation.fbProtectionsTest` | `Protections_LtMaskReleasedAfterTLtRecover_A10_A11_PMI27` | пройден |
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeStartsAllOnLs102StopsOnLs103_A11_PMI21_PMI25` | пройден |
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeEntryWhilePumpingKeepsPumping_A11_PMI25` | пройден |
 | `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeExitAfterTLtRecover_A11_PMI27` | пройден |
@@ -386,6 +386,11 @@
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepAlarmNoFlickerOnStartAndAutoEntry_A3_A7_A15_PMI01_PMI30` | пройден |
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_OverheatTripIsAts_A9_A10_PMI16` | пройден |
 | `GVL_TestsStation.fbStationCoreTest` | `StationCore_RestartSequencesEmergencyPumps_A10_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ApplyProjectCfgChecksProjectLevelLimits_A18` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualToAutoStoppedPumpsNoNoresFlicker_A3_A15_PMI30` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_DryRunReleaseNoNoresStepFlicker_A7_A10_A15_PMI22` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepAlarmNoFlickerAfterPowerRestorePid_A7_A12_A13_A15_PMI33_PMI34` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualFloatModeKeepsEhlDry_A3_A10_A11_A15` | пройден |
 
 ### Упавшие тесты
 
