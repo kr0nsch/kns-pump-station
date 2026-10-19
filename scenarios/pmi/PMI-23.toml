@@ -4,6 +4,9 @@
 # Ложный LS102 при 1,5 м включает аварийный режим (все доступные насосы, пуски через tStagger = 5 с — по разности
 # udiRunCurrent_s, см. PMI-21); через tLdev = 30 с при уровне < 3,50 м поплавок исключается: KNS1.LDEV, бит 9,
 # выход из аварийного режима, число насосов — по ступенчатому автомату (вход без рывка: не больше двух).
+# Допуск между записью устройства и записью станции — до +3 циклов MainTask · k: станция видит выход устройства
+# циклом позже, выдержка срабатывает в первом цикле после неё, а начало цикла пользовательского рантайма Windows
+# (не реального времени) смещается ещё до цикла (прогон ПМИ 19.10.2026, 06 v0.4 §5.3).
 id = "PMI-23"
 title = "Залипание поплавка LS102 в сработавшем состоянии"
 time_scale = 20.0
@@ -54,7 +57,7 @@ expect = [
 note = "через 30 с (уровень < 3,50 м): KNS1.LDEV, LS102 исключён (бит 9), выход из аварийного режима"
 wait_alarm = { code = "KNS1.LDEV", state = "ActiveUnack" }
 timeout_s = 60
-expect_delay = { since = "t1", from_alarm = "LS102.ALM", state = "ActiveUnack", alarm = "KNS1.LDEV", min_s = 29.6, max_s = 30.8 }
+expect_delay = { since = "t1", from_alarm = "LS102.ALM", state = "ActiveUnack", alarm = "KNS1.LDEV", min_s = 29.6, max_s = 31.2 }
 expect = [
   "GVL_Station.stStationSts.wState & 16#0200",          # STN_ST_LS102_MASKED
   "GVL_Station.stStationSts.rLevel_m < 3.50",

@@ -3,6 +3,9 @@
 # «Продолжение PMI-25»: каждый сценарий начинается с И0, поэтому состояние после PMI-25 воспроизводится — ПИД,
 # ведущий в работе у задания, обрыв LT101, режим по поплавкам, насос продолжает откачку. Возврат к способу —
 # через tLtRecover = 30 с достоверного уровня: от снятия LT101.FAIL (станция видит уровнемер в следующем цикле).
+# Допуск между записью устройства и записью станции — до +3 циклов MainTask · k: станция видит выход устройства
+# циклом позже, выдержка срабатывает в первом цикле после неё, а начало цикла пользовательского рантайма Windows
+# (не реального времени) смещается ещё до цикла (прогон ПМИ 19.10.2026, 06 v0.4 §5.3).
 id = "PMI-27"
 title = "Восстановление LT101"
 time_scale = 20.0
@@ -57,7 +60,7 @@ note = "через 30 с — возврат к выбранному способ
 wait = "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid"
 timeout_s = 60
 during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
-expect_delay = { since = "t1", from_alarm = "LT101.FAIL", state = "RtnUnack", event = "KNS1.E14", min_s = 29.6, max_s = 30.8 }
+expect_delay = { since = "t1", from_alarm = "LT101.FAIL", state = "RtnUnack", event = "KNS1.E14", min_s = 29.6, max_s = 31.2 }
 
 [[step]]
 note = "KNS1.FLOAT → RtnUnack; насос работает"

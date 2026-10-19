@@ -5,6 +5,8 @@
 # 4,20 м ≈ за 9,4 мин контура, после LS102 приток 60 м³/ч и откачка тремя насосами до LS103 ≈ 17,5 мин. Интервал
 # пусков tStagger = 5 с — по разности времени непрерывной работы насосов (udiRunCurrent_s, целые секунды, одно
 # чтение): не зависит от опроса и k. KNS1.EHL и KNS1.DRY подавлены по условию с входа в режим по поплавкам.
+# Подход к порогу — при k = 20, последние сантиметры и выдержка — при k = 1 (К3-23): при k = 20 период опроса — 5 с
+# контура, и тревога с выдержкой 1–3 с появлялась раньше метки (прогон ПМИ 19.10.2026).
 id = "PMI-21"
 title = "Аварийно высокий уровень по поплавку при отказе уровнемера"
 time_scale = 20.0
@@ -33,8 +35,15 @@ expect_alarm = { code = "KNS1.EHL", state = "SuppressedByDesign" }
 
 [[step]]
 note = "ожидание LS102: насосы стоят, уровень растёт"
-wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.15"
 timeout_s = 900
+during = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
+
+[[step]]
+note = "уровень ≥ 4,20 м — без ускорения"
+time_scale = 1.0
+wait = "GVL_Sim.stSimSts.rLevel_m >= 4.20"
+timeout_s = 60
 during = ["GVL_Station.stStationSts.uiPumpsRunning = 0"]
 
 [[step]]
@@ -46,6 +55,7 @@ expect_delay = { from = "t_ls", alarm = "LS102.ALM", state = "ActiveUnack", min_
 
 [[step]]
 note = "пускаются все доступные насосы по одному, 100 %"
+time_scale = 20.0
 wait = "GVL_Devices.fbP103.stSts.rSpeedRef_pct >= 99.9"
 timeout_s = 60
 expect = [

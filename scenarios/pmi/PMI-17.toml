@@ -3,6 +3,9 @@
 # Перед аварией ПЧ все тревоги квитированы: сирену HA1 включает новая неквитированная KNS1.LACK, а не KNS1.NORES
 # шага 1 (K1 при этом уже обесточено активной NORES — High). Шаг 3 — через 2 мин после аварии, как в 06: уровень
 # к этому моменту ≈ 2,0 м, требуется один насос, и возвращённый Н2 снимает нехватку (KNS1.LACK → RtnUnack).
+# Допуск между записью устройства и записью станции — до +3 циклов MainTask · k: станция видит выход устройства
+# циклом позже, выдержка срабатывает в первом цикле после неё, а начало цикла пользовательского рантайма Windows
+# (не реального времени) смещается ещё до цикла (прогон ПМИ 19.10.2026, 06 v0.4 §5.3).
 # LT101.H при 3,50 м за 2 мин не достигается (≈ 13 мин контура при 100 м³/ч) — см. not_checked.
 id = "PMI-17"
 title = "Нет насоса для АВР"
@@ -51,7 +54,7 @@ capture = { lv0 = "GVL_Sim.stSimSts.rLevel_m" }
 note = "шаг 2: замены нет; через 10 с KNS1.LACK (High), KNS1.NORES — SuppressedByDesign"
 wait_alarm = { code = "KNS1.LACK", state = "ActiveUnack" }
 timeout_s = 60
-expect_delay = { since = "t2", from_alarm = "P101.EXT", state = "ActiveUnack", alarm = "KNS1.LACK", min_s = 9.6, max_s = 10.8 }
+expect_delay = { since = "t2", from_alarm = "P101.EXT", state = "ActiveUnack", alarm = "KNS1.LACK", min_s = 9.6, max_s = 11.2 }
 expect_alarm = { code = "KNS1.NORES", state = "SuppressedByDesign" }
 expect_absent = { event = "KNS1.E6", since = "t2" }
 

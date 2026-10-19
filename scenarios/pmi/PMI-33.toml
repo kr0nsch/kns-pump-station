@@ -1,8 +1,10 @@
 # PMI-33. Пропадание напряжения на вводе (06_PMI, раздел 5.6.8; приложение А: k = 20, 5 мин контура).
 #
 # «Приток 180 м³/ч, работают два насоса» — подготовка уровнем 2,50 м (пуск ведущего и подпорного без 20 мин
-# наполнения). Перед пропаданием тревоги квитированы: HA1 и K1 после пропадания — от ES301.ALM (High). Задержки
-# ES301.ALM (3 с) и YS302.ALM, YS303.ALM (5 с) — от события 101021. «ПЛК и HMI работают» — время MainTask идёт,
+# наполнения). Перед пропаданием тревоги квитированы: HA1 и K1 после пропадания — от ES301.ALM (High). ES301.ALM —
+# сразу: задержка 3 с входа ES301 — задержка включения (подтверждение восстановления, 04 §13.2), тревога — по
+# значению FALSE (06 v0.4; редакция 0.3 ждала её через 3 с — по delay_s перечня тревог, где для тревоги по FALSE
+# задержка указана неверно, запрос в iolistgen). Задержки YS302.ALM, YS303.ALM (5 с) — от события 101021. «ПЛК и HMI работают» — время MainTask идёт,
 # журнал ведётся (WebVisu — та же задача рантайма от ИБП).
 id = "PMI-33"
 title = "Пропадание напряжения на вводе"
@@ -36,10 +38,10 @@ mark = "t1"
 capture = { now1 = "GVL_Time.lrMainNow_s", seq1 = "GVL_Station.stStationSts.udiEventSeq" }
 
 [[step]]
-note = "через 3 с ES301.ALM (High); насосы Stopped без отказов, MOT_WRN_POWER_LOST; PowerLost; событие 101008"
+note = "сразу ES301.ALM (High; задержка 3 с входа ES301 — на восстановление, 04 §13.2); PowerLost; событие 101008"
 wait_alarm = { code = "ES301.ALM", state = "ActiveUnack" }
 timeout_s = 15
-expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "ES301.ALM", state = "ActiveUnack", min_s = 2.6, max_s = 3.8 }
+expect_delay = { since = "t1", from_event = "KNS1.E21", alarm = "ES301.ALM", state = "ActiveUnack", min_s = 0.0, max_s = 0.8 }
 expect_event = { event = "KNS1.E8", since = "t1" }
 expect = ["GVL_Station.stStationSts.eControlAct = E_ControlAct.PowerLost"]
 

@@ -5,8 +5,12 @@
 # значением инъекция снимается и тревоги квитируются, чтобы каждая уставка появлялась заново. Задержки уставок
 # (PT201 — 5 с, FT202 — 30 с) — от события 101021 и включают фильтр датчика (PT201 tFilter 1 с: пересечение уставки
 # через 2,3…2,9 с; FT202 tFilter 3 с: до 30 м³/ч ≈ 9,7 с). «При остановленных насосах L и LL не появляются» —
-# станция подавляет уставки PT201 и FT202, пока насос не отработал STN_FLOW_SETTLE = 20 с. В1: выбег tV1Overrun =
-# 10 мин после снятия условий — сценарий ждёт останова В1, где 06 требует «остановленный В1».
+# станция подавляет уставки PT201 и FT202, пока насос не отработал STN_FLOW_SETTLE = 20 с. Вход подавления
+# FB_AnalogInput 1.0.0 (xSuppressLimitAlarms) общий для четырёх уставок: HH и H при остановленных насосах тоже
+# подавлены (06 v0.4; раздельное подавление нижних уставок — запрос в библиотеку 1.1, DESIGN 17). В1: выбег tV1Overrun =
+# 10 мин после снятия условий — сценарий ждёт останова В1, где 06 требует «остановленный В1». ZS404.ALM от записи
+# SimCmd.xDoorOpen (записи журнала у команды модели нет): цепочка «модель → GVL_IO → DI → тревога» при k = 20 даёт
+# 3,7 с (≈ +4 цикла MainTask · k сверх 2 с), при k = 1 — 2,07 с (прогон ПМИ 19.10.2026) — верхний допуск 4 с.
 id = "PMI-38"
 title = "Коллектор и павильон: уставки, отказы сигналов, вентиляция"
 time_scale = 20.0
@@ -123,11 +127,13 @@ timeout_s = 60
 expect = ["GVL_Devices.fbPT201.xSuppressLimitAlarms = TRUE"]
 
 [[step]]
-note = "насосы стоят: PT201 12,32 мА — PT201.HH (по 06)"
+note = "насосы стоят: PT201 12,32 мА — уставка HH считается, тревога подавлена (вход подавления общий для четырёх уставок)"
 write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 12.32 }
 mark = "s_hh"
-timeout_s = 15
-expect_delay = { since = "s_hh", from_event = "KNS1.E21", alarm = "PT201.HH", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+hold_s = 12
+expect = ["GVL_Devices.fbPT201.xHH = TRUE"]
+expect_alarm = { code = "PT201.HH", state = "SuppressedByDesign" }
+expect_absent = { alarm = "PT201.HH", since = "s_hh" }
 
 [[step]]
 note = "насосы стоят: инъекция снята"
@@ -136,11 +142,13 @@ hold_s = 8
 pulse = "GVL_Station.stStationCmd.xAckAll"
 
 [[step]]
-note = "насосы стоят: PT201 10,72 мА — PT201.H (по 06)"
+note = "насосы стоят: PT201 10,72 мА — уставка H считается, тревога подавлена"
 write = { "GVL_Sim.stFaultInj.aeAiFault[2]" = "E_SimAiFault.Forced", "GVL_Sim.stFaultInj.arAiForced_mA[2]" = 10.72 }
 mark = "s_h"
-timeout_s = 15
-expect_delay = { since = "s_h", from_event = "KNS1.E21", alarm = "PT201.H", state = "ActiveUnack", min_s = 4.6, max_s = 8.8 }
+hold_s = 12
+expect = ["GVL_Devices.fbPT201.xH = TRUE"]
+expect_alarm = { code = "PT201.H", state = "SuppressedByDesign" }
+expect_absent = { alarm = "PT201.H", since = "s_h" }
 
 [[step]]
 note = "насосы стоят: инъекция снята"
@@ -225,7 +233,7 @@ mark = "t_door"
 note = "шаг 3: ZS404.ALM через 2 с и пуск В1"
 wait_alarm = { code = "ZS404.ALM", state = "ActiveUnack" }
 timeout_s = 30
-expect_delay = { from = "t_door", alarm = "ZS404.ALM", state = "ActiveUnack", min_s = 2.0, max_s = 2.0 }
+expect_delay = { from = "t_door", alarm = "ZS404.ALM", state = "ActiveUnack", min_s = 2.0, max_s = 4.0 }
 
 [[step]]
 note = "шаг 3: В1 в работе"

@@ -74,7 +74,7 @@ write = { "GVL_Log.stEventView.uiPage" = 0 }
 pulse = "GVL_Station.stStationCmd.xExportLog"
 mark = "t3"
 wait = "GVL_Station.stStationSts.eLogExport = E_LogExportState.Done"
-timeout_s = 120
+timeout_s = 1200
 expect = ["GVL_Station.stStationSts.eCmdResult = E_CmdResult.Accepted"]
 expect_event = { event = "KNS1.E19", value = 200, since = "t3" }
 

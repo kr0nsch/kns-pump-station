@@ -122,6 +122,11 @@ expect = [
 ]
 
 [[step]]
+note = "шаг 3: Н2 остановлен (выбег ПЧ)"
+wait = "GVL_Station.stStationSts.uiPumpsRunning <= 1"
+timeout_s = 60
+
+[[step]]
 note = "шаг 3: уровень возвращается к заданию, не поднимаясь до 2,40 м; Н3 не пускался"
 wait = "GVL_Station.stStationSts.rLevel_m <= 1.45"
 timeout_s = 1800

@@ -27,6 +27,11 @@ timeout_s = 300
 expect_event = { event = "KNS1.E5", value = 1 }
 
 [[step]]
+note = "Н1 вышел в работу (ОС)"
+wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"
+timeout_s = 15
+
+[[step]]
 note = "Н1 в работе, уровень растёт к 2,40 м; Н2 и Н3 стоят"
 wait = "GVL_Station.stStationSts.rLevel_m >= 2.38"
 timeout_s = 1800

@@ -3,9 +3,11 @@
 # Перед залипанием ОС Н2 все тревоги квитированы: сирену HA1 и обесточивание K1 включает новая неквитированная
 # тревога High — иначе HA1 уже звучала бы от KNS1.NORES шага 1. Команда снята станцией через 5 с после 1,00 м
 # (записи журнала у снятия нет): «через 15 с после снятия команды» — от наблюдения снятия (метка, допуск обвязки).
-# Шаг 3 06 ждёт P102.UCR после сброса при залипшей ОС; по контракту FB_Motor (сброс снимает FailToStop, только
-# когда двигатель не работает по ОС; UncommandedRun — только из Stopped) ожидается RejectedFault — проверка
-# оставлена по тексту 06, расхождение передано на согласование.
+# Шаг 3 — по 06 v0.4 и контракту FB_Motor plc-process-lib 1.0.0 (API 13.6, 13.7): «Сброс» снимает отказ, только
+# если причина ушла и ОС = 0 (Fault → Stopped); при залипшей ОС FailToStop остаётся, результат сброса —
+# RejectedFault, UncommandedRun не формируется (он — только из Stopped). Редакция 06 v0.3 ждала P102.UCR — это
+# противоречило контракту библиотеки (замечание протокола ПМИ 19.10.2026). Затем ОС отпускается и «Сброс»
+# снимает отказ.
 id = "PMI-14"
 title = "Контроль ОС: пропадание и залипание"
 time_scale = 20.0
@@ -99,10 +101,23 @@ pulse = "GVL_Hmi.stP102Cmd.stCommon.xReset"
 mark = "t3"
 
 [[step]]
-note = "шаг 3: через 10 с после сброса — P102.UCR (High): ОС без команды"
+note = "шаг 3: окно сброса прошло (tResetWindow) — сброс отклонён, Н2 в отказе FailToStop, UCR нет"
+hold_s = 10
+expect = [
+  "GVL_Devices.fbP102.stSts.stCommon.eCmdResult = E_CmdResult.RejectedFault",
+  "GVL_Devices.fbP102.stSts.eState = E_MotorState.Fault",
+  "GVL_Devices.fbP102.stSts.stCommon.wAlmActive & 16#0004",   # слот 2 FailToStop
+]
+expect_absent = { alarm = "P102.UCR", since = "t3" }
+
+[[step]]
+note = "шаг 3: ОС отпущена, «Сброс» — отказ снят, Н2 остановлен"
+write = { "GVL_Sim.stFaultInj.axFeedbackStuck[2]" = false }
+hold_s = 2
+pulse = "GVL_Hmi.stP102Cmd.stCommon.xReset"
+wait = "GVL_Devices.fbP102.stSts.eState = E_MotorState.Stopped"
 timeout_s = 30
-expect_delay = { from = "t3", alarm = "P102.UCR", state = "ActiveUnack", min_s = 10.0, max_s = 10.0 }
-expect_alarm = { code = "P102.UCR", state = "ActiveUnack" }
+expect_absent = { alarm = "P102.UCR", since = "t3" }
 
 [teardown]
 clear_faults = true

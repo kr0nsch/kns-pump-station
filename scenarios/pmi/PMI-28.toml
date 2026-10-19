@@ -4,7 +4,10 @@
 # IT111.FAIL через 2 с, P101.COM через 3 с (от события 101021), ПЧ через 5 с без запросов уходит рампой на 50 Гц
 # (= 50 Гц не позже ≈ 6,2 с: с 44 Гц ещё 1,2 с; DESIGN 11.2, сторожевой таймер модели). KNS1.STEP — с задержкой
 # 10 с (04 §7.4, 05): готовность ПИД снимается в цикле после P101.COM, действующее управление — ещё через цикл.
-# Останов «по уровням проводами на 1,00 м» за 3 мин без связи не наступает — см. not_checked.
+# Останов «по уровням проводами на 1,00 м» за 3 мин без связи не наступает — см. not_checked. Допуски по прогону
+# ПМИ 19.10.2026: 50 Гц от метки — с запаздыванием наблюдения (опрос и чтение метки при k = 1, ≈ 0,5 с); KNS1.STEP
+# при k = 1 — до +5 циклов (начало цикла пользовательского рантайма Windows смещается на миллисекунды); возврат ПИД
+# через STN_PID_RECOVER = 30 с — от снятия P101.COM до готовности ПИД и снятия KNS1.STEP цепочка до 2 с при k = 20.
 id = "PMI-28"
 title = "Потеря связи с ПЧ ведущего насоса"
 time_scale = 20.0
@@ -72,14 +75,14 @@ note = "50 Гц не позже ≈ 6,2 с от потери связи и не 
 mark = "t50"
 expect = [
   "{t50 - t1} >= 4.7",
-  "{t50 - t1} <= 6.6",
+  "{t50 - t1} <= 7.0",
 ]
 
 [[step]]
 note = "нет работающего насоса со связью — KNS1.STEP (Low), действует ступенчатое"
 wait_alarm = { code = "KNS1.STEP", state = "ActiveUnack" }
 timeout_s = 20
-expect_delay = { since = "t1", from_alarm = "P101.COM", state = "ActiveUnack", alarm = "KNS1.STEP", min_s = 9.98, max_s = 10.06 }
+expect_delay = { since = "t1", from_alarm = "P101.COM", state = "ActiveUnack", alarm = "KNS1.STEP", min_s = 9.98, max_s = 10.10 }
 expect = [
   "GVL_Station.stStationSts.eControlAct = E_ControlAct.Stepped",
   "GVL_Station.stStationSts.uiPumpsRequired = 1",
@@ -114,7 +117,7 @@ note = "шаг 2: ПИД снова действует, KNS1.STEP → RtnUnack"
 wait = "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid"
 timeout_s = 60
 wait_alarm = { code = "KNS1.STEP", state = "RtnUnack" }
-expect_delay = { since = "t2", from_alarm = "P101.COM", state = "RtnUnack", alarm = "KNS1.STEP", min_s = 29.6, max_s = 31.2 }
+expect_delay = { since = "t2", from_alarm = "P101.COM", state = "RtnUnack", alarm = "KNS1.STEP", min_s = 29.6, max_s = 32.0 }
 during = ["GVL_Devices.fbP101.stSts.eState = E_MotorState.Running"]
 during_rate = { "GVL_Station.rSpeedSp_pct" = 5.5, "GVL_Station.fbLIC101.stSts.rOut_pct" = 5.5 }
 

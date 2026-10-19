@@ -4,6 +4,8 @@
 # Приток 0, Н1 с фейсплейта на 100 %: уровень 1,20 → 0,80 м ≈ 2 мин, → 0,50 м ≈ 1,5 мин. Задержка уставки LL —
 # 3 с от наблюдения уровня ≤ 0,50 м (метка, допуск обвязки), KNS1.DRY — в следующем цикле станции после
 # LT101.LL. Снятие защиты — выше L с гистерезисом 0,05 м.
+# Подход к порогу — при k = 20, последние сантиметры и выдержка — при k = 1 (К3-23): при k = 20 период опроса — 5 с
+# контура, и тревога с выдержкой 1–3 с появлялась раньше метки (прогон ПМИ 19.10.2026).
 id = "PMI-18"
 title = "Сухой ход по уровнемеру в ручном режиме станции"
 time_scale = 20.0
@@ -36,9 +38,15 @@ wait_alarm = { code = "LT101.L", state = "ActiveUnack" }
 timeout_s = 300
 
 [[step]]
-note = "уровень ≤ 0,50 м"
-wait = "GVL_Station.stStationSts.rLevel_m <= 0.50"
+note = "уровень подходит к 0,50 м"
+wait = "GVL_Station.stStationSts.rLevel_m <= 0.53"
 timeout_s = 300
+
+[[step]]
+note = "уровень ≤ 0,50 м — без ускорения"
+time_scale = 1.0
+wait = "GVL_Station.stStationSts.rLevel_m <= 0.50"
+timeout_s = 60
 
 [[step]]
 note = "через 3 с — LT101.LL и KNS1.DRY (High)"
@@ -55,6 +63,7 @@ expect_delay = [
 
 [[step]]
 note = "бит 0 wInterlock у всех насосов, Н1 остановлен и в Manual"
+time_scale = 20.0
 wait = "GVL_Devices.fbP101.stSts.eState = E_MotorState.Stopped"
 timeout_s = 30
 expect = [
