@@ -57,9 +57,10 @@ def to_markdown(results: Sequence[ScenarioResult]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_reports(results: Sequence[ScenarioResult], out_dir: Path) -> tuple[Path, Path]:
+def write_reports(results: Sequence[ScenarioResult], out_dir: Path, stem: str = "pmi-results") -> tuple[Path, Path]:
+    """``<stem>.json`` и ``<stem>.md``: прогон ПМИ — ``pmi-results``, регрессионные — ``regression-results``."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    js, md = out_dir / "pmi-results.json", out_dir / "pmi-results.md"
+    js, md = out_dir / f"{stem}.json", out_dir / f"{stem}.md"
     js.write_text(to_json(results), encoding="utf-8")
     md.write_text(to_markdown(results), encoding="utf-8")
     return js, md

@@ -1,0 +1,96 @@
+# Регрессия: авария ПЧ ведущего под ПИД при двух работающих насосах (не пункт 06_PMI: PMI-13 проверяет АВР при
+# ступенчатом регулировании). Дефект найден после протокола № 1 на рантайме при записи тренда README
+# (07_test_protocol.md, замечание 17): в цикле отказа LIC101 следил за заданием 0 отказавшего ПЧ, выход падал
+# с 98 до 1 %, оба насоса уходили на минимальную частоту, подпорный отключался, уровень рос с 1,5 до 2,1 м.
+#
+# Тот же путь, что у тренда: И0 под ПИД при 100 м³/ч, приток 180 м³/ч (больше подачи одного насоса, 150 м³/ч) —
+# подпорный по нагрузке, 5 мин регулирования двумя насосами, авария ПЧ ведущего Н1. Наработка И0 (06 §5.2, п. 8):
+# ведущий Н1, подпорный Н2, резервный Н3. k = 20: шаг времени за цикл 0,4 с меньше tSample = 0,5 с (06 §5.3).
+id = "PID-lead-fault"
+title = "ПИД: авария ПЧ ведущего при двух работающих насосах — выход LIC101 не проваливается"
+time_scale = 20.0
+timeout_s = 300
+backends = ["opcua", "cds"]
+mode = "auto"
+manual = []
+
+[setup]
+method = "LevelPid"
+level_m = 1.6
+inflow_m3h = 100.0
+
+[[step]]
+note = "пуск ведущего Н1, LIC101 управляет"
+wait = "GVL_Station.fbLIC101.xTrack = FALSE"
+timeout_s = 120
+expect = [
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+  "GVL_Station.stStationSts.aeRole[1] = E_PumpRole.Lead",
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Running",
+]
+
+[[step]]
+note = "приток 180 м³/ч: подпорный Н2 по нагрузке, работают два насоса"
+write = { "GVL_Sim.stSimCmd.rInflowOverride_m3h" = 180.0 }
+wait = "GVL_Station.stStationSts.uiPumpsRunning = 2"
+timeout_s = 900
+expect = [
+  "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Assist",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+]
+
+[[step]]
+note = "5 мин регулирования двумя насосами; выход LIC101 и уровень перед отказом"
+hold_s = 300
+during = [
+  "GVL_Station.stStationSts.uiPumpsRunning = 2",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+]
+capture = { out0 = "GVL_Station.fbLIC101.stSts.rOut_pct", lvl0 = "GVL_Station.stStationSts.rLevel_m" }
+expect = ["GVL_Station.fbLIC101.stSts.rOut_pct >= 80.0"]
+
+[[step]]
+note = "авария ПЧ ведущего Н1"
+write = { "GVL_Sim.stFaultInj.axVfdFault[1]" = true }
+mark = "t_fault"
+
+[[step]]
+note = "АВР: Н2 — ведущий, резервный Н3 запрошен (событие 101006, KNS1.ATS); выход LIC101 и задание Н2 держатся"
+wait_alarm = { code = "KNS1.ATS", state = "ActiveUnack" }
+timeout_s = 10
+during = [
+  "GVL_Station.fbLIC101.stSts.rOut_pct >= {out0 - 10}",
+  "GVL_Devices.fbP102.stSts.rSpeedRef_pct >= {out0 - 10}",
+]
+expect_event = { event = "KNS1.E6", value = 3, since = "t_fault" }
+expect = [
+  "GVL_Station.stStationSts.aeRole[2] = E_PumpRole.Lead",
+  "GVL_Devices.fbP101.stSts.eState = E_MotorState.Fault",
+]
+
+[[step]]
+note = "Н3 в работе; выход LIC101 и задание Н2 не проваливаются"
+wait = "GVL_Devices.fbP103.stSts.eState = E_MotorState.Running"
+timeout_s = 30
+during = [
+  "GVL_Station.fbLIC101.stSts.rOut_pct >= {out0 - 10}",
+  "GVL_Devices.fbP102.stSts.rSpeedRef_pct >= {out0 - 10}",
+]
+
+[[step]]
+note = "5 мин после АВР: работают два насоса, LIC101 управляет, уровень не уходит от прежнего больше чем на 0,15 м"
+hold_s = 300
+during = [
+  "GVL_Station.stStationSts.uiPumpsRunning = 2",
+  "GVL_Station.stStationSts.eControlAct = E_ControlAct.LevelPid",
+  "GVL_Station.fbLIC101.stSts.rOut_pct >= {out0 - 10}",
+  "GVL_Station.stStationSts.rLevel_m <= {lvl0 + 0.15}",
+]
+expect = [
+  "GVL_Station.fbLIC101.stSts.stCommon.wStatus !& 16#0040",   # PID_STS_TRACKING снят
+  "GVL_Devices.fbP103.stSts.rSpeedRef_pct >= {out0 - 10}",
+]
+
+[teardown]
+clear_faults = true
+inflow_m3h = 100.0

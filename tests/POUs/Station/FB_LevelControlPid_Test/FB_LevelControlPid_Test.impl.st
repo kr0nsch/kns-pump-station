@@ -15,3 +15,4 @@ OutputStagingOnlyWhenPidControls();
 NanOutputNoStaging();
 TimeBackwardsRestartsConfirm();
 CommAbsentDuringPowerRestoreNoRecoverDelay();
+HoldOutputWhenLeadDropsOut();

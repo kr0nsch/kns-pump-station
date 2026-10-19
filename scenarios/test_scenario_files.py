@@ -5,7 +5,8 @@
 из 05_alarm_list.csv, события — ``KNS1.E<код>`` из ``E_StationEvent``; подстановки ``{…}`` используют только
 значения, захваченные раньше (``capture``, ``mark``, ``during_span.capture``); допуск задержек между записями
 журнала — не меньше ±1 цикла MainTask при действующем k (06 §5.3). Подстановки в путях перебираются номерами
-насосов 1…3.
+насосов 1…3. Регрессионные сценарии ``scenarios/regression/`` (не пункты 06) проверяются так же, кроме сверки с
+приложением А: имя файла = ``id``, вид «авто».
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PMI_FILES = sorted((HERE / "pmi").glob("PMI-*.toml"))
 FILES = sorted([*(HERE / "examples").glob("PMI-*.toml"), *PMI_FILES])
+REGRESSION_FILES = sorted((HERE / "regression").glob("*.toml"))
 PMI_COUNT = 39  # 06_PMI, приложение А
 # 06, приложение А, колонка «Вид»: 34 проверки — авто, 5 — авто + ручн. (PMI-01, 08, 35, 36, 37), ручных нет
 EXPECTED_MODES = {"auto": 34, "auto+manual": 5}
@@ -374,6 +376,20 @@ def test_scenario_file(path: Path) -> None:
         assert bool(sc.manual) == (sc.mode != "auto"), "ручные части (manual) — только у вида «авто + ручн.»"
     errors = Checker(sc).run()
     assert not errors, "\n".join(errors)
+
+
+@pytest.mark.parametrize("path", REGRESSION_FILES, ids=[f.stem for f in REGRESSION_FILES])
+def test_regression_file(path: Path) -> None:
+    sc = load_scenario(path)
+    assert sc.id == path.stem, "имя файла = id сценария"
+    assert sc.id not in appendix(), "регрессионный сценарий — не пункт 06: номер PMI-NN занят программой"
+    assert sc.mode == "auto" and not sc.manual, "регрессионный сценарий — без ручных частей"
+    errors = Checker(sc).run()
+    assert not errors, "\n".join(errors)
+
+
+def test_regression_catalogue_not_empty() -> None:
+    assert REGRESSION_FILES, "scenarios/regression/ — хотя бы один сценарий (PID-lead-fault)"
 
 
 def test_pmi_catalogue_complete() -> None:

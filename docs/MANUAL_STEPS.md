@@ -405,7 +405,7 @@ OPC UA-сервера. На рантайме — приложение имита
 ```bat
 python tools_project\codesys\sim.py start --need-min 60   & rem import, символы sim, рантайм, сертификаты, загрузка, «Старт»
 set PMI_LIVE=1
-python -m pytest scenarios\test_pmi.py -m plc               & rem все сценарии; -k "PMI-13" — один
+python -m pytest scenarios\test_pmi.py -m plc               & rem все сценарии; -k "PMI-13" — один, -k regression — регрессионные
 python tools_project\codesys\sim.py stop                   & rem остановить рантайм после серии
 ```
 

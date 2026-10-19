@@ -6,12 +6,18 @@ IF xLeadValid THEN
 END_IF
 
 // 1. Слежение (04 §7.3): ПИД управляет, только когда выбран, а ведущий работает в Auto без отказа
-//    (SpeedAutoActive) и со связью с ПЧ; иначе выход следует за заданием ведущего (0 — ведущего нет)
+//    (SpeedAutoActive) и со связью с ПЧ; иначе выход следует за заданием ведущего (0 — ведущего нет).
+//    Ведущий — прошлого цикла: если он выбыл (авария ПЧ, блокировка станции, смена режима — Available = FALSE),
+//    роль в этом цикле передаст FB_PumpRotation, а остальные насосы работают с прежним заданием. Задание
+//    выбывшего ПЧ (0) — не задание станции: при выбранном ПИД выход держится (04 §7.3, §9)
 xPidControls := FALSE;
 rTrack_pct := 0.0;
 IF xLeadValid THEN
     rTrack_pct := aitfPump[uiLead].SpeedRef;
     xPidControls := xEnable AND aitfPump[uiLead].SpeedAutoActive AND axCommOk[uiLead];
+    IF xEnable AND NOT aitfPump[uiLead].Available THEN
+        rTrack_pct := rPidOut_pct;
+    END_IF
 END_IF
 xTrack := NOT xPidControls;
 

@@ -1,9 +1,10 @@
 // Назначение: поддержание уровня ПИД LIC101 — число насосов и подключение подпорного по нагрузке
 //             (04 §7.2), готовность ПИД (04 §7.4) с выдержкой STN_PID_RECOVER после восстановления
-//             связи с ПЧ (04 §12), слежение ПИД за заданием ведущего, когда ПИД не управляет (04 §7.3).
+//             связи с ПЧ (04 §12), слежение ПИД за заданием ведущего, когда ПИД не управляет (04 §7.3);
+//             выбыл ведущий при выбранном ПИД — выход держится (04 §7.3, §9).
 //             Задание ПИД ФБ не считает: оно внешнее (stCfgLkg.rLevelSp_m, PRG_Station).
 // Автор:      kr0nsch
-// Версия:     0.2.0
+// Версия:     0.2.1
 // Документ:   docs/DESIGN.md, раздел 6.4; docs/04_algorithms.md, разделы 7, 12
 FUNCTION_BLOCK FB_LevelControlPid
 VAR_INPUT
@@ -30,7 +31,8 @@ VAR_OUTPUT
     xPidReady    : BOOL;            // 04 §7.4; после восстановления связи — через STN_PID_RECOVER
     xPidControls : BOOL;            // xEnable AND ведущий SpeedAutoActive AND связь ведущего есть
     xTrack       : BOOL;            // → fbLIC101.xTrack (= NOT xPidControls)
-    rTrack_pct   : REAL;            // → fbLIC101.rTrack_pct и rOutAct_pct: SpeedRef ведущего (0 — нет)
+    rTrack_pct   : REAL;            // → fbLIC101.rTrack_pct и rOutAct_pct: SpeedRef ведущего (0 — нет); ведущий
+                                    // выбыл (Available = FALSE) при xEnable — rPidOut_pct: выход держится
 END_VAR
 VAR
     uiPumps        : UINT;          // состояние: 0, 1, 2 насоса

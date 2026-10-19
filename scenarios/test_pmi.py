@@ -6,6 +6,9 @@
 ``credentials.json``. Шаги ``reset`` (PMI-10, PMI-35) выполняет ``sim.py reset`` (переменная ``PMI_RESET``: ``sim``
 по умолчанию при заданном ``CODESYS_EXE``, ``none`` — шаг «не проверялось»). Итог — отчёт
 ``build/pmi-results.json`` и ``.md`` (заготовка протокола 07).
+
+Регрессионные сценарии ``scenarios/regression/*.toml`` — не пункты 06_PMI: дефекты, найденные вне программы (тот же
+формат и исполнитель); отчёт — ``build/regression-results.json`` и ``.md``. Только они: ``-k regression``.
 """
 
 from __future__ import annotations
@@ -31,7 +34,9 @@ from kns_scenarios.scenario import FAIL, Runner, ScenarioResult, load_scenario
 HERE = Path(__file__).resolve().parent
 BUILD = HERE.parent / "build"
 FILES = sorted((HERE / "pmi").glob("PMI-*.toml")) or sorted((HERE / "examples").glob("PMI-*.toml"))
+REGRESSION_FILES = sorted((HERE / "regression").glob("*.toml"))
 RESULTS: list[ScenarioResult] = []
+REGRESSION_RESULTS: list[ScenarioResult] = []
 LIVE = os.environ.get("PMI_LIVE") == "1"
 URL = os.environ.get("PMI_OPCUA_URL", "opc.tcp://localhost:4840")
 SIM_TOOL = HERE.parent / "tools_project" / "codesys" / "sim.py"
@@ -62,14 +67,27 @@ def plc() -> Iterator[OpcUaClient]:
         client.close()
         if RESULTS:
             report.write_reports(RESULTS, BUILD)
+        if REGRESSION_RESULTS:
+            report.write_reports(REGRESSION_RESULTS, BUILD, stem="regression-results")
 
 
 @pytest.mark.plc
 @pytest.mark.skipif(not LIVE, reason="сценарий на рантайме: PMI_LIVE=1 (DESIGN, раздел 14.3)")
 @pytest.mark.parametrize("path", FILES, ids=[f.stem for f in FILES])
 def test_pmi(plc: OpcUaClient, path: Path) -> None:
+    run_scenario(plc, path, RESULTS)
+
+
+@pytest.mark.plc
+@pytest.mark.skipif(not LIVE, reason="сценарий на рантайме: PMI_LIVE=1 (DESIGN, раздел 14.3)")
+@pytest.mark.parametrize("path", REGRESSION_FILES, ids=[f"regression-{f.stem}" for f in REGRESSION_FILES])
+def test_regression(plc: OpcUaClient, path: Path) -> None:
+    run_scenario(plc, path, REGRESSION_RESULTS)
+
+
+def run_scenario(plc: OpcUaClient, path: Path, results: list[ScenarioResult]) -> None:
     ctx = ScenarioContext(plc, enums=ENUMS)
     runner = Runner(ctx, "opcua", alarms=AlarmView(plc, load_alarm_list(), ENUMS), feed=EventFeed(plc))
     result = runner.run(load_scenario(path))
-    RESULTS.append(result)
+    results.append(result)
     assert result.verdict != FAIL, result.error or [c for c in result.checks if c.ok is False]

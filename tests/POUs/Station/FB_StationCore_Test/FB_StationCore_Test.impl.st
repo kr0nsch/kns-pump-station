@@ -33,3 +33,6 @@ ManualToAutoStoppedPumpsNoNoresFlicker();
 DryRunReleaseNoNoresStepFlicker();
 StepAlarmNoFlickerAfterPowerRestorePid();
 ManualFloatModeKeepsEhlDry();
+PidLeadFaultKeepsOutput();
+PidLeadTripKeepsOutput();
+PidHandoverKeepsOutput();

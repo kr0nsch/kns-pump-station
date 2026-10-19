@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Документ | `docs/DESIGN.md`, версия 0.6 (правки по ревью кода), 19.10.2026 |
-| Основание | [ARCHITECTURE.md](ARCHITECTURE.md) (слои, задачи, решения D-xx), [04_algorithms.md](04_algorithms.md) v0.4 (алгоритмы, уставки — раздел 18), [05_alarm_list.csv](05_alarm_list.csv), [06_PMI.md](06_PMI.md) v0.5 (39 проверок), контракт plc-process-lib 1.0.0 |
+| Документ | `docs/DESIGN.md`, версия 0.7 (ПИД при выбытии ведущего), 20.10.2026 |
+| Основание | [ARCHITECTURE.md](ARCHITECTURE.md) (слои, задачи, решения D-xx), [04_algorithms.md](04_algorithms.md) v0.5 (алгоритмы, уставки — раздел 18), [05_alarm_list.csv](05_alarm_list.csv), [06_PMI.md](06_PMI.md) v0.5 (39 проверок), контракт plc-process-lib 1.0.0 |
 | Согласованность | `python tools_project/check_docs_consistency.py` сверяет объявления этого документа с 01–08, перечнем сигналов, выводом iolistgen и контрактом библиотеки (CI) |
 | Для кого | три команды реализации (раздел 15): интерфейсы этого документа — **контракт** между ними |
 | Изменения | интерфейс, отмеченный «заморожен», меняется только правкой этого документа до правки кода |
@@ -49,6 +49,10 @@ LT101 по AI-13 (раздел 6.7); исполнитель OPC UA: пакеты
 бит 15 `wState` и бит 4 `wLdev` резерв (раздел 6.7); сторожевой таймер `MainTask` — ключ `watchdog` в
 `config.json` (раздел 12); прогон символов объединённого проекта (раздел 13); сверка уставок LIC101 по умолчанию
 с `GVL_Persist` — pytest (раздел 4.2).
+
+Отличия версии 0.7 (дефект после протокола ПМИ № 1, найден на рантайме при записи тренда README): ведущий прошлого
+цикла выбыл при действующем ПИД — `FB_LevelControlPid` отдаёт в слежение выход LIC101, а не задание 0 выбывшего ПЧ
+(раздел 6.4); регрессионные сценарии вне программы ПМИ — `scenarios/regression/` (раздел 14.3).
 
 ## 0. Соглашения
 
@@ -1073,7 +1077,8 @@ VAR_OUTPUT
     xPidReady    : BOOL;            // 04 §7.4; после восстановления связи — через STN_PID_RECOVER
     xPidControls : BOOL;            // xEnable AND ведущий SpeedAutoActive AND связь ведущего есть
     xTrack       : BOOL;            // → fbLIC101.xTrack (= NOT xPidControls)
-    rTrack_pct   : REAL;            // → fbLIC101.rTrack_pct и rOutAct_pct: SpeedRef ведущего (0 — нет)
+    rTrack_pct   : REAL;            // → fbLIC101.rTrack_pct и rOutAct_pct: SpeedRef ведущего (0 — нет); ведущий
+                                    // выбыл (Available = FALSE) при xEnable — rPidOut_pct: выход держится
 END_VAR
 ```
 
@@ -1092,12 +1097,19 @@ END_VAR
 - Условия по выходу ПИД (подключение и отключение подпорного) действуют только при `xPidControls`: в
   слежении выход повторяет задание ведущего и о нагрузке не говорит.
 - Задание ПИД ФБ не считает: оно внешнее (`stCfgLkg.rLevelSp_m`, раздел 7).
+- Ведущий — прошлого цикла: `FB_PumpRotation` вызывается после (ему нужно `uiRequired`). Если он выбыл
+  (`Available = FALSE`: авария ПЧ, блокировка станции — недогрузка или перегрев, смена режима), роль в этом цикле
+  передаст `FB_PumpRotation`, а при `xEnable` слежение идёт за `rPidOut_pct` — выход LIC101 держится, со следующего
+  цикла ПИД управляет через нового ведущего (04 §7.3). Прежде ПИД на этот цикл следил за `SpeedRef` выбывшего ПЧ
+  (0): выход падал с 98 до 1 %, насосы уходили на минимальную частоту, подпорный отключался по «выход ≤ 75 %»
+  (протокол 07, замечание 17). Ведущий доступен, но ещё не в `SpeedAutoActive` (пуск) — слежение за его заданием,
+  как раньше.
 
 Тесты: `StartsLeadAtStartLevel`, `AssistOnOutputHighForTAssistOn`, `AssistOnLevelAboveAssistStart`,
 `AssistOffOutputLowForTAssistOff`, `AssistNotOffAboveAssistStartLevel`, `StopAllAtStopLevel`,
 `TrackWhenLeadNotSpeedAuto`, `TrackWhenLeadCommLost`, `NotReadyWithoutCommPump`,
 `ReadyAfterCommRecoverDelay`, `NotReadyWhenPidManual`, `InitFromRunningPumps`,
-`CommAbsentDuringPowerRestoreNoRecoverDelay`.
+`CommAbsentDuringPowerRestoreNoRecoverDelay`, `HoldOutputWhenLeadDropsOut`.
 
 ### 6.5 `FB_PumpRotation` — роли, чередование, передача роли (04 §5, §8)
 
@@ -1594,7 +1606,10 @@ END_VAR
 `OverheatTripIsAts`, `RestartSequencesEmergencyPumps`, `StepAlarmNoFlickerOnStartAndAutoEntry`; по ревью кода
 (написаны до исправлений и падали) — `ApplyProjectCfgChecksProjectLevelLimits`, `ManualToAutoStoppedPumpsNoNoresFlicker`
 и `DryRunReleaseNoNoresStepFlicker` (запрос режима и снятие блокировки насос выполняет циклом позже станции),
-`StepAlarmNoFlickerAfterPowerRestorePid`, `ManualFloatModeKeepsEhlDry`.
+`StepAlarmNoFlickerAfterPowerRestorePid`, `ManualFloatModeKeepsEhlDry`; по дефекту после протокола ПМИ № 1 (замечание 17
+протокола 07) — `PidLeadFaultKeepsOutput` и `PidLeadTripKeepsOutput` (авария ПЧ и перегрев ведущего при двух
+работающих насосах под ПИД: выход LIC101 и частота не проваливаются; падали до исправления),
+`PidHandoverKeepsOutput` (передача роли по `tMaxContRun` — та же проверка; причина дефекта её не касается).
 
 ## 7. `PRG_Station` — порядок цикла (К1)
 
@@ -2514,6 +2529,12 @@ class PlcClient(Protocol):
 (после подстановки `{имя}` диапазоном 1…3) существуют в индексе символов, построенном из объявлений
 `src/` (GVL и DUT, `tools/codesys/stlayout.py`), и доступны на запись по правилам раздела 13 там, где
 сценарий пишет; коды тревог есть в `05_alarm_list.csv`, литералы перечислений — в `enums.py`.
+
+**Регрессионные сценарии** — `scenarios/regression/<имя>.toml`: дефекты, найденные вне программы ПМИ (не пункты 06,
+номеров `PMI-NN` не занимают). Формат и исполнитель те же; офлайн-проверка — та же, кроме сверки с приложением А
+(`id` = имя файла, вид «авто»); на рантайме — `test_regression` в `test_pmi.py` (`-k regression`), отчёт —
+`build/regression-results.json` и `.md`. `PID-lead-fault` — авария ПЧ ведущего под ПИД при двух работающих насосах
+(протокол 07, замечание 17).
 
 **Запуск** (приёмка 19.10.2026) — `python tools_project/codesys/sim.py start --need-min <мин>`, затем
 `PMI_LIVE=1 python -m pytest scenarios/test_pmi.py -m plc [-k …]` по частям серии (`docs/MANUAL_STEPS.md`, 9.5);
