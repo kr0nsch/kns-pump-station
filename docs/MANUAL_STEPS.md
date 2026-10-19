@@ -211,9 +211,10 @@ python tools\codesys\cds.py roundtrip
 
 - [ ] дерево устройств ПЛК210 и конфигурация модулей ввода-вывода; конфигураторы обмена (Modbus, OPC UA);
 - [ ] визуализации, графические языки (FBD/LD/SFC/CFC), действия (`ACTION`) — `export` предупреждает о них;
-- [ ] **Persistent Variables** (`*.pvl.st`): в SP17 скриптом не создаются. Создайте объект вручную
-  («Application → Добавить объект → Persistent Variables» с именем как у файла), затем
-  `cds.py import` обновит его текст из файла, а `export` выгрузит обратно.
+- [ ] **Persistent Variables** (`*.pvl.st`): API SP17 их не создаёт, поэтому `cds.py import` создаёт
+  объект импортом PLCopenXML и дальше обновляет его текст из файла, а `export` выгружает обратно.
+  Если импорт PLCopenXML не удался (предупреждение в отчёте) — создайте объект вручную
+  («Application → Добавить объект → Persistent Variables» с именем как у файла).
 
 Задачи и ссылки на библиотеки не правьте в IDE: их создаёт `import` по `tools/codesys/config.json`
 (лишние задачи удаляются).
@@ -358,9 +359,11 @@ iolistgen — модуль в окружении, каталог из `IOLISTGEN
 
 ### 9.3. Persistent Variables
 
-Скрипт CODESYS 3.5.17 не создаёт объект Persistent Variables: первый `cds.py import` предупреждает
-«Persistent Variables скриптом SP17 не создаются», а сборка без объекта даёт C0046 «GVL_Persist не
-задан». Один раз на проект:
+API CODESYS 3.5.17 не создаёт объект Persistent Variables, поэтому `cds.py import` (и `import --tests`,
+`build`, `test`, `roundtrip`) создаёт `GVL_Persist` импортом PLCopenXML: в отчёте импорта —
+«created: PVL GVL_Persist», объект — в папке `Generated`. Отдельного шага не нужно. Если в отчёте
+предупреждение «не создан импортом PLCopenXML» (сборка тогда даёт C0046 «GVL_Persist не задан»),
+запасной путь — скрипт, который делает то же для готового проекта:
 
 ```bat
 python tools\codesys\cds.py import
@@ -369,8 +372,9 @@ python tools\codesys\cds.py import --tests
 python tools_project\codesys\codesys_pvl.py --tests
 ```
 
-Дальше `cds.py build`, `build --tests`, `test` обновляют текст объекта сами. После `import --clean`
-(новый проект) повторите скрипт. «Reorder List and Clear Gaps» не выполнять.
+Дальше `cds.py build`, `build --tests`, `test` обновляют текст объекта сами. «Reorder List and Clear
+Gaps» не выполнять. Новые переменные блока станции — только в конец `persist_station.txt` (так
+добавлена `stStationCfgLkg`, DESIGN 4.7).
 
 ### 9.4. Символьная конфигурация OPC UA
 

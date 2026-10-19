@@ -2,10 +2,11 @@
 """Создать объект Persistent Variables в проекте ``cds.py`` импортом PLCopenXML (CODESYS 3.5.17.30).
 
 Сгенерированный ``GVL_Persist.pvl.st`` должен быть объектом Persistent Variables (контракт
-plc-process-lib 18.1, зонд P18). Скриптом CODESYS 3.5.17.30 такой объект не создаётся: у API нет
-``create_persistentvars`` (tools/README.md), поэтому ``cds.py import`` пропускает файл ``*.pvl.st``
-с предупреждением, пока объекта нет, а существующий — обновляет. Импорт PLCopenXML объект
-Persistent Variables создаёт (проверено на 3.5.17.30: зонд Z3 архитектуры, проекты 03 и 07 портфолио).
+plc-process-lib 18.1, зонд P18). У API CODESYS 3.5.17.30 нет ``create_persistentvars``; импорт
+PLCopenXML объект создаёт (проверено на 3.5.17.30: зонд Z3 архитектуры, проекты 03 и 07 портфолио).
+После сборки контура это делает сам ``cds.py import`` (``tools/codesys/import_sources.py``,
+docs/ASSUMPTIONS.md, И7); скрипт остаётся запасным путём для проекта, импорт которого объект не
+создал (например, инструментами шаблона без этой доработки).
 
 Скрипт заменяет ручной шаг «Application → Добавить объект → Persistent Variables»:
 

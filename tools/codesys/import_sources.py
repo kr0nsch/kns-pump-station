@@ -13,7 +13,8 @@ CODESYS.exe --noUI --runscript=<этот файл>.
    методами и свойствами (аксессоры Get/Set — ровно как в раскладке, лишние удаляются), папки
    (подкаталоги src/ — папки проекта, tests/ — папка Tests). Текст меняется, только если он
    отличается: повторный импорт без правок ничего не меняет. Имя, отличающееся от раскладки
-   только регистром (объект, метод, свойство, папка), переименовывается.
+   только регистром (объект, метод, свойство, папка), переименовывается. Persistent Variables
+   (*.pvl.st) создаются импортом PLCopenXML: в API SP17 нет create_persistentvars (D9).
    Перед открытием проекта удаляется кэш предкомпиляции (cds_common.remove_precompile_cache):
    с ним сборка после замены объявления POU с методами могла видеть старый текст.
 4. Удаляет объекты управляемых видов (POU, DUT, GVL, интерфейсы, методы и свойства POU),
@@ -27,7 +28,9 @@ CODESYS.exe --noUI --runscript=<этот файл>.
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
+import io
 import os
+import tempfile
 
 import cds_common as C
 import stlayout as L
@@ -69,6 +72,97 @@ class Report(object):
             'unchanged': self.unchanged,
             'changes': self.changes,
         }
+
+
+# ---------------------------------------------------------------------------
+# Persistent Variables через PLCopenXML
+# ---------------------------------------------------------------------------
+
+_PLCOPEN_NS = 'http://www.plcopen.org/xml/tc6_0200'
+_XHTML_NS = 'http://www.w3.org/1999/xhtml'
+_CDS_GLOBALVARS = 'http://www.3s-software.com/plcopenxml/globalvars'
+_CDS_PLAINTEXT = 'http://www.3s-software.com/plcopenxml/interfaceasplaintext'
+# Отметка времени в заголовке PLCopenXML постоянная: файл не зависит от момента запуска
+_PLCOPEN_TIME = '2026-01-01T00:00:00'
+
+
+def _xml_escape(text, quote=False):
+    # type: (str, bool) -> str
+    out = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    if quote:
+        out = out.replace('"', '&quot;')
+    return out
+
+
+def persistent_vars_xml(name, decl):
+    # type: (str, str) -> str
+    """PLCopenXML (TC6 2.00, расширение CODESYS) с одним объектом Persistent Variables и его текстом.
+
+    Разметка — как у экспорта CODESYS с объявлениями обычным текстом: импорт берёт текст объявления
+    (проверено на 3.5.17.30: зонд Z3 КНС-1 и tools_project/codesys/codesys_pvl.py).
+    """
+    qname = _xml_escape(name, quote=True)
+    lines = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<project xmlns="%s">' % _PLCOPEN_NS,
+        '  <fileHeader companyName="" productName="cds.py import" productVersion="1" creationDateTime="%s" />'
+        % _PLCOPEN_TIME,
+        '  <contentHeader name="%s" modificationDateTime="%s">' % (qname, _PLCOPEN_TIME),
+        '    <coordinateInfo>',
+        '      <fbd><scaling x="1" y="1" /></fbd>',
+        '      <ld><scaling x="1" y="1" /></ld>',
+        '      <sfc><scaling x="1" y="1" /></sfc>',
+        '    </coordinateInfo>',
+        '  </contentHeader>',
+        '  <types><dataTypes /><pous /></types>',
+        '  <instances><configurations /></instances>',
+        '  <addData>',
+        '    <data name="%s" handleUnknown="implementation">' % _CDS_GLOBALVARS,
+        '      <globalVars name="%s" persistent="true" retain="true">' % qname,
+        '        <addData>',
+        '          <data name="%s" handleUnknown="implementation">' % _CDS_PLAINTEXT,
+        '            <InterfaceAsPlainText>',
+        '              <xhtml xmlns="%s">%s</xhtml>' % (_XHTML_NS, _xml_escape(decl)),
+        '            </InterfaceAsPlainText>',
+        '          </data>',
+        '        </addData>',
+        '      </globalVars>',
+        '    </data>',
+        '  </addData>',
+        '</project>',
+    ]
+    return '\n'.join(lines) + '\n'
+
+
+def _import_reporter(se, messages):
+    # type: (Any, List[Dict[str, str]]) -> Any
+    """Приёмник сообщений Application.import_xml; конфликт имён — пропуск (объект уже есть)."""
+
+    class Reporter(se.ImportReporter):
+        def error(self, message):
+            messages.append({'level': 'error', 'text': C._text(message)})
+
+        def warning(self, message):
+            messages.append({'level': 'warning', 'text': C._text(message)})
+
+        def resolve_conflict(self, obj):
+            messages.append({'level': 'conflict', 'text': C.obj_name(obj)})
+            return se.ConflictResolve.Skip
+
+        def added(self, obj):
+            messages.append({'level': 'added', 'text': C.obj_name(obj)})
+
+        def replaced(self, obj):
+            messages.append({'level': 'replaced', 'text': C.obj_name(obj)})
+
+        def skipped(self, objectname):
+            messages.append({'level': 'skipped', 'text': C._text(objectname)})
+
+        @property
+        def aborting(self):
+            return False
+
+    return Reporter()
 
 
 # ---------------------------------------------------------------------------
@@ -248,8 +342,8 @@ class Syncer(object):
         if obj.kind == L.KIND_GVL:
             return parent.create_gvl(obj.name)
         if obj.kind == L.KIND_PVL:
-            # В SP17 нет create_persistentvars (проверено: AttributeError) — ручной шаг
-            return None
+            # В SP17 нет create_persistentvars (проверено: AttributeError) — импорт PLCopenXML
+            return self.create_persistent(obj, parent)
         if obj.kind == L.KIND_ITF:
             return parent.create_interface(obj.name)
         if obj.kind == L.KIND_POU:
@@ -260,6 +354,45 @@ class Syncer(object):
                 return parent.create_pou(name=obj.name, type=se.PouType.Function, return_type=return_type)
             return parent.create_pou(name=obj.name, type=se.PouType.FunctionBlock)
         raise C.StepError('неизвестный вид объекта %s' % obj.kind)
+
+    def find_persistent(self, name):
+        # type: (str) -> Any
+        """Объект Persistent Variables с этим именем где угодно в приложении (без учёта регистра)."""
+        stack = [self.app]
+        while stack:
+            for obj in C.children(stack.pop()):
+                kind = C.kind_of(obj)
+                if kind == C.K_FOLDER:
+                    stack.append(obj)
+                elif kind == C.K_PVL and C.obj_name(obj).lower() == name.lower():
+                    return obj
+        return None
+
+    def create_persistent(self, obj, parent):
+        # type: (L.StObject, Any) -> Any
+        """Persistent Variables импортом PLCopenXML и перенос в папку раскладки; None — объект не создан."""
+        handle, path = tempfile.mkstemp(prefix='cds-pvl-', suffix='.xml')
+        os.close(handle)
+        messages = []  # type: List[Dict[str, str]]
+        try:
+            with io.open(path, 'w', encoding='utf-8', newline='\n') as stream:
+                stream.write(persistent_vars_xml(obj.name, obj.decl))
+            self.app.import_xml(_import_reporter(self.se, messages), path, True)
+        except Exception as exc:
+            self.log.warn('%s: импорт PLCopenXML не удался: %s' % (obj.main_path(), C.squash_ws(C._text(exc))))
+            return None
+        finally:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        for message in messages:
+            if message['level'] in ('error', 'warning'):
+                self.log.warn('%s: импорт PLCopenXML: %s' % (obj.main_path(), message['text']))
+        created = self.find_persistent(obj.name)
+        if created is not None and parent is not self.app:
+            created.move(parent, -1)
+        return created
 
     def needs_recreate(self, cur, cur_kind, obj):
         # type: (Any, str, L.StObject) -> Optional[str]
@@ -298,7 +431,7 @@ class Syncer(object):
             cur = self.create(obj, parent)
             if cur is None:
                 self.log.warn(
-                    '%s: Persistent Variables скриптом SP17 не создаются — создайте объект %s вручную '
+                    '%s: объект Persistent Variables %s не создан импортом PLCopenXML — создайте его вручную '
                     '(docs/MANUAL_STEPS.md), при следующем импорте текст обновится' % (obj.main_path(), obj.name)
                 )
                 return
