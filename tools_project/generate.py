@@ -8,7 +8,7 @@
    ``GVL_CfgProject``, ``GVL_DevIdx``, ``PRG_Devices``, ``PRG_ApplyProjectCfg``), карты Modbus, импорт SCADA,
    ``docs/alarms.csv``, ``docs/03_io_list.md``. Опции ``alarm-list.templates`` и ``scada-csv.templates`` =
    ``none`` передаются через ``--set``: значение ``none`` из ``iolistgen.toml`` iolistgen 0.2.0 читает как
-   путь (docs/ASSUMPTIONS.md, К3-04);
+   путь (docs/ASSUMPTIONS.md, К3-02);
 2. список устройств проекта ``GVL_DeviceList`` и ``PRG_DeviceList`` (решение D-11) — по ``GVL_DevIdx``,
    который только что записал iolistgen: теги, ``dev_no`` и типы по возрастанию ``dev_no``.
 

@@ -17,8 +17,8 @@
 `docs/hmi/*.svg`; список проверок — `python tools_project/check_docs_consistency.py --list`.
 
 Если рядом лежат репозитории iolistgen и plc-process-lib (переменные `IOLISTGEN_REPO` и `PL_REPO` или
-соседние каталоги), скрипт дополнительно сверяет с ними сохранённые снимки: перегенерирует перечень и
-перечитывает исходники библиотеки.
+соседние каталоги; у рабочей копии в `_wt/` — на уровень выше), скрипт дополнительно сверяет с ними
+сохранённые снимки: перегенерирует перечень и перечитывает исходники библиотеки.
 
 Запуск: `python tools_project/check_docs_consistency.py` — код выхода 1, если есть расхождения.
 """
@@ -911,8 +911,10 @@ def library_index_from_repo(repo: Path) -> StIndex:
 
 
 def find_repo(env: str, name: str, root: Path, marker: str) -> Path | None:
+    """Репозиторий из переменной ``env``; без неё — соседний каталог ``name``, у рабочей копии ``git worktree``
+    в ``<портфолио>/_wt/`` — на уровень выше (как ``generate.find_iolistgen``)."""
     raw = os.environ.get(env)
-    candidates = [Path(raw)] if raw else [root.parent / name]
+    candidates = [Path(raw)] if raw else [root.parent / name, root.parent.parent / name]
     for c in candidates:
         if (c / marker).exists():
             return c
