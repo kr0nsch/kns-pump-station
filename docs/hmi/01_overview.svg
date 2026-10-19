@@ -1,0 +1,418 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="900" viewBox="0 0 1320 900" role="img" aria-labelledby="t d">
+<title id="t">Макет экрана «Обзор станции» HMI КНС-1</title>
+<desc id="d">Макет WebVisu в стиле ISA-101: резервуар с уровнем и поплавками, три насоса, напорный коллектор, панель станции, карточки насосов; одна тревога средней важности у насоса Н3.</desc>
+<defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="#E6E9EC"/><line x1="0" y1="0" x2="0" y2="10" stroke="#C7CCD2" stroke-width="4"/></pattern></defs>
+<rect x="0.0" y="0.0" width="1320.0" height="900.0" rx="0" fill="#F4F6F9" stroke="none" stroke-width="1.0" />
+<rect x="20.0" y="10.0" width="1280.0" height="30.0" rx="3" fill="#FFFFFF" stroke="#5B6B7E" stroke-width="1.2" stroke-dasharray="6 4" />
+<text x="34.0" y="30.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#3D4B5C" text-anchor="start" letter-spacing="1.5">МАКЕТ</text>
+<text x="98.0" y="30.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="400" fill="#3D4B5C" text-anchor="start">Экран 1 «Обзор станции» · WebVisu 1280 × 800 · docs/08_hmi_spec.md, раздел 5 · данные условные</text>
+<text x="20.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#3D4B5C" text-anchor="start">Цвет — только у отклонений (ISA-101). Индикаторы тревог:</text>
+<path d="M372,872.5 L379.5,880 L372,887.5 L364.5,880 Z" fill="#C62828" stroke="#C62828" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="372.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.64" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="383.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#3D4B5C" text-anchor="start">Critical</text>
+<rect x="452.0" y="874.0" width="12.0" height="12.0" rx="0" fill="#E8590C" stroke="#E8590C" stroke-width="1.4" />
+<text x="458.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.64" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="469.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#3D4B5C" text-anchor="start">High</text>
+<path d="M544,873.1 L551.2,885.7 L536.8,885.7 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="544.0" y="885.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.64" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<text x="555.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#3D4B5C" text-anchor="start">Medium</text>
+<circle cx="630.0" cy="880.0" r="6.3" fill="#7E57C2" stroke="#7E57C2" stroke-width="1.4"/>
+<text x="630.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.64" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="641.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#3D4B5C" text-anchor="start">Low</text>
+<text x="720.0" y="884.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#3D4B5C" text-anchor="start">Штрихи вокруг индикатора — тревога не квитирована (на экране мигает 1 Гц).</text>
+<rect x="20.0" y="52.0" width="1280.0" height="800.0" rx="0" fill="#D4D8DD" stroke="#8A939E" stroke-width="1" />
+<rect x="20.0" y="52.0" width="1280.0" height="44.0" rx="0" fill="#C4C9CF" stroke="none" stroke-width="1.0" />
+<line x1="20.0" y1="96.0" x2="1300.0" y2="96.0" stroke="#A7AEB7" stroke-width="1" stroke-linecap="butt"/>
+<text x="34.0" y="80.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1F2933" text-anchor="start">КНС-1</text>
+<text x="96.0" y="80.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="15" font-weight="500" fill="#4A5562" text-anchor="start">·  Обзор станции</text>
+<rect x="450.0" y="64.0" width="57.7" height="18.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="478.9" y="77.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">АВТОМАТ</text>
+<rect x="515.7" y="64.0" width="194.1" height="18.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="612.8" y="77.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">ПИД уровня · действует: ПИД</text>
+<rect x="888.0" y="64.0" width="91.8" height="18.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" stroke-dasharray="3 2" />
+<text x="933.9" y="77.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">ИМИТАЦИЯ ×20</text>
+<text x="1060.0" y="74.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" font-weight="600" fill="#1F2933" text-anchor="middle" style="font-variant-numeric: tabular-nums">10:52:41</text>
+<text x="1060.0" y="88.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#6B7684" text-anchor="middle" style="font-variant-numeric: tabular-nums">19.10.2026</text>
+<text x="1206.0" y="79.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="end">Петров · Оператор</text>
+<rect x="1216.0" y="63.0" width="72.0" height="22.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1252.0" y="78.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle">Выход</text>
+<rect x="20.0" y="96.0" width="1280.0" height="72.0" rx="0" fill="#DEE1E5" stroke="none" stroke-width="1.0" />
+<line x1="20.0" y1="168.0" x2="1300.0" y2="168.0" stroke="#A7AEB7" stroke-width="1" stroke-linecap="butt"/>
+<text x="32.0" y="112.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#6B7684" text-anchor="start">Не квитировано</text>
+<path d="M44,124.0 L54.0,134 L44,144.0 L34.0,134 Z" fill="none" stroke="#9AA2AC" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="44.0" y="139.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.52" font-weight="700" fill="#9AA2AC" text-anchor="middle">1</text>
+<text x="57.0" y="139.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" font-weight="600" fill="#6B7684" text-anchor="start" style="font-variant-numeric: tabular-nums">0</text>
+<rect x="82.0" y="126.0" width="16.0" height="16.0" rx="0" fill="none" stroke="#9AA2AC" stroke-width="1.4" />
+<text x="90.0" y="139.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.52" font-weight="700" fill="#9AA2AC" text-anchor="middle">2</text>
+<text x="103.0" y="139.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" font-weight="600" fill="#6B7684" text-anchor="start" style="font-variant-numeric: tabular-nums">0</text>
+<path d="M136,124.8 L145.6,141.6 L126.4,141.6 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="136.0" y="140.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.52" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<text x="149.0" y="139.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" font-weight="600" fill="#1F2933" text-anchor="start" style="font-variant-numeric: tabular-nums">2</text>
+<circle cx="182.0" cy="134.0" r="8.4" fill="none" stroke="#9AA2AC" stroke-width="1.4"/>
+<text x="182.0" y="139.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.52" font-weight="700" fill="#9AA2AC" text-anchor="middle">4</text>
+<text x="195.0" y="139.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" font-weight="600" fill="#6B7684" text-anchor="start" style="font-variant-numeric: tabular-nums">0</text>
+<line x1="220.0" y1="104.0" x2="220.0" y2="160.0" stroke="#B4BAC2" stroke-width="1" stroke-linecap="butt"/>
+<path d="M242,103.525 L249.8,117.175 L234.2,117.175 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="242.0" y="116.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.36" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<line x1="252.1" y1="118.1" x2="254.6" y2="119.8" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="231.9" y1="118.1" x2="229.4" y2="119.8" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="231.9" y1="103.9" x2="229.4" y2="102.2" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="252.1" y1="103.9" x2="254.6" y2="102.2" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<text x="262.0" y="115.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">10:41:07</text>
+<text x="322.0" y="115.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="600" fill="#1F2933" text-anchor="start">P103.COM</text>
+<text x="430.0" y="115.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="start">Насос Н3: потеря связи с ПЧ</text>
+<text x="960.0" y="115.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">активна, не квит.</text>
+<rect x="1052.0" y="103.0" width="50.0" height="17.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1077.0" y="115.1" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#1F2933" text-anchor="middle">Квит.</text>
+<path d="M242,124.525 L249.8,138.175 L234.2,138.175 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="242.0" y="137.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.36" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<line x1="252.1" y1="139.1" x2="254.6" y2="140.8" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="231.9" y1="139.1" x2="229.4" y2="140.8" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="231.9" y1="124.9" x2="229.4" y2="123.2" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="252.1" y1="124.9" x2="254.6" y2="123.2" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<text x="262.0" y="136.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">10:41:06</text>
+<text x="322.0" y="136.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="600" fill="#1F2933" text-anchor="start">IT131.FAIL</text>
+<text x="430.0" y="136.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="start">Насос Н3: ток двигателя (измеряет ПЧ): отказ сигнала</text>
+<text x="960.0" y="136.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">активна, не квит.</text>
+<rect x="1052.0" y="124.0" width="50.0" height="17.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1077.0" y="136.1" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#1F2933" text-anchor="middle">Квит.</text>
+<circle cx="242.0" cy="153.0" r="6.8" fill="#7E57C2" stroke="#7E57C2" stroke-width="1.4"/>
+<text x="242.0" y="157.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.36" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="262.0" y="157.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">09:12:55</text>
+<text x="322.0" y="157.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="600" fill="#1F2933" text-anchor="start">KNS1.SIM</text>
+<text x="430.0" y="157.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="start">Включён режим имитации: входы заменены моделью</text>
+<text x="960.0" y="157.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">активна, квит.</text>
+<rect x="1052.0" y="145.0" width="50.0" height="17.0" rx="3" fill="#E2E5E8" stroke="#C3C8CE" stroke-width="1" />
+<text x="1077.0" y="157.1" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#9AA2AC" text-anchor="middle">Квит.</text>
+<rect x="1116.0" y="106.0" width="80.0" height="24.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1156.0" y="122.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle">Квит. все</text>
+<rect x="1204.0" y="106.0" width="84.0" height="24.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1246.0" y="122.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle">Звук выкл.</text>
+<rect x="1116.0" y="136.0" width="172.0" height="24.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1202.0" y="152.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="500" fill="#1F2933" text-anchor="middle">Тревоги  ›</text>
+<rect x="20.0" y="800.0" width="1280.0" height="52.0" rx="0" fill="#C4C9CF" stroke="none" stroke-width="1.0" />
+<line x1="20.0" y1="800.0" x2="1300.0" y2="800.0" stroke="#A7AEB7" stroke-width="1" stroke-linecap="butt"/>
+<rect x="30.0" y="810.0" width="130.0" height="32.0" rx="3" fill="#4A5562" stroke="#4A5562" stroke-width="1" />
+<text x="95.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">Обзор</text>
+<rect x="168.0" y="810.0" width="86.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="211.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Н1</text>
+<rect x="262.0" y="810.0" width="86.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="305.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Н2</text>
+<rect x="356.0" y="810.0" width="86.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="399.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Н3</text>
+<path d="M428,811.675 L434.6,823.225 L421.4,823.225 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="428.0" y="822.6" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="7.92" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<line x1="436.6" y1="824.0" x2="439.0" y2="825.7" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="419.4" y1="824.0" x2="417.0" y2="825.7" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="419.4" y1="812.0" x2="417.0" y2="810.3" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="436.6" y1="812.0" x2="439.0" y2="810.3" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<rect x="450.0" y="810.0" width="130.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="515.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Тревоги (3)</text>
+<rect x="588.0" y="810.0" width="130.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="653.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Тренды</text>
+<rect x="726.0" y="810.0" width="130.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="791.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Настройки</text>
+<rect x="864.0" y="810.0" width="130.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="929.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Имитация</text>
+<rect x="1150.0" y="810.0" width="140.0" height="32.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1220.0" y="830.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="500" fill="#1F2933" text-anchor="middle">Сброс всех</text>
+<g transform="translate(20,52)">
+<text x="14.0" y="136.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="600" fill="#6B7684" text-anchor="start" letter-spacing="0.3">Технологическая схема</text>
+<line x1="200.0" y1="178.0" x2="690.0" y2="178.0" stroke="#6B7684" stroke-width="7" stroke-linecap="butt"/>
+<path d="M690,170 L706,178 L690,186 Z" fill="#6B7684" stroke="#6B7684" stroke-width="1" stroke-linejoin="round"/>
+<text x="212.0" y="167.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Напорный коллектор</text>
+<text x="704.0" y="204.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#4A5562" text-anchor="end">на очистные</text>
+<line x1="436.0" y1="156.0" x2="436.0" y2="174.0" stroke="#4A5562" stroke-width="1" stroke-linecap="butt" stroke-dasharray="3 2"/>
+<circle cx="436.0" cy="139.0" r="17.0" fill="#F4F5F7" stroke="#4A5562" stroke-width="1.4"/>
+<line x1="419.0" y1="139.0" x2="453.0" y2="139.0" stroke="#4A5562" stroke-width="1" stroke-linecap="butt"/>
+<text x="436.0" y="135.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="600" fill="#1F2933" text-anchor="middle">PT</text>
+<text x="436.0" y="151.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#1F2933" text-anchor="middle">201</text>
+<text x="458.0" y="135.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="start" style="font-variant-numeric: tabular-nums">1,6 бар</text>
+<text x="458.0" y="149.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#6B7684" text-anchor="start">давление</text>
+<line x1="560.0" y1="156.0" x2="560.0" y2="174.0" stroke="#4A5562" stroke-width="1" stroke-linecap="butt" stroke-dasharray="3 2"/>
+<circle cx="560.0" cy="139.0" r="17.0" fill="#F4F5F7" stroke="#4A5562" stroke-width="1.4"/>
+<line x1="543.0" y1="139.0" x2="577.0" y2="139.0" stroke="#4A5562" stroke-width="1" stroke-linecap="butt"/>
+<text x="560.0" y="135.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="600" fill="#1F2933" text-anchor="middle">FT</text>
+<text x="560.0" y="151.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#1F2933" text-anchor="middle">202</text>
+<text x="582.0" y="135.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="start" style="font-variant-numeric: tabular-nums">96 м³/ч</text>
+<text x="582.0" y="149.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#6B7684" text-anchor="start">расход</text>
+<path d="M14,214 L150,214 L150,252" fill="none" stroke="#8A939E" stroke-width="7" stroke-linejoin="miter"/>
+<path d="M143,246 L150,260 L157,246 Z" fill="#8A939E" stroke="#8A939E" stroke-width="1" stroke-linejoin="round"/>
+<text x="14.0" y="204.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#4A5562" text-anchor="start">Приток (самотёк)</text>
+<rect x="121.0" y="240.0" width="278.0" height="460.0" rx="0" fill="#E3E6EA" stroke="none" stroke-width="1.0" />
+<rect x="121.0" y="574.9" width="278.0" height="125.1" rx="0" fill="#AEBCCB" stroke="none" stroke-width="1.0" />
+<line x1="121.0" y1="574.9" x2="399.0" y2="574.9" stroke="#7F8FA0" stroke-width="1.2" stroke-linecap="butt"/>
+<path d="M120,240 L120,701 L400,701 L400,240" fill="none" stroke="#4A5562" stroke-width="2.5" stroke-linejoin="miter"/>
+<line x1="121.0" y1="276.8" x2="399.0" y2="276.8" stroke="#6B7684" stroke-width="1" stroke-linecap="butt" stroke-dasharray="5 4"/>
+<text x="392.0" y="271.8" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#6B7684" text-anchor="end">перелив 4,60</text>
+<text x="260.0" y="718.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#4A5562" text-anchor="middle">Приёмный резервуар · 12 м²</text>
+<line x1="112.0" y1="313.6" x2="120.0" y2="313.6" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="108.0" y="317.1" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="end" style="font-variant-numeric: tabular-nums">LS102 4,20</text>
+<line x1="112.0" y1="332.0" x2="120.0" y2="332.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="108.0" y="335.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="end" style="font-variant-numeric: tabular-nums">HH 4,00</text>
+<line x1="112.0" y1="378.0" x2="120.0" y2="378.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="108.0" y="381.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="end" style="font-variant-numeric: tabular-nums">H 3,50</text>
+<line x1="112.0" y1="626.4" x2="120.0" y2="626.4" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="108.0" y="629.9" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="end" style="font-variant-numeric: tabular-nums">L 0,80</text>
+<line x1="112.0" y1="654.0" x2="120.0" y2="654.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="108.0" y="657.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="end" style="font-variant-numeric: tabular-nums">LL 0,50</text>
+<line x1="400.0" y1="479.2" x2="408.0" y2="479.2" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="412.0" y="482.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">2,40 пуск подпорного</text>
+<line x1="400.0" y1="552.8" x2="408.0" y2="552.8" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="412.0" y="556.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">1,60 пуск ведущего</text>
+<line x1="400.0" y1="571.2" x2="408.0" y2="571.2" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="412.0" y="574.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">1,40 задание</text>
+<line x1="400.0" y1="608.0" x2="408.0" y2="608.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="412.0" y="611.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">1,00 стоп</text>
+<line x1="400.0" y1="663.2" x2="408.0" y2="663.2" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="412.0" y="666.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="400" fill="#4A5562" text-anchor="start" style="font-variant-numeric: tabular-nums">0,40 LS103</text>
+<line x1="140.0" y1="240.0" x2="140.0" y2="307.6" stroke="#6B7684" stroke-width="1" stroke-linecap="butt"/>
+<path d="M134,307.59999999999997 L146,307.59999999999997 L140,318.59999999999997 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.3" stroke-linejoin="round"/>
+<line x1="386.0" y1="240.0" x2="386.0" y2="657.2" stroke="#6B7684" stroke-width="1" stroke-linecap="butt"/>
+<path d="M380,657.2 L392,657.2 L386,668.2 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.3" stroke-linejoin="round"/>
+<line x1="200.0" y1="636.0" x2="200.0" y2="178.0" stroke="#6B7684" stroke-width="5" stroke-linecap="butt"/>
+<path d="M191,231.2 L209,231.2 L200,218.6 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="191.0" y1="218.6" x2="209.0" y2="218.6" stroke="#4A5562" stroke-width="2" stroke-linecap="butt"/>
+<path d="M192,192 L208,192 L192,208 L208,208 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.5" stroke-linejoin="miter"/>
+<circle cx="200.0" cy="655.0" r="19.0" fill="#3C4652" stroke="#4A5562" stroke-width="2"/>
+<path d="M189.55,661.27 L210.45,661.27 L200,645.595 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1" stroke-linejoin="round"/>
+<text x="200.0" y="690.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="middle">Н1</text>
+<text x="207.0" y="612.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="start" style="font-variant-numeric: tabular-nums">38,5 Гц</text>
+<line x1="265.0" y1="636.0" x2="265.0" y2="178.0" stroke="#8A939E" stroke-width="5" stroke-linecap="butt"/>
+<path d="M256,231.2 L274,231.2 L265,218.6 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="256.0" y1="218.6" x2="274.0" y2="218.6" stroke="#4A5562" stroke-width="2" stroke-linecap="butt"/>
+<path d="M257,192 L273,192 L257,208 L273,208 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.5" stroke-linejoin="miter"/>
+<circle cx="265.0" cy="655.0" r="19.0" fill="#ECEEF1" stroke="#4A5562" stroke-width="2"/>
+<path d="M254.55,661.27 L275.45,661.27 L265,645.595 Z" fill="#4A5562" stroke="#4A5562" stroke-width="1" stroke-linejoin="round"/>
+<text x="265.0" y="690.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="middle">Н2</text>
+<line x1="330.0" y1="636.0" x2="330.0" y2="178.0" stroke="#8A939E" stroke-width="5" stroke-linecap="butt"/>
+<path d="M321,231.2 L339,231.2 L330,218.6 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="321.0" y1="218.6" x2="339.0" y2="218.6" stroke="#4A5562" stroke-width="2" stroke-linecap="butt"/>
+<path d="M322,192 L338,192 L322,208 L338,208 Z" fill="#ECEEF1" stroke="#4A5562" stroke-width="1.5" stroke-linejoin="miter"/>
+<circle cx="330.0" cy="655.0" r="19.0" fill="#ECEEF1" stroke="#4A5562" stroke-width="2"/>
+<path d="M319.55,661.27 L340.45,661.27 L330,645.595 Z" fill="#4A5562" stroke="#4A5562" stroke-width="1" stroke-linejoin="round"/>
+<text x="330.0" y="690.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="middle">Н3</text>
+<path d="M352,633.1 L359.2,645.7 L344.8,645.7 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="352.0" y="645.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.64" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<line x1="361.3" y1="646.5" x2="363.8" y2="648.3" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="342.7" y1="646.5" x2="340.2" y2="648.3" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="342.7" y1="633.5" x2="340.2" y2="631.7" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="361.3" y1="633.5" x2="363.8" y2="631.7" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="400.0" y1="300.0" x2="446.0" y2="300.0" stroke="#4A5562" stroke-width="1" stroke-linecap="butt" stroke-dasharray="3 2"/>
+<circle cx="463.0" cy="300.0" r="17.0" fill="#F4F5F7" stroke="#4A5562" stroke-width="1.4"/>
+<line x1="446.0" y1="300.0" x2="480.0" y2="300.0" stroke="#4A5562" stroke-width="1" stroke-linecap="butt"/>
+<text x="463.0" y="296.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="600" fill="#1F2933" text-anchor="middle">LT</text>
+<text x="463.0" y="312.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#1F2933" text-anchor="middle">101</text>
+<rect x="522.0" y="190.0" width="118.0" height="42.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="530.0" y="206.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#4A5562" text-anchor="start">LT101 · уровень</text>
+<text x="632.0" y="226.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1,36 м</text>
+<rect x="560.0" y="240.0" width="16.0" height="460.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="561.0" y="479.2" width="14.0" height="128.8" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<line x1="556.0" y1="332.0" x2="580.0" y2="332.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="583.0" y="335.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#6B7684" text-anchor="start">HH</text>
+<line x1="556.0" y1="378.0" x2="580.0" y2="378.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="583.0" y="381.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#6B7684" text-anchor="start">H</text>
+<line x1="556.0" y1="626.4" x2="580.0" y2="626.4" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="583.0" y="629.9" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#6B7684" text-anchor="start">L</text>
+<line x1="556.0" y1="654.0" x2="580.0" y2="654.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<text x="583.0" y="657.5" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#6B7684" text-anchor="start">LL</text>
+<path d="M559,574.88 L551,569.88 L551,579.88 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="560.0" y1="574.9" x2="576.0" y2="574.9" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="568.0" y="718.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#6B7684" text-anchor="middle">0…5 м</text>
+<rect x="730.0" y="124.0" width="542.0" height="194.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="740.0" y="142.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4A5562" text-anchor="start" letter-spacing="0.2">Станция</text>
+<text x="742.0" y="165.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#4A5562" text-anchor="start">Режим</text>
+<rect x="822.0" y="148.0" width="112.0" height="26.0" rx="3" fill="#4A5562" stroke="#4A5562" stroke-width="1" />
+<text x="878.0" y="165.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">Автомат</text>
+<rect x="940.0" y="148.0" width="112.0" height="26.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="996.0" y="165.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="500" fill="#1F2933" text-anchor="middle">Ручной</text>
+<text x="742.0" y="201.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#4A5562" text-anchor="start">Способ</text>
+<rect x="822.0" y="184.0" width="112.0" height="26.0" rx="3" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="878.0" y="201.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="500" fill="#1F2933" text-anchor="middle">Ступенчатое</text>
+<rect x="940.0" y="184.0" width="112.0" height="26.0" rx="3" fill="#4A5562" stroke="#4A5562" stroke-width="1" />
+<text x="996.0" y="201.3" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">ПИД уровня</text>
+<text x="742.0" y="236.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#4A5562" text-anchor="start">Действует</text>
+<text x="822.0" y="236.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="start">ПИД уровня · ведущий Н1</text>
+<text x="742.0" y="258.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#4A5562" text-anchor="start">Насосы</text>
+<text x="822.0" y="258.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="400" fill="#1F2933" text-anchor="start">требуется 1 · работает 1 · доступно 3</text>
+<text x="742.0" y="280.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#4A5562" text-anchor="start">Частота</text>
+<text x="822.0" y="280.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="400" fill="#1F2933" text-anchor="start" style="font-variant-numeric: tabular-nums">общее задание 77,1 % (38,6 Гц)</text>
+<text x="742.0" y="302.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#4A5562" text-anchor="start">Пуск</text>
+<text x="822.0" y="302.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="400" fill="#6B7684" text-anchor="start">последовательный пуск не идёт</text>
+<rect x="1068.0" y="146.0" width="194.0" height="162.0" rx="3" fill="#E8EAED" stroke="#B4BAC2" stroke-width="1" />
+<text x="1078.0" y="165.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="600" fill="#4A5562" text-anchor="start">LIC101 · регулятор уровня</text>
+<rect x="1078.0" y="174.0" width="28.6" height="17.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1092.3" y="186.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">АВТ</text>
+<text x="1078.0" y="216.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="start">Задание</text>
+<text x="1252.0" y="216.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1,40 м</text>
+<text x="1078.0" y="238.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="start">Уровень</text>
+<text x="1252.0" y="238.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1,36 м</text>
+<text x="1078.0" y="260.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#4A5562" text-anchor="start">Выход</text>
+<text x="1252.0" y="260.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">77,1 %</text>
+<rect x="1078.0" y="276.0" width="174.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1182.4" y="277.0" width="66.1" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<path d="M1212.154,283 L1207.154,291 L1217.154,291 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="1212.2" y1="276.0" x2="1212.2" y2="284.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="1078.0" y="302.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#6B7684" text-anchor="start">выход, %: норма 60…98</text>
+<rect x="730.0" y="326.0" width="176.0" height="240.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="740.0" y="349.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1F2933" text-anchor="start">Н1</text>
+<text x="768.0" y="349.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">P101</text>
+<rect x="842.6" y="335.0" width="53.4" height="17.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="869.3" y="347.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">ВЕДУЩИЙ</text>
+<circle cx="758.0" cy="384.0" r="15.0" fill="#3C4652" stroke="#4A5562" stroke-width="2"/>
+<path d="M749.75,388.95 L766.25,388.95 L758,376.575 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1" stroke-linejoin="round"/>
+<text x="782.0" y="381.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#1F2933" text-anchor="start">РАБОТА</text>
+<rect x="782.0" y="388.0" width="27.7" height="16.5" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="795.8" y="399.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">АВТ</text>
+<text x="740.0" y="430.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Частота</text>
+<text x="896.0" y="430.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">38,5 Гц</text>
+<rect x="740.0" y="438.0" width="156.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="833.6" y="439.0" width="62.4" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<path d="M860.12,445 L855.12,453 L865.12,453 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="860.1" y1="438.0" x2="860.1" y2="446.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="740.0" y="462.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="896.0" y="462.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">50</text>
+<text x="740.0" y="478.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Ток</text>
+<text x="896.0" y="478.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">14,7 А</text>
+<rect x="740.0" y="486.0" width="156.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="771.2" y="487.0" width="49.4" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<line x1="820.6" y1="483.0" x2="820.6" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="828.4" y1="483.0" x2="828.4" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="771.2" y1="483.0" x2="771.2" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt" stroke-dasharray="2 2"/>
+<path d="M778.22,493 L773.22,501 L783.22,501 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="778.2" y1="486.0" x2="778.2" y2="494.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="740.0" y="510.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="896.0" y="510.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">60</text>
+<text x="740.0" y="524.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Наработка</text>
+<text x="896.0" y="524.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1 234 ч</text>
+<text x="740.0" y="541.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Пусков за час</text>
+<text x="896.0" y="541.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">2 / 10</text>
+<text x="740.0" y="558.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Связь с ПЧ</text>
+<text x="896.0" y="558.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#6B7684" text-anchor="end">норма</text>
+<rect x="913.0" y="326.0" width="176.0" height="240.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="923.0" y="349.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1F2933" text-anchor="start">Н2</text>
+<text x="951.0" y="349.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">P102</text>
+<rect x="1031.8" y="335.0" width="47.2" height="17.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1055.4" y="347.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">РЕЗЕРВ</text>
+<circle cx="941.0" cy="384.0" r="15.0" fill="#ECEEF1" stroke="#4A5562" stroke-width="2"/>
+<path d="M932.75,388.95 L949.25,388.95 L941,376.575 Z" fill="#4A5562" stroke="#4A5562" stroke-width="1" stroke-linejoin="round"/>
+<text x="965.0" y="381.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#1F2933" text-anchor="start">СТОП</text>
+<rect x="965.0" y="388.0" width="27.7" height="16.5" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="978.8" y="399.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">АВТ</text>
+<text x="923.0" y="430.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Частота</text>
+<text x="1079.0" y="430.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">0,0 Гц</text>
+<rect x="923.0" y="438.0" width="156.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1016.6" y="439.0" width="62.4" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<path d="M923.0,445 L918.0,453 L928.0,453 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="923.0" y1="438.0" x2="923.0" y2="446.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="923.0" y="462.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="1079.0" y="462.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">50</text>
+<text x="923.0" y="478.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Ток</text>
+<text x="1079.0" y="478.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">0,0 А</text>
+<rect x="923.0" y="486.0" width="156.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="954.2" y="487.0" width="49.4" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<line x1="1003.6" y1="483.0" x2="1003.6" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="1011.4" y1="483.0" x2="1011.4" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="954.2" y1="483.0" x2="954.2" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt" stroke-dasharray="2 2"/>
+<path d="M923.0,493 L918.0,501 L928.0,501 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="923.0" y1="486.0" x2="923.0" y2="494.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="923.0" y="510.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="1079.0" y="510.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">60</text>
+<text x="923.0" y="524.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Наработка</text>
+<text x="1079.0" y="524.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1 251 ч</text>
+<text x="923.0" y="541.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Пусков за час</text>
+<text x="1079.0" y="541.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1 / 10</text>
+<text x="923.0" y="558.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Связь с ПЧ</text>
+<text x="1079.0" y="558.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#6B7684" text-anchor="end">норма</text>
+<rect x="1096.0" y="326.0" width="176.0" height="240.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="1106.0" y="349.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1F2933" text-anchor="start">Н3</text>
+<text x="1134.0" y="349.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">P103</text>
+<rect x="1214.8" y="335.0" width="47.2" height="17.0" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1238.4" y="347.2" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">РЕЗЕРВ</text>
+<circle cx="1124.0" cy="384.0" r="15.0" fill="#ECEEF1" stroke="#4A5562" stroke-width="2"/>
+<path d="M1115.75,388.95 L1132.25,388.95 L1124,376.575 Z" fill="#4A5562" stroke="#4A5562" stroke-width="1" stroke-linejoin="round"/>
+<text x="1148.0" y="381.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" fill="#1F2933" text-anchor="start">СТОП</text>
+<rect x="1148.0" y="388.0" width="27.7" height="16.5" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1161.8" y="399.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">АВТ</text>
+<rect x="1184.0" y="388.0" width="74.8" height="16.5" rx="2" fill="#E6E9EC" stroke="#9AA2AC" stroke-width="1" />
+<text x="1221.4" y="399.7" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="500" fill="#1F2933" text-anchor="middle" letter-spacing="0.3">S вне спец.</text>
+<text x="1106.0" y="430.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Частота</text>
+<text x="1262.0" y="430.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#6B7684" text-anchor="end" style="font-variant-numeric: tabular-nums">нет данных</text>
+<rect x="1106.0" y="438.0" width="156.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1199.6" y="439.0" width="62.4" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<text x="1106.0" y="462.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="1262.0" y="462.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">50</text>
+<text x="1106.0" y="478.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Ток</text>
+<text x="1262.0" y="478.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">ОТКАЗ</text>
+<rect x="1106.0" y="486.0" width="156.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1137.2" y="487.0" width="49.4" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<line x1="1186.6" y1="483.0" x2="1186.6" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="1194.4" y1="483.0" x2="1194.4" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="1137.2" y1="483.0" x2="1137.2" y2="497.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt" stroke-dasharray="2 2"/>
+<text x="1106.0" y="510.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="1262.0" y="510.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">60</text>
+<text x="1106.0" y="524.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Наработка</text>
+<text x="1262.0" y="524.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1 266 ч</text>
+<text x="1106.0" y="541.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Пусков за час</text>
+<text x="1262.0" y="541.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="400" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">0 / 10</text>
+<path d="M1114,547.1 L1121.2,559.7 L1106.8,559.7 Z" fill="#F2C230" stroke="#1F2933" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="1114.0" y="559.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.64" font-weight="700" fill="#1F2933" text-anchor="middle">3</text>
+<line x1="1123.3" y1="560.5" x2="1125.8" y2="562.3" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="1104.7" y1="560.5" x2="1102.2" y2="562.3" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="1104.7" y1="547.5" x2="1102.2" y2="545.7" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<line x1="1123.3" y1="547.5" x2="1125.8" y2="545.7" stroke="#F2C230" stroke-width="1.4" stroke-linecap="butt"/>
+<text x="1126.0" y="558.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="600" fill="#1F2933" text-anchor="start">нет связи с ПЧ</text>
+<rect x="730.0" y="574.0" width="542.0" height="80.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="740.0" y="592.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4A5562" text-anchor="start" letter-spacing="0.2">Напорный коллектор</text>
+<text x="1262.0" y="592.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="end">камера задвижек: сухо</text>
+<text x="742.0" y="614.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">PT201 давление</text>
+<text x="988.0" y="614.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1,6 бар</text>
+<rect x="742.0" y="620.0" width="246.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="778.9" y="621.0" width="49.2" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<line x1="766.6" y1="617.0" x2="766.6" y2="631.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="840.4" y1="617.0" x2="840.4" y2="631.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<line x1="865.0" y1="617.0" x2="865.0" y2="631.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<path d="M781.36,627 L776.36,635 L786.36,635 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="781.4" y1="620.0" x2="781.4" y2="628.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="742.0" y="644.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="988.0" y="644.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">10</text>
+<text x="1014.0" y="614.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">FT202 расход</text>
+<text x="1260.0" y="614.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">96 м³/ч</text>
+<rect x="1014.0" y="620.0" width="246.0" height="8.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1028.8" y="621.0" width="93.5" height="6.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<line x1="1028.8" y1="617.0" x2="1028.8" y2="631.0" stroke="#4A5562" stroke-width="1.2" stroke-linecap="butt"/>
+<path d="M1061.232,627 L1056.232,635 L1066.232,635 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="1061.2" y1="620.0" x2="1061.2" y2="628.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="1014.0" y="644.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="start">0</text>
+<text x="1260.0" y="644.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="400" fill="#6B7684" text-anchor="end">500</text>
+<rect x="730.0" y="662.0" width="542.0" height="78.0" rx="3" fill="#DEE1E5" stroke="#B4BAC2" stroke-width="1" />
+<text x="742.0" y="680.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4A5562" text-anchor="start">Электроснабжение</text>
+<text x="742.0" y="699.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Ввод 0,4 кВ</text>
+<text x="900.0" y="699.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#1F2933" text-anchor="end">норма</text>
+<text x="742.0" y="715.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">ИБП</text>
+<text x="900.0" y="715.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#1F2933" text-anchor="end">от сети</text>
+<text x="742.0" y="731.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#4A5562" text-anchor="start">Общая авария</text>
+<text x="900.0" y="731.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="400" fill="#1F2933" text-anchor="end">нет</text>
+<line x1="914.0" y1="670.0" x2="914.0" y2="732.0" stroke="#B4BAC2" stroke-width="1" stroke-linecap="butt"/>
+<text x="926.0" y="680.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4A5562" text-anchor="start">Павильон</text>
+<text x="926.0" y="697.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#4A5562" text-anchor="start">H₂S</text>
+<text x="1030.0" y="697.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">0,6 мг/м³</text>
+<rect x="926.0" y="708.0" width="104.0" height="6.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="926.0" y="709.0" width="13.0" height="4.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<path d="M927.56,713 L922.56,721 L932.56,721 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="927.6" y1="708.0" x2="927.6" y2="714.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="1040.0" y="697.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#4A5562" text-anchor="start">CH₄</text>
+<text x="1144.0" y="697.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">1,5 % НКПР</text>
+<rect x="1040.0" y="708.0" width="104.0" height="6.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1040.0" y="709.0" width="10.4" height="4.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<path d="M1041.56,713 L1036.56,721 L1046.56,721 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="1041.6" y1="708.0" x2="1041.6" y2="714.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="1154.0" y="697.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#4A5562" text-anchor="start">T воздуха</text>
+<text x="1258.0" y="697.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="600" fill="#1F2933" text-anchor="end" style="font-variant-numeric: tabular-nums">17,8 °C</text>
+<rect x="1154.0" y="708.0" width="104.0" height="6.0" rx="0" fill="#ECEEF1" stroke="#9AA2AC" stroke-width="1" />
+<rect x="1200.8" y="709.0" width="31.2" height="4.0" rx="0" fill="#C3C9D0" stroke="none" stroke-width="1.0" />
+<path d="M1214.112,713 L1209.112,721 L1219.112,721 Z" fill="#1F2933" stroke="#1F2933" stroke-width="0.8" stroke-linejoin="round"/>
+<line x1="1214.1" y1="708.0" x2="1214.1" y2="714.0" stroke="#1F2933" stroke-width="2" stroke-linecap="butt"/>
+<text x="926.0" y="733.0" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="10.5" font-weight="400" fill="#6B7684" text-anchor="start">Дверь: закрыта · В1: стоп, АВТ · Пожар: нет</text>
+</g>
+</svg>
