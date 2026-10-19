@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-16 07:14:13. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 14:48:27. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-16 07:14:13 |
-| Коммит | 63edb70-dirty |
+| Дата прогона | 2026-10-19 14:48:27 |
+| Коммит | 6862703-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -23,32 +23,65 @@
 
 | Набор | Тестов | Пройдено | Упало | Пропущено | Итог |
 |---|---|---|---|---|---|
-| `PRG_Tests.fbF_ClampTest` | 7 | 7 | 0 | 0 | пройдено |
-| `PRG_Tests.fbExampleTest` | 11 | 11 | 0 | 0 | пройдено |
-| **Всего** | 18 | 18 | 0 | 0 | **пройдено** |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | 7 | 7 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbEventLogTest` | 12 | 12 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbEventLogCsvTest` | 5 | 5 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbUtcToIsoTest` | 3 | 3 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmCodeTest` | 4 | 4 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | 12 | 12 | 0 | 0 | пройдено |
+| `GVL_TestsInfra.fbDeviceAuditTest` | 3 | 3 | 0 | 0 | пройдено |
+| **Всего** | 46 | 46 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
 | Набор | Тест | Итог |
 |---|---|---|
-| `PRG_Tests.fbF_ClampTest` | `InsideRangeReturnsValue` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `BelowLowReturnsLow` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AboveHighReturnsHigh` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AtLowBoundaryReturnsLow` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AtHighBoundaryReturnsHigh` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `EqualBoundsReturnsBound` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `LowGreaterThanHighSwapsBounds` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoSwitchesOnBelowThreshold` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoThresholdsAreInclusive` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoHoldsStateInsideHysteresis` | пройден |
-| `PRG_Tests.fbExampleTest` | `InvalidValueLatchesFault` | пройден |
-| `PRG_Tests.fbExampleTest` | `AcknowledgeClearsFaultWhenValid` | пройден |
-| `PRG_Tests.fbExampleTest` | `AcknowledgeKeepsFaultWhileInvalid` | пройден |
-| `PRG_Tests.fbExampleTest` | `ManualFollowsCommand` | пройден |
-| `PRG_Tests.fbExampleTest` | `LocalAndOutOfServiceSwitchOff` | пройден |
-| `PRG_Tests.fbExampleTest` | `DefaultModeIsOutOfService` | пройден |
-| `PRG_Tests.fbExampleTest` | `ParametersAreClamped` | пройден |
-| `PRG_Tests.fbExampleTest` | `CountsSwitchOnsAndResetClears` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DefaultsAllFalse` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeBits` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_DecodeScale5000Is100Pct` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_NoCommForcesStatusFalseHoldsSpeed` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeResetBitWhileQReset` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeScaleAndClamp` | пройден |
+| `GVL_TestsInfra.fbVfdAdapterCondTest` | `VfdAdapter_EncodeNanIsZero` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EmptyLogDefaults` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_EventRecordSizeIs40` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_AlarmEventStored` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_StationEventIdIsBasePlusCode` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_RingOverwritesOldestAndCounts` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_GetRecordNewestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_ViewPagination` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedFromSeqOldestFirst` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_FeedReportsOverwrittenGap` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_MonoTimeIsProcessTime` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_TimeBackwardsRecordedAsIs` | пройден |
+| `GVL_TestsInfra.fbEventLogTest` | `EventLog_SnapshotIndependentOfLaterEvents` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EventCsvLineFormat` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_WritesHeaderAndAllLines` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_EmptySnapshotHeaderOnly` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ReadBackMatchesSnapshot` | пройден |
+| `GVL_TestsInfra.fbEventLogCsvTest` | `EventLogCsv_ErrorOnBadPathReported` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroIsEmpty` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_KnownDates` | пройден |
+| `GVL_TestsInfra.fbUtcToIsoTest` | `UtcToIso_ZeroPadDigits` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_DeviceSuffixesByType` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_StationAlarms` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_Lic101AndEvents` | пройден |
+| `GVL_TestsInfra.fbAlarmCodeTest` | `AlarmCode_UnknownIsNumber` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_EmptyDefaults` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_SlotMaxMatchesLibrary` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_CountsByPriority` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_PrioUnackHighest` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_NewHighSeqOnlyOnTransition` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewSortedUnackFirst` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewLimitedToRows` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ViewPeriodRespected` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_TimeBackwardsRebuildsView` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_AckByIdDeviceStationPid` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_ShelveByIdRespectsTShelveMax` | пройден |
+| `GVL_TestsInfra.fbAlarmSummaryTest` | `AlarmSummary_UnshelveById` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoEventOnFirstCall` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_AuditLogsModeChange` | пройден |
+| `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoSinkIsSafe` | пройден |
 
 ### Упавшие тесты
 
@@ -59,58 +92,41 @@ _Нет._
 
 ## Сборка и полная проверка компиляции в CODESYS
 
-CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 2026-10-16. `build` компилирует
-объекты, достижимые из задач; `check` — все объекты раскладки (docs/MANUAL_STEPS.md, раздел 5).
+CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 19.10.2026 — ветка команды К3
+(сгенерированный слой, полевой слой, журнал). Объекты логики станции и модели (К1, К2), на которые
+ссылаются задачи и сгенерированный слой (`PRG_Station`, `PRG_PlantModel`, `GVL_Time`, `GVL_Sim`, типы станции
+и имитации), подставлены копиями из веток команд (в коммиты К3 не входят): итог для объединённого проекта —
+после слияния.
 
 | Команда | Итог | Примечание |
 |---|---|---|
-| `cds.py build` | 0 ошибок, 0 предупреждений | ссылки проекта: `#Standard` из `config.json` и плейсхолдеры устройства (`#IoStandard`, `#3SLicense`, `#CAA Device Diagnosis`, `#BreakpointLogging`); повторный импорт — 0 изменений |
-| `cds.py check` | 0 ошибок, 0 предупреждений | 8 объектов `src/` (включая `PRG_Main`) |
-| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 11 объектов `src/` и `tests/` |
-| `cds.py test` | 18 из 18 | раздел выше |
-| `cds.py roundtrip` | без диффа (60 файлов), повторный импорт — 0 изменений | — |
-| `cds.py library` | 0 ошибок проверки пула | 7 объектов, ссылка библиотеки — `#Standard` |
-
-Проверка самой команды `check` на копии шаблона (вне репозитория): программа без задачи с
-`iX := diZ;`, ФБ без экземпляра с ошибкой в методе, неиспользуемый DUT, вспомогательный ФБ в
-`tests/` с ошибкой — `build` «0 ошибок» (код 0), `check` / `check --tests` — каждая ошибка с файлом
-и строкой раскладки (код 1); после удаления — код 0. GVL с типами библиотек устройства
-(`IoStandard.IoConfigConnector`, `DED.DEVICE_STATE`): `build` и `check` — 0 ошибок (ссылки
-устройства копируются в пул проверки). Standard в той же копии (TON, R_TRIG, CTU, CONCAT без
-пространства имён и с `Standard.`): `build`, `check --tests`, `library` — 0 ошибок, `test` — 19 из
-19; без ссылки `standard` — C0077 «Неизвестный тип: 'TON'» (docs/ASSUMPTIONS.md, D37–D39).
+| `cds.py deps --check` | все есть | plc-process-lib 1.0.0.0, CAA File 3.5.17.0, SysTimeRtc 3.5.17.0, coUnit 1.2.0.0, Standard |
+| `cds.py check` | 0 ошибок, 0 предупреждений | 51 объект `src/` |
+| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 61 объект `src/` и `tests/` |
+| `cds.py build` | 0 ошибок, 0 предупреждений | MainTask, PlantModelTask, SlowTask; Persistent Variables — `codesys_pvl.py` (MANUAL_STEPS 9.3) |
+| `cds.py build --tests` | 0 ошибок, 0 предупреждений | — |
+| `cds.py test` | 46 из 46 | раздел выше; отрицательный контроль: порча индекса кольца журнала и удержание аварии ПЧ без связи в адаптере — 12 тестов упали, после возврата — зелёные |
+| `symbol_config.py` (сборка `sim`) | файл символов совпал с правилами | `GVL_Devices` 29 Read, `GVL_Hmi` 30 ReadWrite, `GVL_IO` 86 Read, `GVL_Log` 4 Read + 2 ReadWrite, `GVL_Persist` 37 ReadWrite, `GVL_Sim` 3 + 3, `GVL_Time` 1; повтор — 0 изменений |
+| `cds.py roundtrip` | не запускался | в чистом проекте нет объекта Persistent Variables (создаёт только `codesys_pvl.py`), экспорт без `GVL_Persist` дал бы дифф |
 
 ## Что проверяют тесты
 
-| Набор | Тест | Что проверяет |
-|---|---|---|
-| `FB_F_Clamp_Test` | `InsideRangeReturnsValue` | значение внутри диапазона не меняется |
-| `FB_F_Clamp_Test` | `BelowLowReturnsLow` | значение ниже диапазона → нижняя граница |
-| `FB_F_Clamp_Test` | `AboveHighReturnsHigh` | значение выше диапазона → верхняя граница |
-| `FB_F_Clamp_Test` | `AtLowBoundaryReturnsLow` | значение на нижней границе не меняется |
-| `FB_F_Clamp_Test` | `AtHighBoundaryReturnsHigh` | значение на верхней границе не меняется |
-| `FB_F_Clamp_Test` | `EqualBoundsReturnsBound` | вырожденный диапазон `rLow = rHigh` |
-| `FB_F_Clamp_Test` | `LowGreaterThanHighSwapsBounds` | `rLow > rHigh`: границы меняются местами |
-| `FB_Example_Test` | `AutoSwitchesOnBelowThreshold` | авторежим: значение ниже порога включения (уставка − гистерезис) включает выход, отказа нет |
-| `FB_Example_Test` | `AutoThresholdsAreInclusive` | авторежим: на пороге включения выход включается, на уставке — отключается |
-| `FB_Example_Test` | `AutoHoldsStateInsideHysteresis` | авторежим: в зоне гистерезиса выход сохраняет состояние (после включения и после отключения) |
-| `FB_Example_Test` | `InvalidValueLatchesFault` | недостоверное измерение в авторежиме: отказ, выход отключён; отказ держится после восстановления измерения |
-| `FB_Example_Test` | `AcknowledgeClearsFaultWhenValid` | `Acknowledge()` при достоверном измерении снимает отказ и возвращает TRUE, выход снова управляется |
-| `FB_Example_Test` | `AcknowledgeKeepsFaultWhileInvalid` | `Acknowledge()` при недостоверном измерении возвращает FALSE, отказ остаётся |
-| `FB_Example_Test` | `ManualFollowsCommand` | ручной режим: выход повторяет `xManualOn`, недостоверное измерение отказа не даёт |
-| `FB_Example_Test` | `LocalAndOutOfServiceSwitchOff` | `Local` и `OutOfService` отключают выход при любых измерении и команде |
-| `FB_Example_Test` | `DefaultModeIsOutOfService` | режим по умолчанию — `OutOfService`: выход отключён |
-| `FB_Example_Test` | `ParametersAreClamped` | уставка и гистерезис вне диапазона ограничиваются `EXAMPLE_SP_MAX_PCT` и `EXAMPLE_HYST_MIN_PCT` |
-| `FB_Example_Test` | `CountsSwitchOnsAndResetClears` | счётчик `Count` считает только фронты включения; `Reset()` через `I_Resettable` отключает выход и обнуляет счётчик |
+| Набор | Тестов | Что проверяет |
+|---|---:|---|
+| `FB_VfdAdapter_Cond_Test` | 7 | биты слова состояния, масштаб 5000 = 100 %, без связи статусы FALSE и последняя скорость, бит сброса, задание с ограничением и округлением, NaN и +Inf → 0, умолчания |
+| `FB_EventLog_Test` | 12 | запись тревоги и события станции (101000 + код), кольцо на 200 и счётчик затёртых, «новые первыми», страницы HMI, курсор и пропуск затёртых, время процесса, «время назад», снимок, размер записи 40 байт, пустой журнал |
+| `FB_EventLogCsv_Test` | 5 | формат строки CSV; в рантайме через CAA File: заголовок и 25 строк, пустой снимок, чтение файла назад побайтно, ошибка открытия |
+| `FB_F_UtcToIso_Test` | 3 | ISO 8601 по эталонам Python (29.02.2024, 2100 год), 0 → пусто, ведущие нули |
+| `FB_F_AlarmCode_Test` | 4 | коды устройств по типу и слоту, тревоги станции, LIC101.PVF, KNS1.E<код>, неизвестные номера |
+| `FB_AlarmSummary_Test` | 12 | счётчики по приоритетам, высший неквитированный, новые High/Critical, порядок и предел списка, период и «время назад», квитирование и откладывание по номеру с `tShelveMax`, соответствие `ALM_SLOT_MAX` библиотеке |
+| `FB_DeviceAudit_Test` | 3 | событие 101018 со значением dev_no · 10 + режим, без события при старте и без журнала |
 
 ## Проверки без CODESYS
 
-Итоги последнего прогона CI (ссылка на запуск GitHub Actions) или локального прогона.
-
 | Проверка | Итог | Примечание |
 |---|---|---|
-| `ruff check`, `ruff format --check`, `mypy`, `pytest` | пройдено, 2026-10-16, локально | pytest: все тесты, включая интеграционные с настоящими `plc` и iec_checker |
-| `tools/assemble.py` (все варианты, с `--tests` и без) | пройдено, 2026-10-16, локально | 8 объектов `src/` + 3 объекта `tests/` |
-| `tools/check/st_lint.py --strict` | пройдено, 2026-10-16, локально | 60 файлов, 0 замечаний |
-| iec_checker 0.4 (локально, `run_iec_checker.py --tests`) | пройдено, 2026-10-16 | 11 файлов, ошибок разбора нет; необоснованных находок 0, обоснованных 100 — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
-| RuSTy 1.0.6 (локально, `run_rusty.py`) | пройдено, 2026-10-16 | 11 файлов (`src/` и `tests/` с прокладкой coUnit), исключений нет, 0 ошибок, 0 предупреждений |
+| `ruff check`, `ruff format --check`, `mypy` (strict) | пройдено, 19.10.2026, локально | `tools/`, `tools_project/`, `scenarios/` |
+| `pytest` | 647 пройдено, 8 пропущено (19.10.2026) | сверка генерации побайтно (`test_generate.py`), таблица перечислений, правила символов, обвязка сценариев на имитаторе OPC UA-сервера (PMI-13 целиком), офлайн-проверка файлов сценариев; пропущены — сценарии на рантайме (`PMI_LIVE=1`) и каталог 39 сценариев (ещё нет) |
+| `tools_project/generate.py --check` | дрейфа нет (20 файлов) | iolistgen 0.2.0 |
+| `tools_project/check_docs_consistency.py` | 20 проверок, 0 расхождений | с `IOLISTGEN_REPO` и `PL_REPO` — и сверки с генератором и исходниками библиотеки |
+| `st_lint --strict`, iec_checker 0.4, RuSTy 1.0.6 | 0 ошибок, необоснованных находок 0 | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md), раздел К3 |

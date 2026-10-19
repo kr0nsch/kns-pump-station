@@ -49,7 +49,7 @@
 конфигурация, исполнители сценариев. Файл правит только владелец; остальные — через запрос владельцу.
 
 ```
-iolistgen.toml                                   К3  настройки генератора (time_source, alarm_sink, template_dir)
+iolistgen.toml                                   К3  настройки генератора (time_source, alarm_sink, persist_extra)
 docs/03_io_list.csv                              —   перечень сигналов (источник истины; меняется по согласованию)
 docs/{03_io_list.md,alarms.csv,modbus_*.csv,modbus_map.md}, scada/*.csv   генератор (К3 запускает)
 src/
@@ -77,7 +77,7 @@ src/
                 FB_PowerRestore, FB_Ventilation, FB_StationAlarms, FB_Annunciator,
                 F_StationCfgCheck                                                К1
     Log/        FB_EventLog, FB_EventLogCsv, FB_AlarmSummary, FB_DeviceAudit, F_AlarmCode,
-                F_UtcToIso, PRG_Slow                                             К3
+                F_UtcToIso, F_UtcNowMs, F_ZeroPad, F_EventCsvLine, PRG_Slow       К3
     Time/       FB_ScaledClock                                                   К2
     Model/      PRG_PlantModel, FB_PlantModel, FB_InflowProfile, FB_StormGenerator, F_Xorshift32,
                 FB_TankModel, FB_HydraulicSolver, FB_VfdSim, FB_AnalogSensorSim, F_FloatContact,
@@ -90,19 +90,24 @@ tests/
     Fakes/       FB_FakeMotorVfd, FB_FakeEventSink                              К1
     Station/     FB_<ФБ>_Test для каждого ФБ станции                             К1
     Field/, Log/ FB_VfdAdapter_Cond_Test, FB_EventLog_Test, FB_EventLogCsv_Test,
-                 FB_AlarmSummary_Test, F_AlarmCode_Test                          К3
+                 FB_AlarmSummary_Test, FB_DeviceAudit_Test, FB_F_AlarmCode_Test,
+                 FB_F_UtcToIso_Test, FB_TestAlarmSource (источник тревог тестов)  К3
     Model/       FB_ScaledClock_Test, FB_InflowProfile_Test, FB_StormGenerator_Test,
                  FB_HydraulicSolver_Test, FB_VfdSim_Test, FB_TankModel_Test      К2
     Integration/ FB_SimRunner, FB_ClosedLoop_Test                                К2
-  scenarios/
-    kns_scenarios/  __init__.py, values.py, enums.py (генерируется), client.py, backend_opcua.py,
-                    backend_cds.py, runner.py, alarms.py, journal.py, report.py  К3 (обвязка, раздел 14.3)
-    conftest.py, test_pmi.py, test_scenario_files.py (без ПЛК, в CI)             К3
-    pmi/PMI-NN.toml — 39 файлов по 06, приложение А                              К2 (сценарии ПМИ)
+scenarios/                                       сценарии ПМИ (не в tests/: там раскладка ST допускает только DUTs, GVLs, Interfaces, POUs)
+  kns_scenarios/  __init__.py, values.py, enums.py (генерируется), client.py, credentials.py,
+                  backend_opcua.py, backend_cds.py, context.py, scenario.py, alarms.py, journal.py,
+                  report.py                                                      К3 (обвязка, раздел 14.3)
+  mock_plc.py, plc_fixtures.py, test_harness.py, test_pmi.py, test_scenario_files.py (без ПЛК, в CI)   К3
+  examples/PMI-12.toml, PMI-13.toml, PMI-28.toml — примеры схемы                 К3
+  pmi/PMI-NN.toml — 39 файлов по 06, приложение А                                К2 (сценарии ПМИ)
 tools_project/                                   инструменты проекта (Python 3.11+, ruff, mypy strict, pytest в CI)
   check_docs_consistency.py, test_check_docs_consistency.py, data/plc_process_lib.json   К3 (есть с этапа документов)
-  generate.py, check_persist.py, gen_textlists.py, gen_enums.py, eventlog_decode.py, demo.py         К3
-  iolistgen_templates/st/  GVL_Persist.pvl.st.j2, GVL_Persist.station.st.j2      К3 (текст блока — раздел 4.7, заморожен)
+  generate.py, gen_textlists.py, gen_enums.py, eventlog_decode.py, demo.py         К3
+  persist_station.txt  блок станции GVL_Persist для persist_extra iolistgen      К3 (текст блока — раздел 4.7, заморожен)
+  codesys/  codesys_pvl.py (Persistent Variables импортом PLCopenXML), symbol_config.py,
+            symbol_rules.json (символьная конфигурация, раздел 13), *_cds.py — скрипты CODESYS   К3
   plant_reference.py, test_plant_reference.py                                    К2 (эталон модели, раздел 11.3)
 tools/                                           шаблон plc-repo-template (общие инструменты, синхронизируются из шаблона)
   codesys/   + symbol_config.py, online_bridge.py, импорт Persistent Variables через PLCopenXML, команды
@@ -144,6 +149,19 @@ VAR_GLOBAL CONSTANT
     VFD_STW_WARNING : WORD := 16#0008;
     VFD_STW_REMOTE : WORD := 16#0010;
     VFD_CTW_RESET : WORD := 16#0004;         // сброс аварии по фронту
+    LOG_RTC_OK : UDINT := 0;                 // SysTimeRtcHighResGet: «нет ошибки» (ERR_OK)
+    LOG_UTC_MIN_MS : ULINT := 1577836800000; // 2020-01-01T00:00:00Z: раньше — часы ПЛК не выставлены
+    LOG_CSV_LINE_LEN : INT := 160;           // длина строки CSV с CRLF (ASCII), с запасом
+    LOG_CSV_TIMEOUT_US : UDINT := 1000000;   // таймаут FILE.Write, мкс (CAA File)
+    LOG_DEV_MODE_SCALE : UINT := 10;         // событие 101018: значение dev_no · 10 + режим (04 §16)
+    ALM_SLOT_MAX : UINT := 7;                // последний слот тревог источника (PL.GVL_Const.DEV_ALARMS_MAX - 1)
+    LOG_NUM_LEN : INT := 10;                 // знаков в десятичной записи UDINT
+    LOG_ISO_LEN : INT := 24;                 // «2026-10-16T07:41:05.120Z»
+    LOG_SUFFIX_LEN : INT := 8;               // суффикс кода тревоги и короткие поля CSV
+    LOG_PATH_LEN : INT := 255;               // путь файла CAA File
+    LOG_CSV_BUF_LEN : UDINT := 1760;         // буфер FILE.Write: (LOG_CSV_LINES_PER_WRITE + 1) · LOG_CSV_LINE_LEN
+    // заголовок CSV журнала (раздел 9.2)
+    LOG_CSV_HEADER : STRING := 'seq;time_utc;kind;id;code;priority;old_state;new_state;reason;value$R$N';
     // ===== Станция (К1) =====
     STN_PUMP_COUNT : UINT := 3;
     STN_DUTY_MAX : UINT := 2;                // «два рабочих + один резервный», предел uiDutyMax
@@ -697,28 +715,30 @@ k = 50 и 20 мс — до 1 с), для модели и логики это д�
 {attribute 'qualified_only'}
 VAR_GLOBAL CONSTANT
     DEVICE_COUNT : UINT := 29;
-    asTag     : ARRAY[1..29] OF STRING(GVL_Const.TAG_LEN) := ['P101', 'P102', ...];   // по возрастанию dev_no
-    auiDevNo  : ARRAY[1..29] OF UINT := [11, 12, ...];
-    aeDevType : ARRAY[1..29] OF PL.E_DeviceType := [PL.E_DeviceType.MotorVfd, ...];
+    IDX_P101 : UINT := 1;   // позиция устройства в списке, по возрастанию dev_no (… IDX_HS502 := 29)
+    asTag     : ARRAY[1..GVL_DeviceList.DEVICE_COUNT] OF STRING(GVL_Const.TAG_LEN) := ['P101', 'P102', ...];
+    auiDevNo  : ARRAY[1..GVL_DeviceList.DEVICE_COUNT] OF UINT := [GVL_DevIdx.P101, GVL_DevIdx.P102, ...];
+    aeDevType : ARRAY[1..GVL_DeviceList.DEVICE_COUNT] OF PL.E_DeviceType := [PL.E_DeviceType.MotorVfd, ...];
 END_VAR
 VAR_GLOBAL
-    aitfDevice : ARRAY[1..29] OF PL.I_Device;     // присваивает PRG_DeviceList каждый цикл
+    aitfDevice : ARRAY[1..GVL_DeviceList.DEVICE_COUNT] OF PL.I_Device;   // присваивает PRG_DeviceList каждый цикл
 END_VAR
 ```
 
-`PRG_DeviceList` (тело): `GVL_DeviceList.aitfDevice[1] := GVL_Devices.fbP101;` … для всех устройств.
-Вызывается в `MainTask` до `PRG_Station`.
+`PRG_DeviceList` (тело): `GVL_DeviceList.aitfDevice[GVL_DeviceList.IDX_P101] := GVL_Devices.fbP101;` … для
+всех устройств (позиции — константы `IDX_<TAG>`, номера — `GVL_DevIdx`: «магических» чисел нет).
+Вызывается в `MainTask` до `PRG_Station`. Список строит `generate.py` по `GVL_DevIdx`, который только что
+записал iolistgen; `generate.py --check` и `tools_project/test_generate.py` — побайтная сверка с генерацией.
 
 ### 4.6 Сгенерированные списки iolistgen
 
-Как в выводе генератора 0.1.0 (ARCHITECTURE, раздел 3); `iolistgen.toml`:
+Как в выводе генератора 0.2.0 (ARCHITECTURE, раздел 3); `iolistgen.toml`:
 
 ```toml
 [generators.st-codesys]
 time_source = "GVL_Time.fbClockMain"
 alarm_sink = "GVL_Log.fbEventLog"
-template_dir = "tools_project/iolistgen_templates"
-persist_check = false        # заменён tools_project/check_persist.py (блок станции)
+persist_extra = "tools_project/persist_station.txt"   # блок станции (раздел 4.7); persist_check его учитывает
 doc = "docs/03_io_list.md"   # документ в заголовках POU (правило STL001)
 
 [generators.docs-table]
@@ -727,13 +747,16 @@ title = "КНС-1. Перечень сигналов"
 ```
 
 Остальные генераторы (`modbus-map`, `scada-csv`, `alarm-list`) — с умолчаниями: `docs/modbus_*.csv`,
-`docs/modbus_map.md`, `scada/*.csv`, `docs/alarms.csv`. `docs/03_io_list.md` и `docs/alarms.csv` уже в
+`docs/modbus_map.md`, `scada/*.csv`, `docs/alarms.csv`; тексты тревог — «смысл слота», как в 05
+(`alarm-list.templates = none`, `scada-csv.templates = none`; в iolistgen 0.2.0 значение `none` из файла
+настроек читается как путь, поэтому `generate.py` передаёт обе опции через `--set`, ASSUMPTIONS К3-02). `docs/03_io_list.md` и `docs/alarms.csv` уже в
 репозитории (этап документов): по `docs/alarms.csv` сверяется перечень тревог 05 (проверка C03
 `check_docs_consistency.py`); первый запуск `generate.py` должен дать те же файлы.
 
 ### 4.7 Блок станции в `GVL_Persist` (заморожен)
 
-Файл `tools_project/iolistgen_templates/st/GVL_Persist.station.st.j2`, вставляется перед `END_VAR`:
+Файл `tools_project/persist_station.txt` (опция `persist_extra` iolistgen 0.2.0: по объявлению на строку,
+генератор дописывает их после устройств под заголовком «данные приложения»). Объявления — те же:
 
 ```st
     // --- станция (не из перечня сигналов): docs/DESIGN.md, раздел 4.7 ---
@@ -752,9 +775,11 @@ title = "КНС-1. Перечень сигналов"
     stLIC101Retain : PL.ST_DeviceRetain;              // режим регулятора
 ```
 
-`tools_project/check_persist.py` сравнивает все объявления `имя : тип` нового `GVL_Persist` с
-версией `git show HEAD:src/GVLs/Generated/GVL_Persist.pvl.st`: смена типа — ошибка, удаление —
-предупреждение (с `--strict` — ошибка), переименование переменной станции — ошибка.
+Сверку с прежним `GVL_Persist` выполняет сам генератор (`persist_check`): у устройств и у данных
+приложения смена типа, удаление, перестановка и новая переменная перед прежними — предупреждения, с
+`--strict` (так `generate.py --check` в CI) — ошибка без записи файлов. Инициализатор `stLIC101Cfg` в
+одну строку длиннее 120 символов: правило STL003 для `GVL_Persist.pvl.st` выключено в
+`tools/check/st_lint.toml` (ASSUMPTIONS К3-01).
 
 ## 5. Интерфейс `I_StationEventSink` (К3, заморожен)
 
@@ -1306,10 +1331,14 @@ END_VAR
    таргета — зонд в первом этапе: функции SysTarget (имя устройства, производитель) в 3.5.17;
    если в таргете ПЛК210 их нет — константа сборки `GVL_Const.SIM_ALLOWED` в файле-наложении
    `targets/plc210/` (FALSE).
-3. Адаптеры ПЧ: `afbVfd[i].Decode(wStw := GVL_IO.wP10n_STW, uiFact := GVL_IO.uiP10n_FACT,
+3. Адаптеры ПЧ: `fbVfdP10n.Decode(wStw := GVL_IO.wP10n_STW, uiFact := GVL_IO.uiP10n_FACT,
    xSlaveOk := GVL_IO.xMbOk_RS485_1_Sn)`, затем `GVL_IO.xP10n_CommOk`, `xP10n_VfdReady`,
    `xP10n_VfdRun`, `xP10n_VfdFault`, `rP10n_SpeedAct_pct` из выходов адаптера (три явных блока: имена
-   `GVL_IO` у каждого насоса свои).
+   `GVL_IO` у каждого насоса свои; экземпляры `fbVfdP101…fbVfdP103` в `VAR` программы — без индексов
+   массива, которые были бы «магическими» числами).
+
+Признак имитации — `xSimulationReq AND SIM_ALLOWED` (константа сборки; определение таргета функциями
+SysTarget не делалось — в сборке `targets/plc210` файл-наложение даёт `SIM_ALLOWED = FALSE`).
 
 ### 8.2 `FB_VfdAdapter_Cond` — условная карта ПЧ, потеря связи (04 §12; заморожен)
 
@@ -1348,8 +1377,8 @@ END_VAR
 
 ### 8.3 `PRG_FieldOut`
 
-`afbVfd[i].Encode(xQReset := GVL_IO.xP10n_VfdQReset, rSpeedRef_pct := GVL_IO.rP10n_SpeedRef_pct)`,
-затем `GVL_IO.wP10n_CTW`, `GVL_IO.uiP10n_FREF`.
+`PRG_FieldIn.fbVfdP10n.Encode(xQReset := GVL_IO.xP10n_VfdQReset, rSpeedRef_pct := GVL_IO.rP10n_SpeedRef_pct)`
+(те же экземпляры, что разбирают регистры чтения), затем `GVL_IO.wP10n_CTW`, `GVL_IO.uiP10n_FREF`.
 
 ### 8.4 Сборка ПЛК210 (`targets/plc210/`)
 
@@ -1389,17 +1418,21 @@ END_VAR
 // FillView(VAR_IN_OUT stView : ST_EventView) — страница stView.uiPage, новые сверху
 // FillFeed(VAR_IN_OUT stFeed : ST_EventFeed) — до LOG_FEED_ROWS записей с номера stFeed.udiFromSeq, от старой к новой
 // TakeSnapshot() : BOOL — копия кольца (MainTask) для CSV
-// GetSnapshotRecord(uiIndex; VAR_OUTPUT stRecord) : BOOL — от старой к новой (SlowTask)
+// GetSnapshotRecord(uiIndex; VAR_OUTPUT stRecord) : BOOL — от старой к новой, uiIndex с 0 (SlowTask)
+// PROPERTY SnapshotCount : UINT — записей в снимке
 ```
 
 Тело пустое: запись выполняют методы в момент события (вызовы из `MainTask`). Вход `itfTime`
 присваивает `PRG_Station` на шаге 1 каждого цикла (до `PRG_Devices`, где устройства вызывают
-`OnAlarmEvent`). `lrMono_s` — из `itfTime`, `uliUtc_ms` — `SysTimeRtcHighResGet` (при ошибке 0,
-`xClockValid := FALSE`).
+`OnAlarmEvent`). `lrMono_s` — из `itfTime`, `uliUtc_ms` — `F_UtcNowMs` (`SysTimeRtcHighResGet`; при
+ошибке или времени раньше 2020 года — 0, `xClockValid := FALSE`). Пустой журнал: `udiSeqLast = 0`, курсор
+отдаёт `udiSeqFirst = udiSeqLast + 1`. `TakeSnapshot` вызывается, только пока SlowTask не пишет файл
+(`eExportState` не `Writing`; логика станции это проверяет).
 
 Тесты: `AlarmEventStored`, `StationEventIdIsBasePlusCode`, `RingOverwritesOldestAndCounts`,
 `GetRecordNewestFirst`, `ViewPagination`, `FeedFromSeqOldestFirst`, `FeedReportsOverwrittenGap`,
-`MonoTimeIsProcessTime`, `SnapshotIndependentOfLaterEvents`.
+`MonoTimeIsProcessTime`, `SnapshotIndependentOfLaterEvents`; сверх списка — `EmptyLogDefaults`,
+`EventRecordSizeIs40`, `TimeBackwardsRecordedAsIs`. Журнал (≈16 КБ) в тестах — `VAR_INST` метода, а не стек.
 
 ### 9.2 `FB_EventLogCsv` (вызывает `PRG_Slow` в `SlowTask`)
 
@@ -1413,18 +1446,24 @@ END_VAR
 
 ```
 seq;time_utc;kind;id;code;priority;old_state;new_state;reason;value
-1532;2026-10-16T07:41:05.120Z;alarm;110;P101.FTS;2;0;1;1;0
-1533;2026-10-16T07:41:05.140Z;station;101006;KNS1.E6;0;0;0;0;3
+1532;2026-10-16T07:41:05.120Z;alarm;110;P101.FTS;2;0;1;1;0.0
+1533;2026-10-16T07:41:05.140Z;station;101006;KNS1.E6;0;0;0;0;3.0
 ```
+
+Значение — `REAL_TO_STRING` (3.0 → «3.0», проверено прогоном). Строку собирает `F_EventCsvLine`;
+порции по `LOG_CSV_LINES_PER_WRITE` строк, заголовок — отдельной первой записью.
 
 `code` — `F_AlarmCode(udiId)`: устройство — `asTag[dev_no] + '.' + суффикс` (таблица API 19 по
 `aeDevType` и слоту), станция — `KNS1.<SUFFIX>`, LIC101 — `LIC101.PVF`, событие — `KNS1.E<код>`.
-`time_utc` — `F_UtcToIso(uliUtc_ms)` (через `DT_TO_STRING`, проверено зондом Z2); 0 — пусто.
+`time_utc` — `F_UtcToIso(uliUtc_ms)`: целочисленный алгоритм дат civil_from_days (без зависимости от
+формата `DT_TO_STRING`), миллисекунды и «Z»; 0 — пусто.
 Русский текст подставляет `tools_project/eventlog_decode.py` по `05_alarm_list.csv` и таблице
 событий 04 §16 (`events_ru.csv`, UTF-8).
 
 Тесты (многоцикловые, на рантайме): `WritesHeaderAndAllLines`, `ReadBackMatchesSnapshot` (как зонд Z1),
-`ErrorOnBadPathReported`.
+`ErrorOnBadPathReported` (пустое имя файла: несуществующий каталог CAA File на Control Win создаёт сам),
+`EmptySnapshotHeaderOnly`; формат строки — `EventCsvLineFormat`; `F_UtcToIso` и `F_AlarmCode` — наборы
+`FB_F_UtcToIso_Test`, `FB_F_AlarmCode_Test`.
 
 ### 9.3 `FB_AlarmSummary` и `FB_DeviceAudit`
 
@@ -1444,11 +1483,15 @@ END_VAR
 VAR_IN_OUT
     stView : ST_AlarmView;          // GVL_Log.stAlarmView, пересчёт раз в ALM_VIEW_PERIOD
 END_VAR
-// AckById(udiId : UDINT) : BOOL — найти источник и слот по номеру, I_Alarm.Ack()
-// ShelveById(udiId : UDINT; xShelve : BOOL) : BOOL — I_Alarm.Shelve(T#0S) (срок — tShelveMax тревоги) или Unshelve()
+// AckById(udiId : UDINT) : BOOL — найти источник и слот по номеру, I_Alarm.Ack(); TRUE — найдена и была неквитирована
+// ShelveById(udiId : UDINT; xShelve : BOOL) : BOOL — I_Alarm.Shelve(T#0S) (срок — tShelveMax тревоги) или Unshelve();
+//   TRUE — найдена и запрос принят (FALSE — логика станции отвечает RejectedState)
 ```
 
-Счётчики — каждый цикл (`AlarmCount`, `GetAlarm(i).State`, `.AlarmPriority`, `.Unacked`; имя свойства
+Группы списка: неквитированные (`ActiveUnack`, `RtnUnack`) по приоритету, затем `ActiveAck` по приоритету,
+затем `Shelved`, `SuppressedByDesign`, `OutOfService`; внутри — новые выше (время процесса перехода).
+Границы массивов слотов — `GVL_Const.ALM_SLOT_MAX` (= `PL.GVL_Const.DEV_ALARMS_MAX - 1`, тест
+`SlotMaxMatchesLibrary`). Счётчики — каждый цикл (`AlarmCount`, `GetAlarm(i).State`, `.AlarmPriority`, `.Unacked`; имя свойства
 приоритета `AlarmPriority` закреплено в контракте 1.0.0, запись F-17). Время перехода строки списка —
 по изменению `I_Alarm.Seq`, отметка RTC.
 
@@ -1623,14 +1666,17 @@ flowchart LR
 (плейсхолдер `SysTimeRtc`, как в проекте 06), `standard`. Сторожевой таймер задач (`watchdog`) —
 дополнить `import_sources.py` по API `ScriptTaskObject.watchdog` или ручной шаг (MainTask: 100 мс).
 `TestTask` — с запасом по времени цикла: интеграционные тесты выполняют много шагов за цикл.
+Persistent Variables в проекте тестов — тот же объект, что в приложении (создаёт
+`tools_project/codesys/codesys_pvl.py --tests`), а не заменитель GVL: так проверено в iolistgen 0.2.0 и здесь.
 
 ## 13. Символьная конфигурация (К3)
 
-`tools/codesys/symbol_config.py` (IronPython; основа — проверенный скрипт раздела 10.2 MANUAL_STEPS
-проекта 06: `application.create_symbol_config(False, True, <OptimizedClientSideLayout>)`, доступ —
-`configured_access` переменных из `get_all_signatures(True)`) запускается после импорта; правила —
-`config.json`, раздел `symbol_config`, с ключом сборки `sim` (Control Win, имитация) или `site`
-(ПЛК210):
+`tools_project/codesys/symbol_config.py` (скрипт CODESYS `symbol_config_cds.py`, IronPython; основа —
+проверенный скрипт раздела 10.2 MANUAL_STEPS проекта 06: `application.create_symbol_config(False, True,
+<OptimizedClientSideLayout>)`, доступ — `configured_access` переменных из `get_all_signatures(True)`)
+запускается после импорта; правила — `tools_project/codesys/symbol_rules.json` (в `config.json` лишний
+раздел не допускает тест шаблона `test_config_has_template_shape`), с ключом сборки `sim` (Control Win,
+имитация) или `site` (ПЛК210):
 
 | GVL | Переменные | Доступ | Сборка |
 |---|---|---|---|
@@ -1652,8 +1698,12 @@ flowchart LR
 
 Скрипт идемпотентен (`configured_access` меняется, только если отличается); после `import --force`
 или нового `.project` выполняется снова автоматически. Результат проверяется по файлу символов
-`<проект>.Device.Application.xml`, который пишет генерация кода (так проверено в проекте 06): тест
-`symbol_config` сверяет число переменных каждого доступа с правилами. Запись в Cfg и Retain по OPC UA
+`<проект>.Device.Application.xml`, который пишет генерация кода (так проверено в проекте 06): скрипт сверяет
+доступ каждой выгруженной переменной с правилами (код выхода 1 при расхождении), pytest
+`test_symbol_config.py` — правила обеих сборок и разбор файла символов. Прогон 19.10.2026 (сборка `sim`):
+`GVL_Devices` — 29 Read, `GVL_Hmi` — 30 ReadWrite, `GVL_IO` — 86 Read, `GVL_Log` — 4 Read и 2 ReadWrite,
+`GVL_Persist` — 37 ReadWrite, `GVL_Sim` — 3 Read и 3 ReadWrite, `GVL_Time` — 1 Read; повторный запуск —
+0 изменений. Запись в Cfg и Retain по OPC UA
 в сборке `site` закрыта и на уровне символов, и правами группы пользователей рантайма (MANUAL_STEPS).
 
 ## 14. Тесты
@@ -1695,7 +1745,7 @@ flowchart LR
 
 ### 14.3 Сценарии ПМИ через внешний интерфейс (К3 — обвязка и исполнители, К2 — сценарии)
 
-Сценарий = пункт ПМИ: файл `tests/scenarios/pmi/PMI-NN.toml` с тем же номером, что в `06_PMI.md`
+Сценарий = пункт ПМИ: файл `scenarios/pmi/PMI-NN.toml` с тем же номером, что в `06_PMI.md`
 (приложение А — инъекции, k, длительность). Сценарий делает те же записи, что инженер по таблицам
 06 §5.6, ждёт и проверяет состояния; итог и измеренные значения уходят в отчёт для протокола 07.
 Файл декларативный (`tomllib`, без внешних зависимостей): один источник шагов для двух исполнителей
@@ -1773,6 +1823,12 @@ clear_faults = true
 | `repeat` + `steps` | повтор вложенных шагов (PMI-37: 110 переключений двери) |
 | `reset` | `warm` или `cold` — только исполнитель `cds`; в `opcua` шаг и зависящие проверки — «не проверялось» с причиной |
 
+Внутри шага действия выполняются в порядке: `reset`, `write`, `pulse`, `mark`, `capture`, `hold_s`, `wait`,
+`wait_alarm`, `expect`, `expect_delay`, `repeat` (другой порядок — отдельные шаги). `expect_delay` от метки
+сценария получает допуск «период опроса · k» (метка читается после записи), между записями журнала — без
+допуска. `[setup]` — И0 06 §5.2 (`skip_initial_state = true` — без него) и отличия: `method`, `level_m`,
+`inflow_m3h`, `run_hours_s`; `[teardown]` — `clear_faults`, `inflow_m3h`.
+
 Литералы перечислений (`E_MotorState.Fault`, `E_CmdResult.RejectedFault`, `E_ControlAct.Float`) —
 по таблице `kns_scenarios/enums.py`, которую генерирует `tools_project/gen_enums.py` из DUT `src/` и
 DUT библиотеки (путь — `PL_REPO`): в сценариях нет «магических» чисел. Таймауты — в секундах
@@ -1834,7 +1890,7 @@ class PlcClient(Protocol):
 **Запуск** — `cds.py scenarios [--backend opcua|cds] [-k PMI-13]`: блокировка рантайма; перезапуск
 рантайма, если до конца двухчасового демо-режима меньше, чем нужно серии (оценка — колонка
 «Реально» приложения А 06); сборка и загрузка приложения имитации и символьной конфигурации; для
-`cds` — мост; `pytest tests/scenarios -m plc` (`test_pmi.py` — по тесту на файл); отчёт; «Стоп»,
+`cds` — мост; `pytest scenarios -m plc` с переменной окружения `PMI_LIVE=1` (`test_pmi.py` — по тесту на файл); отчёт; «Стоп»,
 выход, снятие блокировки. Серия ≈ 2 ч (06, приложение А) делится на две части с перезапуском рантайма.
 
 ### 14.4 Каталог сценариев
@@ -1863,8 +1919,8 @@ k, время контура и реальное. Здесь — только т
 | Команда | Отвечает за | Читает (не правит) |
 |---|---|---|
 | **К1 — логика станции** | `src/DUTs/Station`, `src/GVLs/Station`, `src/POUs/Station`, раздел «Станция» `GVL_Const`, `tests/POUs/{Fakes,Station}`, `GVL_TestsStation` | интерфейсы К3 (`I_StationEventSink`, `FB_EventLog`, `FB_AlarmSummary`), `GVL_DeviceList`, `GVL_Time` |
-| **К2 — модель, имитация, инъекции** | `src/DUTs/Sim`, `src/GVLs/Sim`, `src/POUs/{Model,Time}`, раздел «Модель» `GVL_Const`, `tests/POUs/{Model,Integration}`, `tests/scenarios/pmi/*.toml` (39 сценариев), `tools_project/plant_reference.py` | всё остальное для интеграции; ожидаемые результаты сценариев согласует с К1 |
-| **К3 — сгенерированный слой, адаптер ПЧ, журнал, символы, обвязка сценариев** | `iolistgen.toml`, `tools_project` (генерация, сверки, расшифровка журнала, шаблоны iolistgen), доработки `tools/codesys` через шаблон (импорт PVL, `symbol_config.py`, `online_bridge.py`, команды `scenarios`, `sim`), `src/*/Generated` (генерацией), `src/*/Log`, `src/Interfaces`, `src/POUs/Field`, `targets/plc210`, `tests/POUs/{Field,Log}`, `PRG_Tests`, `tests/scenarios/{kns_scenarios,conftest.py,test_pmi.py,test_scenario_files.py}`, CI, раздел «Инфраструктура» `GVL_Const`, `docs/MANUAL_STEPS.md`, `docs/TEST_REPORT.md` | типы К1 для блока `GVL_Persist` |
+| **К2 — модель, имитация, инъекции** | `src/DUTs/Sim`, `src/GVLs/Sim`, `src/POUs/{Model,Time}`, раздел «Модель» `GVL_Const`, `tests/POUs/{Model,Integration}`, `scenarios/pmi/*.toml` (39 сценариев), `tools_project/plant_reference.py` | всё остальное для интеграции; ожидаемые результаты сценариев согласует с К1 |
+| **К3 — сгенерированный слой, адаптер ПЧ, журнал, символы, обвязка сценариев** | `iolistgen.toml`, `tools_project` (генерация, сверки, расшифровка журнала, шаблоны iolistgen), доработки `tools/codesys` через шаблон (импорт PVL, `symbol_config.py`, `online_bridge.py`, команды `scenarios`, `sim`), `src/*/Generated` (генерацией), `src/*/Log`, `src/Interfaces`, `src/POUs/Field`, `targets/plc210`, `tests/POUs/{Field,Log}`, `PRG_Tests`, `scenarios/{kns_scenarios,mock_plc.py,plc_fixtures.py,test_*.py,examples}`, CI, раздел «Инфраструктура» `GVL_Const`, `docs/MANUAL_STEPS.md`, `docs/TEST_REPORT.md` | типы К1 для блока `GVL_Persist` |
 
 Общие правила: замороженные интерфейсы (разделы 3, 4.7, 5, 6 — объявления, 8.2, 10) меняются через
 этот документ; `GVL_Const` — только свой раздел; `docs/03_io_list.csv` меняется по согласованию всех
@@ -1985,7 +2041,7 @@ k, время контура и реальное. Здесь — только т
 | 06 plc-iiot-stack | тревоги из `05_alarm_list.csv` (`source = station` и LIC101); слова тревог станции — `stStationSts.wAlmActive/wAlmUnack/wAlmShelved`, бит = slot − 1 | станционные тревоги |
 | 06 plc-iiot-stack | `xK1 = FALSE` — общая авария (реле под напряжением в норме) | семантика метрики `K1.general_alarm` |
 | 06 plc-iiot-stack | правила символов — в `config.json` флагмана; имя устройства в узлах OPC UA — обзором; узлы OPC UA доступны только после ручного шага 5 раздела 16 (Z5) | общий скрипт, рабочий OPC UA |
-| 07 iolistgen | переменные приложения в `GVL_Persist` из файла-вставки и учёт их в `persist_check` (сейчас проверка выдаёт ложное «удалена» на блок станции — проверено 19.10.2026); тип устройства `Pid`; генерация `GVL_DeviceList`; тексты `TL_Reason` для битов, заданных проектом | убрать перекрытие шаблона и генератор проекта |
+| 07 iolistgen | выполнено в 0.2.0: переменные приложения в `GVL_Persist` (`persist_extra`) с учётом в `persist_check`, тип устройства `Pid`. Осталось: генерация `GVL_DeviceList` (пока `generate.py`); тексты `TL_Reason` для битов, заданных проектом; многострочное объявление в `persist_extra`; значение `none` опции `templates` из `iolistgen.toml` (сейчас читается как путь) | убрать генератор проекта и обходы |
 | 01 plc-process-lib | вход подавления тревоги состояния `FB_DigitalInput` (1.1) | режим по поплавкам без повторных тревог (R-04) |
 | шаблон | создание Persistent Variables через PLCopenXML при импорте; заменитель GVL в проекте тестов; онлайн-мост `online_bridge.py` и символьная конфигурация `symbol_config.py` как общие инструменты; команды `cds.py scenarios` и `cds.py sim` | общий ручной шаг всех проектов; сценарии без OPC UA; `tools/` принадлежит шаблону (раздел 1) |
 | `04_algorithms.md`, `06_PMI.md`, `08_hmi_spec.md` | правки этого раздела версии 0.2 внесены (04 v0.3, 06 v0.3, 08 v0.2); вопросы 1 и 2 раздела 14 документа 08 решены полями `ST_StationCmd` (раздел 3.1); согласованность документов проверяет `tools_project/check_docs_consistency.py` в CI | — |
