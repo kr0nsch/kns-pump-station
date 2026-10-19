@@ -8,12 +8,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 16:39:24. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 18:01:06. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 16:39:24 |
-| Коммит | a47fd41-dirty |
+| Дата прогона | 2026-10-19 18:01:06 |
+| Коммит | d44f9c7 |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -30,7 +30,29 @@
 | `GVL_TestsInfra.fbAlarmCodeTest` | 5 | 5 | 0 | 0 | пройдено |
 | `GVL_TestsInfra.fbAlarmSummaryTest` | 15 | 15 | 0 | 0 | пройдено |
 | `GVL_TestsInfra.fbDeviceAuditTest` | 4 | 4 | 0 | 0 | пройдено |
-| **Всего** | 56 | 56 | 0 | 0 | **пройдено** |
+| `GVL_TestsInfra.fbPlcStartAdoptionTest` | 2 | 2 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbScaledClockTest` | 8 | 8 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbInflowProfileTest` | 6 | 6 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbStormGeneratorTest` | 10 | 10 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbTankModelTest` | 8 | 8 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbHydraulicSolverTest` | 11 | 11 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbVfdSimTest` | 15 | 15 | 0 | 0 | пройдено |
+| `GVL_TestsModel.fbPlantModelTest` | 24 | 24 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbStationModeTest` | 10 | 10 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbControlSelectorTest` | 5 | 5 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | 11 | 11 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbLevelControlPidTest` | 15 | 15 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbPumpRotationTest` | 28 | 28 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbAtsTest` | 13 | 13 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbProtectionsTest` | 21 | 21 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbPumpProtectionTest` | 9 | 9 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbPowerRestoreTest` | 10 | 10 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbVentilationTest` | 4 | 4 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbStationAlarmsTest` | 9 | 9 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbAnnunciatorTest` | 7 | 7 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbStationCfgCheckTest` | 13 | 13 | 0 | 0 | пройдено |
+| `GVL_TestsStation.fbStationCoreTest` | 29 | 29 | 0 | 0 | пройдено |
+| **Всего** | 324 | 324 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
@@ -92,6 +114,274 @@
 | `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_AuditLogsModeChange` | пройден |
 | `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_NoSinkIsSafe` | пройден |
 | `GVL_TestsInfra.fbDeviceAuditTest` | `DeviceAudit_LargeDevNoValueNoOverflow` | пройден |
+| `GVL_TestsInfra.fbPlcStartAdoptionTest` | `PlcStartAdoption_AdoptedInGeneratedOrder_A13` | пройден |
+| `GVL_TestsInfra.fbPlcStartAdoptionTest` | `PlcStartAdoption_PowerDeviceAfterPumpStopsRunningPump_A13` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_DefaultsScaleOneAndSystemTime` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ScaleOneEqualsSystem` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ScaleChangeIsMonotonic` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ScaleClampedToMax` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_NanScaleIsOne` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ScaleFiftyBracketsRealTime` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_ManualAdvance` | пройден |
+| `GVL_TestsModel.fbScaledClockTest` | `ScaledClock_AdvanceIgnoredOutsideManual` | пройден |
+| `GVL_TestsModel.fbInflowProfileTest` | `InflowProfile_DefaultsMatchProfilePoints` | пройден |
+| `GVL_TestsModel.fbInflowProfileTest` | `InflowProfile_InterpolatesBetweenHours` | пройден |
+| `GVL_TestsModel.fbInflowProfileTest` | `InflowProfile_WrapsAtMidnight` | пройден |
+| `GVL_TestsModel.fbInflowProfileTest` | `InflowProfile_MeanIsAverage` | пройден |
+| `GVL_TestsModel.fbInflowProfileTest` | `InflowProfile_NonFiniteInputsSafe` | пройден |
+| `GVL_TestsModel.fbInflowProfileTest` | `InflowProfile_NegativeFactorGivesZeroInflow` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_XorshiftKnownValues` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_DefaultsSeedDayZeroStorms` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_SameSeedSameStorms` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_DifferentDaysDiffer` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_TrapezoidShape` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_StormCrossingMidnightContinues` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_ClearSuppressesRunningStorms` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_CountLimitedToMax` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_ZeroSeedDoesNotStall` | пройден |
+| `GVL_TestsModel.fbStormGeneratorTest` | `StormGenerator_InflowDependsOnlyOnClock` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_DefaultsLevelAfterSetLevel` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_VolumeBalance` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_OverflowCounts` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_ShortOverflowCounted` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_NoOverflowWhenBalanced` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_IntakeDryNoFlow` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_ZeroOrNegativeStepNoChange` | пройден |
+| `GVL_TestsModel.fbTankModelTest` | `TankModel_SetLevelClamped` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_DefaultsStoppedStaticHead` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_SinglePumpMatchesReference` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_ParallelPumpsMatchReference` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_UnequalSpeedsCheckValveClosed` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_NoFlowBelowStaticHead` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_AirLockZeroFlowLowCurrent` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_ClogReducesFlowRaisesCurrent` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_ClogWithDryIntakeKeepsDryCurrent` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_IntakeDryNoFlow` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_PumpCurrentEdgeCases` | пройден |
+| `GVL_TestsModel.fbHydraulicSolverTest` | `HydraulicSolver_NonFiniteSpeedTreatedAsStopped` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_DefaultsReadyAndStopped` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_RampToReference` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_FaultCoastAndResetEdge` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_OverheatFaultCode` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_CommLossFreezesRegisters` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_CommLossWatchdogGoesTo50HzAfter5s` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_CommRestoredFollowsFref` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_PowerLossAndBoot` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_NoFeedbackInjection` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_FeedbackStuckInjection` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_LocalRun` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_LocalRunAtLocalPreset` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_TimeBackwardsHoldsFrequency` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_CurrentRegisterScaled` | пройден |
+| `GVL_TestsModel.fbVfdSimTest` | `VfdSim_ResetDriveClearsFault` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_DefaultsInitialState` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_MassBalanceNoPumps` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_SteadyStateOnePump87` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_TimeAccelerationConsistency` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_ClearFaultsZeroesFaultsOnly` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_StormNowTrapezoid` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_AiFaultCurrents` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_FloatStuckNormalTripped` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_FanNoFeedback` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_FaultSeqCountsChanges` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_PumpAndStationInjectionsReachIo` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_ButtonsPulse` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_ResetPlantRestoresLevelAndDrives` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_AirLockAndClogCurrents` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_IntakeDryStopsPumping` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_TimeBackwardsHoldsState` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_SetTimeOfDayKeepsDay` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_StepCappedAtMax` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_ResetPlantClearsOverflowTime` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_NanInjectionCountedOnce` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_IntakeEdgeOutflowMatchesTank` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_MassBalanceTwoPumps` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_OverflowTimeResolvedBySubsteps` | пройден |
+| `GVL_TestsModel.fbPlantModelTest` | `PlantModel_PerPumpSignalsIsolated` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_EmptyRetainStartsManual_A3` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_GarbageRetainSanitized_A3` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_ManualToAutoRequestsAutoExceptOos_A3_PMI30` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_AutoToManualRequestsManual_A3_PMI30` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_LocalPumpGetsRememberedMode_A3_PMI31` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_ManualWinsOverAutoSameCall_A3` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_MethodSwitchLoggedAndRetained_A3_PMI07` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_EnteredAutoPulsesOnFirstCallInAuto_A3_A13` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_SameModeCommandAcceptedNoRequests_A3` | пройден |
+| `GVL_TestsStation.fbStationModeTest` | `StationMode_NoEventSinkIsSafe_A3` | пройден |
+| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_PrecedenceTable_A4` | пройден |
+| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_ManualModeAlwaysManual_A4` | пройден |
+| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_PidNotReadyFallsBackToStepped_A4_A7_PMI28` | пройден |
+| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_ChangedPulsesOnce_A4` | пройден |
+| `GVL_TestsStation.fbControlSelectorTest` | `ControlSelector_GarbageMethodIsStepped_A4` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_StartsLeadAtStartLevelAfterConfirm_A6_PMI02` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_NoStartIfLevelDropsDuringConfirm_A6` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_StopsAllAtStopLevel_A6_PMI02` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_AssistOnAndOffWithHysteresis_A6_PMI03` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_TwoToZeroAtStopLevel_A6` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_DutyMaxOneLimitsToOne_A6` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_InitFromRunningPumpsNoStop_A6_PMI07` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_InvalidLevelHoldsState_A6_PMI25` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_BoundaryLevelsInclusive_A6` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_DisabledOutputsZeroInitRestores_A6` | пройден |
+| `GVL_TestsStation.fbLevelControlSteppedTest` | `Stepped_TimeBackwardsRestartsConfirm_A6` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_StartsLeadAtStartLevel_A7_PMI04` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistOnOutputHighForTAssistOn_A7_PMI05` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistOnLevelAboveAssistStart_A7_PMI05` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistOffOutputLowForTAssistOff_A7_PMI05` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_AssistNotOffAboveAssistStartLevel_A7` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_StopAllAtStopLevel_A7_PMI06` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TrackWhenLeadNotSpeedAuto_A7_PMI04` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TrackWhenLeadCommLost_A7_A12_PMI28` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NotReadyWithoutCommPump_A7_PMI29` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_ReadyAfterCommRecoverDelay_A7_A12_PMI28` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NotReadyWhenPidManual_A7` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_InitFromRunningPumps_A7_PMI07` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_OutputStagingOnlyWhenPidControls_A7` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_NanOutputNoStaging_A7` | пройден |
+| `GVL_TestsStation.fbLevelControlPidTest` | `LevelPid_TimeBackwardsRestartsConfirm_A7` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RunHoursPicksLeastHours_A8_PMI09` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_TieBreakStartsThenIndex_A8` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicAdvancesNextLeadRetained_A8_PMI10` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_FixedOrder_A8` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_ReadyBeforeInhibited_A5` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RunningKeepRoles_A5` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_ForeignRunningReducesRequests_A5_PMI31` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RequestLimitCapsRequests_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StaggerDelaysSecondStart_A5` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StopMoreHoursWhenFewerNeeded_A5_PMI03` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicStopsAssist_A5` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_RequireCommPicksCommPumpAsLead_A5_A12_PMI28` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_LeadSwapWithoutStartStop_A12_PMI28` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverAfterTMaxContRunWithOverlap_A8_PMI11` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverRetryWhenNoStandby_A8_PMI11` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverDisabledInEmergency_A8` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_FaultedPumpLosesRequestImmediately_A9_PMI12_PMI13` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_ResetPumpBecomesStandby_A9_PMI12` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_AdoptKeepsRunningPumpsOnAutoEntry_A3_PMI30` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_AdoptAtPlcStartFromFeedback_A13_PMI35` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_EmergencyRequiresAllThree_A10_PMI20` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_DisabledNoRequestsRolesStandby_A5` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_GarbageNextLeadSanitized_A8` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StaggerSkippedWhenPreviousDropped_A5_A9` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_TimeBackwardsRestartsStagger_A5` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_HandoverLeadNeedsCommInPid_A5_A8_A12_PMI11` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_CyclicNextLeadFollowsRoleTransfer_A8_PMI10_PMI11` | пройден |
+| `GVL_TestsStation.fbPumpRotationTest` | `Rotation_StopKeepsCommPumpInPid_A5_A12_PMI05_PMI28` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_RequestedPumpFaultRaisesAts_A9_PMI12_PMI13` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_ModeChangeIsNotAts_A9_PMI31` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_PowerLossIsNotAts_A9_PMI33` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_UnderloadTripIsAts_A9_A10_PMI15` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_AtsClearsWhenPumpAvailableAgain_A9_PMI12` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_EventNamesReplacementPump_A9_A16_PMI12` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_LackWhenRequiredExceedsAvailable_A9_PMI17` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_NoReserveWhenOnePumpUnavailable_A9_A15_PMI32` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_ForeignRunningCountsAgainstLack_A9_PMI31` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_UnrequestedOrManualFaultIsNotAts_A9_PMI14` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_TimeBackwardsWindowRestarts_A9` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_NoReserveUsesEffectiveDuty_A5_A15_PMI32` | пройден |
+| `GVL_TestsStation.fbAtsTest` | `Ats_TripEventNamesReplacementNotTrippedPump_A9_A16_PMI15_PMI16` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunByFloat_A10_PMI19` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunByLtLl_A10_PMI18` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunReleaseAboveL_A10_PMI18` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunReleaseWithoutLtAfterTDryRelease_A10_PMI19` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_EmergencyByFloatAndByHh_A10_PMI20_PMI23` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_EmergencyReleaseBelowH_A10_PMI20` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_FalseLs103MaskedAfterTLdev_A10_PMI22` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_FalseLs102MaskedAfterTLdev_A10_PMI23` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_Ls102NotTrippedAboveOffMark_A10_PMI24` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_MaskReleasedWhenFloatReturns_A10_PMI22` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_MaskReleasedWhenLtInvalid_A10_PMI25` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_OorLtContradictingFloatMaskedAfterTLdev_A10_A11_PMI26` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_GoodLtContradictingFloatMasksFloat_A10_PMI22` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_LtMaskReleasedAfterTLtRecover_A10_A11_PMI27` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeStartsAllOnLs102StopsOnLs103_A11_PMI21_PMI25` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeEntryWhilePumpingKeepsPumping_A11_PMI25` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_FloatModeExitAfterTLtRecover_A11_PMI27` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_DryRunAndEmergencyBothDryRunWins_A10` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_FirstCallDoesNotEnterFloatMode_A11_PMI01` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_Ls103NotTrippedBelowOffMark_A10` | пройден |
+| `GVL_TestsStation.fbProtectionsTest` | `Protections_TimeBackwardsRestartsLdev_A10` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_UnderloadTripsAfterTUnderload_A10_PMI15` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_NoUnderloadBelowMinSpeed_A10` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_NoUnderloadWhenCurrentInvalid_A10_PMI29` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_UnderloadLatchedUntilReset_A10_PMI15` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_ResetClearsLatch_A10_PMI15` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_DisabledWhenThresholdZero_A10` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_OverheatInterlockWhileActive_A10_PMI16` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_CurrentAtThresholdIsNotUnderload_A10` | пройден |
+| `GVL_TestsStation.fbPumpProtectionTest` | `PumpProtection_TimeBackwardsRestartsUnderload_A10` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_PlcStartDelaysAllRequests_A13_PMI01_PMI35` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_PowerLossBlocksRequests_A13_PMI33` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_RestoreWaitsTPwrRestart_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_SequenceOnePumpPerStep_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_StepAdvancesOnTimeoutIfStartFails_A13` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_PowerLossDuringSequenceRestarts_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_NothingRequiredFinishesImmediately_A13` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_SeqRemainCountsDown_A13_PMI34` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_FirstCallIgnoresPowerInput_A13_PMI01` | пройден |
+| `GVL_TestsStation.fbPowerRestoreTest` | `PowerRestore_TimeBackwardsRestartsDelay_A13` | пройден |
+| `GVL_TestsStation.fbVentilationTest` | `Ventilation_RunsOnGasDoorTemp_A17_PMI38` | пройден |
+| `GVL_TestsStation.fbVentilationTest` | `Ventilation_OverrunAfterConditionsClear_A17_PMI38` | пройден |
+| `GVL_TestsStation.fbVentilationTest` | `Ventilation_FireInterlocksAndStops_A17_PMI38` | пройден |
+| `GVL_TestsStation.fbVentilationTest` | `Ventilation_TimeBackwardsRestartsOverrun_A17` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_IdsAreBasePlusSlot_A15` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_SuppressionPutsSuppressedByDesign_A15_PMI21` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_AckMaskAcksSlot_A15_PMI36` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_AckAllViaInterface_A15_PMI36` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_GetAlarmIndexOutOfRangeReturnsZero_A15` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_WordsAndPrioUnack_A15_PMI36` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_ShelveRejectedForEhl_A15_PMI36` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_OnDelayFromCfg_A15_PMI17` | пройден |
+| `GVL_TestsStation.fbStationAlarmsTest` | `StationAlarms_TimeBackwardsOnDelayRestarts_A15` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_HornOnNewHighUnack_A14_PMI36` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_SilenceStopsHornUntilNextNew_A14_PMI36` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_HornOffWhenAllAcked_A14_PMI36` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_LampBlinksAt1Hz_A14_PMI36` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_LampSteadyWhenActiveAcked_A14_PMI36` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_K1DeenergizedOnActiveHigh_A14_PMI17` | пройден |
+| `GVL_TestsStation.fbAnnunciatorTest` | `Annunciator_TimeBackwardsRestartsBlink_A14` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_DefaultsPass_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_LevelOrderBit_A18_PMI08` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_LevelRangeBit_A18_PMI08` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_SpeedBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_PidStagingBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_DutyBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_RotationBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_TimesBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_FloatCheckBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_UnderloadBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_AlarmBit_A18` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_SetpointBit_A18_PMI08` | пройден |
+| `GVL_TestsStation.fbStationCfgCheckTest` | `StationCfgCheck_NanRejected_A18` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StationStsSizeIs72_A19` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StationDefaultsMatchTypeDefaults_A18` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PlcStartLogsEventAndDelaysRequests_A13_PMI01_PMI35` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualDryRunInterlocksAllPumps_A10_PMI18` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_CommandPulsesClearedAndCounted_A19_PMI30_PMI36` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ResetButtonEdgeResetsAndLogs_A14_PMI36` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_LkgRejectsInvalidCfg_A18_PMI08` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_RevertCfgRestoresLkg_A18_PMI08` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_LkgRestoredAfterRestart_A18_PMI35` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_RestoredInvalidLkgFallsBackToDefaults_A18` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ApplyProjectCfgRestoresDefaults_A18` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_EmergencyRequiresAllAtFullSpeed_A10_PMI20` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PowerLostSuppressesLackNoresAts_A13_A15_PMI33` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_LackSuppressesNoReserve_A9_A15_PMI17` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepFallbackSuppressedInEmergency_A7_A15_PMI28` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_PidControlsLeadSpeed_A7_PMI04` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_FloatModeStartsAllOnLs102_A11_PMI21_PMI25` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_AtsReplacesFaultedLead_A9_PMI12_PMI13` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_UnderloadTripInterlocksAndAts_A10_PMI15` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ManualToAutoAdoptsRunningPump_A3_PMI30` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_ExportCommandAndEvents_A16_PMI37` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_AlarmIdCommandsResultAndClear_A15_PMI36` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_SimulationAlarmAndFaultEvent_A15_A16_PMI01` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_FlowAlarmsSuppressedUntilSettled_A15_PMI38` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_VentilationAndAnnunciatorOutputs_A14_A17_PMI36_PMI38` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_DryRunStopSuppressesNoReserve_A10_A11_A15_PMI21` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_StepAlarmNoFlickerOnStartAndAutoEntry_A3_A7_A15_PMI01_PMI30` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_OverheatTripIsAts_A9_A10_PMI16` | пройден |
+| `GVL_TestsStation.fbStationCoreTest` | `StationCore_RestartSequencesEmergencyPumps_A10_A13_PMI34` | пройден |
 
 ### Упавшие тесты
 
