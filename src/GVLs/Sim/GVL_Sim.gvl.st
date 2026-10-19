@@ -1,8 +1,9 @@
 // Назначение: имитация: запрос и действующий признак, параметры модели, команды, инъекции
 //             отказов, состояние модели. Модель (PRG_PlantModel, PlantModelTask) пишет stSimSts
-//             и входы GVL_IO; признак xSimulation фиксирует PRG_FieldIn в первом цикле.
+//             и входы GVL_IO; признак xSimulation фиксирует PRG_FieldIn в первом цикле, он же
+//             выставляет xIoReady, когда входы GVL_IO действительны.
 // Автор:      <ИМЯ ФАМИЛИЯ>
-// Версия:     0.1.0
+// Версия:     0.2.0
 // Документ:   docs/DESIGN.md, раздел 4.4; docs/ARCHITECTURE.md, раздел 4
 {attribute 'qualified_only'}
 VAR_GLOBAL
@@ -12,4 +13,5 @@ VAR_GLOBAL
     stSimCmd        : ST_SimCmd;         // команды модели (ReadWrite в сборке имитации)
     stFaultInj      : ST_FaultInjection; // отказы (ReadWrite в сборке имитации)
     stSimSts        : ST_SimSts;         // Read
+    xIoReady        : BOOL;              // входы GVL_IO действительны: реальный режим или модель опубликовала их (Read)
 END_VAR

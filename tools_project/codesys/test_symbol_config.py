@@ -46,6 +46,7 @@ def test_rules_file_matches_design_table_sim() -> None:
     assert S.access_for(sim, "GVL_Persist", "stP101Retain") == "ReadWrite"
     assert S.access_for(sim, "GVL_Sim", "stFaultInj") == "ReadWrite"
     assert S.access_for(sim, "GVL_Sim", "stSimSts") == "Read"
+    assert S.access_for(sim, "GVL_Sim", "xIoReady") == "Read"
     assert S.access_for(sim, "GVL_Time", "lrMainNow_s") == "Read"
 
 

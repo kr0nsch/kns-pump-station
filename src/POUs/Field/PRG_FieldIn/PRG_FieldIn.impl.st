@@ -8,6 +8,14 @@ IF NOT xInitDone THEN
     xInitDone := TRUE;
 END_IF
 
+// 2а. Входы GVL_IO действительны: в реальном режиме — с первого цикла (драйверы обновляют их до цикла задачи), в
+//     имитации — после первого цикла модели: PlantModelTask ниже MainTask по приоритету, и первый цикл MainTask
+//     видит нули (обрыв AI, НЗ-поплавки «сработали», нет напряжения). До этого PRG_Station и PRG_Devices не
+//     выполняются (GVL_Sim.xIoReady); признак не снимается
+IF NOT GVL_Sim.xIoReady THEN
+    GVL_Sim.xIoReady := NOT GVL_Sim.xSimulation OR GVL_Sim.stSimSts.xRunning;
+END_IF
+
 // 3. Адаптеры ПЧ: регистры чтения → входы PL.FB_MotorVfd (имена GVL_IO у каждого насоса свои)
 fbVfdP101.Decode(wStw := GVL_IO.wP101_STW, uiFact := GVL_IO.uiP101_FACT, xSlaveOk := GVL_IO.xMbOk_RS485_1_S1);
 GVL_IO.xP101_CommOk := fbVfdP101.xCommOk;

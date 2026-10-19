@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -69,3 +70,51 @@ def test_command_passes_templates_none_via_set() -> None:
     sets = [cmd[i + 1] for i, a in enumerate(cmd) if a == "--set"]
     assert sets == list(G.IOLISTGEN_SETS)
     assert cmd[-1] == "--strict"
+
+
+PRG_DEVICES_IMPL = ROOT / G.GEN_POU_DIR / "PRG_Devices" / "PRG_Devices.impl.st"
+TEMPLATE_OVERRIDE = ROOT / "tools_project" / "iolistgen_templates" / "st" / "PRG_Devices.impl.st.j2"
+GUARD_FIRST_LINE = "// КНС-1 (перекрытие шаблона iolistgen"
+GUARD_LAST_LINE = "END_IF"
+
+
+def guard_block(text: str) -> tuple[int, int]:
+    """Строки (с, по) перекрытия шаблона: проверка GVL_Sim.xIoReady в начале PRG_Devices."""
+    lines = text.splitlines()
+    first = next(i for i, line in enumerate(lines) if line.startswith(GUARD_FIRST_LINE))
+    last = next(i for i in range(first, len(lines)) if lines[i] == GUARD_LAST_LINE)
+    return first, last
+
+
+def test_devices_wait_for_valid_inputs_and_power_device_comes_first() -> None:
+    """Подхват насоса при старте ПЛК (ASSUMPTIONS, И3): ES301 (link_power) вызывается раньше насосов и В1,
+    а до действительных входов имитации (GVL_Sim.xIoReady, И2) устройства не вызываются вовсе."""
+    text = PRG_DEVICES_IMPL.read_text(encoding="utf-8")
+    first, last = guard_block(text)
+    guard = "\n".join(text.splitlines()[first : last + 1])
+    assert "IF NOT GVL_Sim.xIoReady THEN" in guard and "RETURN;" in guard
+    calls = [line.split("(")[0] for line in text.splitlines() if line.startswith("GVL_Devices.fb") and "(" in line]
+    assert calls[0] == "GVL_Devices.fbES301"
+    dependents = ("P101", "P102", "P103", "V1")
+    assert text.index("GVL_Devices.fbES301(") < min(text.index(f"GVL_Devices.fb{tag}(") for tag in dependents)
+    assert text.index("RETURN;") < text.index("GVL_Devices.fbES301(")
+
+
+@needs_iolistgen
+def test_template_override_differs_from_package_only_by_guard() -> None:
+    """Перекрытие шаблона iolistgen (риск R-10 архитектуры): кроме проверки xIoReady — текст шаблона пакета."""
+    repo = G.find_iolistgen(ROOT)
+    if repo is None:  # пакет установлен в окружение
+        spec = importlib.util.find_spec("iolistgen")
+        assert spec is not None and spec.origin is not None
+        package = Path(spec.origin).resolve().parent
+    else:
+        package = repo / "iolistgen"
+    original = (package / "templates" / "st" / "PRG_Devices.impl.st.j2").read_text(encoding="utf-8")
+    override = TEMPLATE_OVERRIDE.read_text(encoding="utf-8")
+    lines = override.splitlines(keepends=True)
+    first, last = guard_block(override)
+    assert lines[first - 1] == "\n", "перед проверкой — пустая строка"
+    assert "".join(lines[: first - 1] + lines[last + 1 :]) == original, (
+        "шаблон PRG_Devices пакета iolistgen изменился: перенесите правку в tools_project/iolistgen_templates"
+    )

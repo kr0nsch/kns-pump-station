@@ -1,3 +1,9 @@
+// 0. Входы GVL_IO ещё недействительны (имитация до первого цикла модели, GVL_Sim.xIoReady): станция и устройства
+//    не выполняются — первый вызов ядра (подхват по ОС, событие 101015) только по действительным входам
+IF NOT GVL_Sim.xIoReady THEN
+    RETURN;
+END_IF
+
 // 1. Ссылки и приёмник журнала — каждый цикл (L12 контракта): интерфейсы переживают онлайн-изменение
 PL.GVL_Lib.itfAlarmSink := GVL_Log.fbEventLog;
 GVL_Log.fbEventLog.itfTime := GVL_Time.fbClockMain;
