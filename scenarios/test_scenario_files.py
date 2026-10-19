@@ -41,7 +41,9 @@ def symbol_index() -> tuple[C.StIndex, dict[str, C.Var]]:
 
 
 INDEX, CONSTS = symbol_index()
-RULES = S.load_rules(json.loads(S.RULES_FILE.read_text(encoding="utf-8")), "sim")
+RULES_DATA = json.loads(S.RULES_FILE.read_text(encoding="utf-8"))
+RULES = S.load_rules(RULES_DATA, "sim")
+TYPE_RULES = S.load_type_rules(RULES_DATA)
 ALARMS = load_alarm_list()
 
 
@@ -60,6 +62,26 @@ def expand(text: str) -> list[str]:
     if not _PLACEHOLDER.search(text):
         return [text]
     return [_PLACEHOLDER.sub(str(n), text) for n in PUMPS]
+
+
+def writable(path: str) -> bool:
+    """Запись по пути разрешена символами сборки sim: переменная ReadWrite и, если у её типа есть правило полей,
+    поле первого уровня тоже ReadWrite (DESIGN, раздел 13)."""
+    parts = re.split(r"\.", re.sub(r"\[[^\]]*\]", "", path))
+    gvl, var = parts[0], parts[1]
+    if S.access_for(RULES, gvl, var) != "ReadWrite":
+        return False
+    decl = INDEX.gvls.get(gvl, {}).get(var)
+    if decl is None or len(parts) < 3 or decl.type is None:
+        return True
+    access = S.member_access(TYPE_RULES, decl.type.split(".")[-1], parts[2])
+    return access in (None, "ReadWrite")
+
+
+def test_writable_respects_member_rules() -> None:
+    assert writable("GVL_Log.stEventFeed.udiFromSeq") and writable("GVL_Log.stEventView.uiPage")
+    assert not writable("GVL_Log.stEventFeed.udiSeqLast") and not writable("GVL_Log.stEventView.astRow[1].udiSeq")
+    assert writable("GVL_Sim.stFaultInj.axVfdFault[2]") and not writable("GVL_IO.xLS102")
 
 
 def walk_steps(steps: list[dict[str, Any]]) -> Iterator[dict[str, Any]]:
@@ -107,8 +129,7 @@ def test_scenario_file(path: Path) -> None:
             assert res.ok, f"{sc.id}: путь {p}: {res.message}"
     for template in writes:
         for p in expand(template):
-            gvl, var = p.split(".")[0], re.split(r"[.\[]", p)[1]
-            assert S.access_for(RULES, gvl, var) == "ReadWrite", f"{sc.id}: запись в {p} закрыта символами (sim)"
+            assert writable(p), f"{sc.id}: запись в {p} закрыта символами (sim)"
     for template in codes:
         for code in expand(template):
             assert code in ALARMS, f"{sc.id}: тревоги {code} нет в 05_alarm_list.csv"

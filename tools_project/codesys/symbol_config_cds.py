@@ -10,11 +10,13 @@
       "tools_codesys": "<repo>/tools/codesys",
       "project": "<путь>.project",
       "rules": [{"gvl": "GVL_IO", "vars": ["*"], "access": "Read"}, ...],   правила одной сборки
+      "types": [{"type": "ST_EventFeed", "members": [["udiFromSeq", "ReadWrite"], ["*", "Read"]]}, ...],
       "result": "<путь>.json"
     }
 
 Первое подходящее правило выигрывает; переменная без правила или с access = null — без доступа (None).
-Доступ меняется, только если отличается (идемпотентно). Затем сборка и генерация кода: файл символов
+Поля типов из ``types`` (``get_all_datatypes``) получают доступ первой подходящей пары; поля типов без правила
+не трогаются. Доступ меняется, только если отличается (идемпотентно). Затем сборка и генерация кода: файл символов
 ``<проект>.Device.Application.xml`` пишет генерация кода. Синтаксис — общее подмножество Python 2.7 и 3.x.
 """
 
@@ -82,6 +84,18 @@ def wanted(rules, gvl, var):
     return None
 
 
+def member_wanted(type_rules, type_name, member):
+    """Доступ поля типа по правилам types: первая подходящая пара; тип без правила — False (не трогать)."""
+    for rule in type_rules:
+        if rule['type'].lower() != type_name.lower():
+            continue
+        for pattern, access in rule['members']:
+            if fnmatch.fnmatchcase(member.lower(), pattern.lower()):
+                return access
+        return False
+    return False
+
+
 def find_symbol_config(app):
     for child in C.children(app):
         try:
@@ -124,6 +138,21 @@ def main():
                 if access is not None:
                     counts.setdefault(gvl, {}).setdefault(access, 0)
                     counts[gvl][access] += 1
+        type_rules = JOB.get('types', [])
+        if type_rules:
+            # поля структур — настройка типа: get_all_datatypes после сборки приложения выше
+            for dt in sc.get_all_datatypes(False):
+                tname = C._text(dt.full_qualified_name).split('.')[-1]
+                for var in dt.variables:
+                    access = member_wanted(type_rules, tname, C._text(var.name))
+                    if access is False:
+                        continue
+                    target = access_value(access)
+                    if var.configured_access != target:
+                        var.configured_access = target
+                        result['changed'] += 1
+                    counts.setdefault(tname, {}).setdefault(access, 0)
+                    counts[tname][access] += 1
         result['counts'] = counts
         app.build()
         app.generate_code()

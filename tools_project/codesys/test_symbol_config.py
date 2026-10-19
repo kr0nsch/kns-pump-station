@@ -111,6 +111,79 @@ def test_parse_and_verify_symbol_file() -> None:
     assert S.counts(symbols)["GVL_Persist"] == {"ReadWrite": 1}
 
 
+TYPES_XML = """<?xml version="1.0" encoding="utf-8"?>
+<Symbolconfiguration xmlns="http://www.3s-software.com/schemas/Symbolconfiguration.xsd">
+  <TypeList>
+    <TypeUserDef name="T_ST_EventView" typeclass="Userdef" pouclass="STRUCTURE" iecname="ST_EventView">
+      <UserDefElement iecname="uiPage" type="T_UINT" byteoffset="0" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="uiPageCount" type="T_UINT" byteoffset="2" vartype="VAR" access="Read" />
+      <UserDefElement iecname="astRow" type="T_ARR" byteoffset="8" vartype="VAR" access="Read" />
+    </TypeUserDef>
+    <TypeUserDef name="T_ST_EventFeed" typeclass="Userdef" pouclass="STRUCTURE" iecname="ST_EventFeed">
+      <UserDefElement iecname="udiFromSeq" type="T_UDINT" byteoffset="0" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="udiSeqLast" type="T_UDINT" byteoffset="8" vartype="VAR" access="Read" />
+    </TypeUserDef>
+    <TypeUserDef name="T_ST_EventRecord" typeclass="Userdef" pouclass="STRUCTURE" iecname="ST_EventRecord">
+      <UserDefElement iecname="udiSeq" type="T_UDINT" byteoffset="0" vartype="VAR" access="Read" />
+    </TypeUserDef>
+    <TypeUserDef name="T_ST_MotorCmd" typeclass="Userdef" pouclass="STRUCTURE" iecname="ST_MotorCmd">
+      <UserDefElement iecname="rSpeedSp_pct" type="T_REAL" byteoffset="0" vartype="VAR" access="ReadWrite" />
+    </TypeUserDef>
+  </TypeList>
+  <NodeList />
+</Symbolconfiguration>
+"""
+
+
+def type_rules() -> list[S.TypeRule]:
+    return S.load_type_rules(json.loads(S.RULES_FILE.read_text(encoding="utf-8")))
+
+
+def test_type_rules_leave_only_cursor_fields_writable() -> None:
+    # страница HMI и курсор журнала: клиент пишет только номер страницы и первый нужный номер (DESIGN, раздел 13)
+    tr = type_rules()
+    assert S.member_access(tr, "ST_EventView", "uiPage") == "ReadWrite"
+    for member in ("uiPageCount", "uiCount", "wReserve", "astRow"):
+        assert S.member_access(tr, "ST_EventView", member) == "Read", member
+    assert S.member_access(tr, "ST_EventFeed", "udiFromSeq") == "ReadWrite"
+    for member in ("udiSeqFirst", "udiSeqLast", "uiCount", "wReserve", "astRow"):
+        assert S.member_access(tr, "ST_EventFeed", member) == "Read", member
+    assert S.member_access(tr, "ST_EventRecord", "udiSeq") == "Read"  # строки журнала — только чтение
+    assert S.member_access(tr, "ST_MotorCmd", "rSpeedSp_pct") is None  # без правила — права переменной
+
+
+def test_parse_and_verify_type_members() -> None:
+    types = S.parse_type_members(TYPES_XML)
+    assert types["ST_EventView"] == {"uiPage": "ReadWrite", "uiPageCount": "Read", "astRow": "Read"}
+    assert S.verify_types(types, type_rules()) == []
+    tampered = {**types, "ST_EventFeed": {**types["ST_EventFeed"], "udiSeqLast": "ReadWrite"}}
+    assert S.verify_types(tampered, type_rules()) == [
+        "ST_EventFeed.udiSeqLast: в файле символов ReadWrite, по правилам Read"
+    ]
+    missing = {k: v for k, v in types.items() if k != "ST_EventView"}
+    assert S.verify_types(missing, type_rules()) == ["ST_EventView: тип не выгружен в файл символов"]
+
+
+def test_job_carries_variable_and_type_rules() -> None:
+    job = S.make_job(S.ROOT / "build" / "kns.project", rules("sim"), type_rules())
+    assert {"gvl": "GVL_IO", "vars": ["*"], "access": "Read"} in job["rules"]
+    assert {"type": "ST_EventFeed", "members": [["udiFromSeq", "ReadWrite"], ["*", "Read"]]} in job["types"]
+
+
+@pytest.mark.parametrize(
+    "types",
+    [
+        [{"type": "ST_X", "members": []}],
+        [{"type": "", "members": [["*", "Read"]]}],
+        [{"type": "ST_X", "members": [["*", "Write"]]}],
+        [{"type": "ST_X", "members": [["*"]]}],
+    ],
+)
+def test_invalid_type_rules_rejected(types: list[dict[str, object]]) -> None:
+    with pytest.raises(S.RulesError):
+        S.load_type_rules({"builds": ["sim"], "rules": [], "types": types})
+
+
 def test_symbol_file_name() -> None:
     project = S.ROOT / "build" / "kns.project"
     assert S.symbol_file(project, "Device").name == "kns.Device.Application.xml"

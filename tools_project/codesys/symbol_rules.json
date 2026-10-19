@@ -3,7 +3,8 @@
     "Правила символьной конфигурации OPC UA КНС-1 (docs/DESIGN.md, раздел 13). Применяет tools_project/codesys/symbol_config.py.",
     "Правило: gvl — имя списка, vars — шаблоны имён переменных (fnmatch, без учёта регистра), access — Read, ReadWrite или по сборке {\"sim\": ..., \"site\": ...}.",
     "Первое подходящее правило выигрывает. Переменные без правила и правило без доступа для сборки не выгружаются (None).",
-    "Сборка sim — CODESYS Control Win с имитацией (сценарии ПМИ пишут уставки, наработку и инъекции); site — ПЛК210 на объекте."
+    "Сборка sim — CODESYS Control Win с имитацией (сценарии ПМИ пишут уставки, наработку и инъекции); site — ПЛК210 на объекте.",
+    "types — доступ к полям структур (настройка типа, действует для всех переменных этого типа; права поля не выше прав переменной): members — пары [шаблон поля, Read или ReadWrite], первая подходящая выигрывает. Типы без правила не трогаются (у полей — права переменной)."
   ],
   "builds": ["sim", "site"],
   "rules": [
@@ -20,5 +21,10 @@
     {"gvl": "GVL_Sim", "vars": ["stSimCmd", "stFaultInj", "stSimCfg"], "access": {"sim": "ReadWrite"}},
     {"gvl": "GVL_Sim", "vars": ["xSimulation", "xSimulationReq", "stSimSts"], "access": "Read"},
     {"gvl": "GVL_Time", "vars": ["lrMainNow_s"], "access": "Read"}
+  ],
+  "types": [
+    {"type": "ST_EventView", "members": [["uiPage", "ReadWrite"], ["*", "Read"]]},
+    {"type": "ST_EventFeed", "members": [["udiFromSeq", "ReadWrite"], ["*", "Read"]]},
+    {"type": "ST_EventRecord", "members": [["*", "Read"]]}
   ]
 }
