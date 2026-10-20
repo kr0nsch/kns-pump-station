@@ -385,17 +385,28 @@ ARCHITECTURE.md:296: [C03] SHA-256 перечня 06336d13c4b2, в docs/alarms.c
 
 ### 6.5 Сборка для ПЛК
 
-В репозитории сборки для ПЛК210 ещё нет; на контроллере проект не проверялся. Что для неё нужно
-([DESIGN.md](DESIGN.md), раздел 8.4):
+Сборки для ОВЕН ПЛК210-14 и REGUL R500 61 описаны в `targets/<имя>/target.json` и собираются одной командой
+([README, «Сборка для ОВЕН ПЛК210 и REGUL R500»](../README.md#сборка-для-овен-плк210-и-regul-r500),
+[DESIGN.md](DESIGN.md), раздел 8.4):
 
-- запретить имитацию: `GVL_Const.SIM_ALLOWED = FALSE`, `GVL_Sim.xSimulationReq = FALSE`, без
-  `PRG_PlantModel` и `PlantModelTask`;
-- дерево устройств: модули ввода-вывода по колонкам `io_module`/`io_channel`, мастер Modbus RTU и слейвы по
-  [modbus_master_map.csv](modbus_master_map.csv), привязка каналов к `GVL_IO`, диагностика слейвов в
-  `GVL_IO.xMbOk_RS485_1_S1…S3` — вручную в IDE;
+```bat
+python tools_project\targets.py build plc210     :: CODESYS 3.5.17.30 + пакет OwenTargets 3.5.17.36
+python tools_project\targets.py build r500       :: Astra.IDE 1.7.2.2
+```
+
+Сборка ПЛК210 запрещает имитацию (`GVL_Const.SIM_ALLOWED`, `GVL_Sim.xSimulationReq` — FALSE, без
+`PRG_PlantModel`), а дерево устройств — модуль-слот, встроенный ввод-вывод, порты RS-485 с мастером Modbus RTU,
+Modbus TCP с модулями МВ210, каналы и привязки к `GVL_IO` — строит по перечню сигналов и
+`targets/plc210/hardware.json`. 20.10.2026: сборка и «Генерировать код» — 0 ошибок, 0 предупреждений. На
+контроллере проект не проверялся. Свой объект:
+
+- другая модификация ПЛК210, модули или адреса — `targets/plc210/hardware.json` (идентификаторы устройств — в
+  репозитории устройств CODESYS после установки пакета ОВЕН), каналы — колонки `io_module`/`io_channel` и `mb_*`
+  перечня; таблицу привязок обновляет `python tools_project\codesys\plc210_io.py table --write`;
 - символьная конфигурация для объекта: `python tools_project\codesys\symbol_config.py --build site` — уставки
   `GVL_Persist` и `GVL_Sim` только на чтение;
-- сверить наличие CAA File в таргете ПЛК210 и версию таргет-файла с прошивкой.
+- на объекте: порядок слов маски МВ210-202, шкала встроенных AI, запись CSV через CAA File —
+  [MANUAL_STEPS.md, раздел 10.2](MANUAL_STEPS.md#102-сборка-плк210).
 
 ## 7. Частые проблемы
 
