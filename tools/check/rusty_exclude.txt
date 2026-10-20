@@ -20,6 +20,10 @@ FB_F_AlarmCode_Test.st  # F_AlarmCode (исключены)
 FB_TestAlarmSource.st  # PL.*
 FB_VfdAdapter_Cond.st  # PL.*
 FB_VfdAdapter_Cond_Test.st  # PL.*
+FB_FieldOwen_Test.st  # PL.*, функции полевого слоя ОВЕН (исключены)
+F_Mx210AiToMa.st  # PL.*
+F_OwenAiToMa.st  # PL.*
+F_WordsToReal.st  # PL.* (PL.U_RealBits)
 F_AlarmCode.st  # PL.*
 F_EventCsvLine.st  # F_AlarmCode, ST_EventRecord (исключены)
 F_UtcNowMs.st  # SysTimeRtc
